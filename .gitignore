@@ -1,0 +1,16 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+
+# SQLite databases
+*.db
+
+# Environment variables
+.env
+
+# VS Code settings (optional)
+.vscode/
+
+# Logs and backups
+*.log
+*.bak
