@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Machine Shop</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            text-align: center;
+            background-color: #1e1e1e;
+            padding: 40px 60px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 187, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #00bfff;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 260px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            background-color: #2a2a2a;
+            color: #f0f0f0;
+        }
+
+        button {
+            padding: 12px 40px;
+            font-size: 18px;
+            background-color: #00bfff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #0099cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Millit Knives App</h1>
+        <form method="POST">
+            <input type="text" name="username" placeholder="Enter your name" required><br>
+            <button type="submit">ENTER</button>
+        </form>
+    </div>
+</body>
+</html>
+ 

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Assembly Viewer{% endblock %}
+{% block topbar %}🔩 Assembly Viewer{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-xl font-semibold">Assembly: {{ part.name }} ({{ part.part_number }})</h2>
+	<div id="cad-viewer" class="w-full h-[600px] border border-gray-700 mb-6"></div>
+    <p class="text-sm text-gray-400">Revision: {{ part.revision or "-" }}</p>
+    <p class="mt-2">{{ part.description }}</p>
+</div>
+
+<hr class="my-4 border-gray-600">
+
+<div class="flex justify-between items-center mb-4">
+    <h3 class="text-lg font-medium">Bill of Materials</h3>
+    <a href="#" class="text-blue-400 hover:underline text-sm">+ Add Component</a>
+</div>
+
+{% if part.children %}
+    <table class="w-full table-auto border-collapse text-sm">
+        <thead class="text-left border-b border-gray-700">
+            <tr>
+                <th class="py-2">Part #</th>
+                <th class="py-2">Name</th>
+                <th class="py-2">Qty</th>
+                <th class="py-2">Unit</th>
+                <th class="py-2">Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bom in part.children %}
+                <tr class="border-b border-gray-800 hover:bg-gray-800">
+                    <td class="py-2">{{ bom.child.part_number }}</td>
+                    <td class="py-2">{{ bom.child.name }}</td>
+                    <td class="py-2">{{ bom.quantity }}</td>
+                    <td class="py-2">{{ bom.unit or "-" }}</td>
+                    <td class="py-2">{{ bom.notes or "" }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="text-gray-400">No components added to this assembly yet.</p>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+  <script type="module">
+    import { Viewer, Display } from "{{ url_for('static', filename='vendor/three-cad-viewer/three-cad-viewer.esm.js') }}";
+
+    // The options you want to use for your viewer and display
+    const options = {
+        theme: "dark",
+        showAxes: true,
+        showGrid: true,
+        glass: false,           // or true if you want the "glass" UI
+        tools: true,            // enable CAD tools
+        cadWidth: 800,
+        height: 600,
+        treeWidth: 250,
+        // add any other supported options!
+    };
+
+    // 1. Create a Display instance
+    const display = new Display(document.getElementById("cad-viewer"), options);
+
+    // 2. Create the Viewer, passing the display and options objects
+    const viewer = new Viewer(display, options);
+
+    // 3. Load your model
+    const stepPath = "/static/uploads/cad/kline_rework.step";
+    viewer.open(stepPath);
+</script>
+
+
+
+{% endblock %}
+

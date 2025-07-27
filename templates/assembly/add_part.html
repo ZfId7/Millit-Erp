@@ -1,0 +1,40 @@
+
+{% extends "base.html" %}
+
+{% block title %}Assembly{% endblock %}
+{% block topbar %}🧩 Assembly{% endblock %}
+
+{% block content %}
+<h2>Assembly Add Form</h2>
+<p>Fill out the Form to Add A Parent Assembly.</p>
+
+<a href="{{ url_for('assembly_bp.add_part') }}">
+  <button class="btn btn-primary">➕ Add New Part</button>
+</a>
+
+<hr>
+
+<h2>All Parts</h2>
+<table class="table table-dark table-striped">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Part #</th>
+      <th>Type</th>
+      <th>Unit</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for part in parts %}
+    <tr>
+      <td>{{ part.name }}</td>
+      <td>{{ part.part_number }}</td>
+      <td>{{ part.type }}</td>
+      <td>{{ part.unit }}</td>
+      <td>{{ part.description }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Assembly{% endblock %}
+{% block topbar %}🧩 Assembly{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+  <h2 class="text-xl font-bold">Assembly Dashboard</h2>
+  <div class="flex gap-2">
+    <a href="{{ url_for('assembly_bp.add_assy') }}" class="add-assy-btn">➕ Add Assembly</a>
+    
+  </div>
+</div>
+
+{% if assemblies %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for assembly in assemblies %}
+  <div class="bg-zinc-800 p-4 rounded-xl shadow">
+    <h3 class="text-lg font-semibold">🧩 {{ assembly.name }}</h3>
+    <p class="text-sm text-zinc-400">Assembly #: {{ assembly.assembly_number }}</p>
+    <p class="text-sm text-zinc-400">Revision: {{ assembly.revision or 'n/a' }}</p>
+    <p class="text-sm text-zinc-400 mb-2">{{ assembly.description or 'No description provided.' }}</p>
+    <div class="flex justify-end gap-2 mt-2">
+      <a href="{{ url_for('assembly_bp.cad_viewer', assembly_id=assembly.id) }}" class="add-assy-btn" target="_blank">🔍 View CAD</a>
+      <a href="{{ url_for('cad_upload_bp.upload_cad', assembly_id=assembly.id) }}" class="add-assy-btn">📤 Upload CAD</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  <p class="text-zinc-400">No assemblies found. Click "Add Assembly" to get started.</p>
+{% endif %}
+{% endblock %}
+
+{% block styles %}
+<style>
+  .add-assy-btn {
+    padding: 6px 14px;
+    background-color: #1a1a1a;
+    border: 1px solid #666;
+    color: #00bfff;
+    border-radius: 6px;
+    font-size: 13px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin-left: auto;
+  }
+
+  .add-assy-btn:hover {
+    background-color: #2a2a2a;
+    border-color: #888;
+    color: #33ccff;
+  }
+</style>
+{% endblock %}

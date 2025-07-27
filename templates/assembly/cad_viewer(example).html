@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Link the CSS for viewer icons & layout -->
+    <link rel="stylesheet" href="/static/vendor/three-cad-viewer/dist/three-cad-viewer.css" />
+    <script type="module">
+      import { Viewer, Display } from "/static/vendor/three-cad-viewer/dist/three-cad-viewer.esm.js";
+
+      // (A) Any notification callback you want (or use `() => {}`)
+      function nc(change) {
+        console.log("NOTIFY:", JSON.stringify(change, null, 2));
+      }
+
+      // (B) Default display/viewer/render options (customize as you wish)
+      const displayOptions = {
+        cadWidth: 850,
+        height: 525,
+        treeWidth: 240,
+        theme: "browser",
+        pinning: true
+      };
+      const renderOptions = {
+        ambientIntensity: 1.0,
+        directIntensity: 1.1,
+        metalness: 0.30,
+        roughness: 0.65,
+        edgeColor: 0x707070,
+        defaultOpacity: 0.5,
+        normalLen: 0
+      };
+      const viewerOptions = {
+        target: [0, 0, 0],
+        up: "Z"
+      };
+
+      // (C) Sample "shapes" data - renders a colored cube
+      const shapes = {
+        version: 3,
+        parts: [{
+          id: "/Group/Workplane(Solid)",
+          type: "shapes",
+          subtype: "solid",
+          name: "Workplane(Solid)",
+          shape: {
+            vertices: [
+                -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5,
+                0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, -0.5,
+                -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5,
+                0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5,
+                -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5,
+                0.5, -0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5,
+              ],
+            triangles: [
+                -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5,
+                0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, -0.5,
+                -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5,
+                0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5,
+                -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5,
+                0.5, -0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5,
+              ],
+            normals: [
+                -1.0, -0.0, 0.0, -1.0, -0.0, 0.0, -1.0, -0.0, 0.0, -1.0, -0.0, 0.0,
+                1.0, 0.0, -0.0, 1.0, 0.0, -0.0, 1.0, 0.0, -0.0, 1.0, 0.0, -0.0, 0.0,
+                -1.0, -0.0, 0.0, -1.0, -0.0, 0.0, -1.0, -0.0, 0.0, -1.0, -0.0, -0.0,
+                1.0, 0.0, -0.0, 1.0, 0.0, -0.0, 1.0, 0.0, -0.0, 1.0, 0.0, -0.0, -0.0,
+                -1.0, -0.0, -0.0, -1.0, -0.0, -0.0, -1.0, -0.0, -0.0, -1.0, 0.0, 0.0,
+                1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+              ],
+            edges: [
+                -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5,
+                -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5,
+                0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+                0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5,
+                -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, 0.5,
+                -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+              ],
+            obj_vertices: [
+                -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5,
+                0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5,
+              ],
+            face_types: [0, 0, 0, 0, 0, 0],
+            edge_types: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            triangles_per_face: [2, 2, 2, 2, 2, 2],
+            segments_per_edge: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+          },
+          state: [1, 1],
+          color: "#e8b024",
+          alpha: 1.0,
+          texture: null,
+          loc: [
+            [-0.0, -0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0]
+          ],
+          renderback: false,
+          accuracy: null,
+          bb: null,
+        }],
+        loc: [
+          [0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 1.0]
+        ],
+        name: "Group",
+        id: "/Group",
+        normal_len: 0,
+        bb: { xmin: -0.5, xmax: 0.5, ymin: -0.5, ymax: 0.5, zmin: -0.5, zmax: 0.5 }
+      };
+
+      // (D) Get the container, create Display, then Viewer
+      const container = document.getElementById("cad-viewer");
+      const display = new Display(container, displayOptions);
+      const viewer = new Viewer(display, viewerOptions, nc);
+
+      // (E) Render the shapes
+      viewer.render(shapes, renderOptions, viewerOptions);
+
+    </script>
+  </head>
+  <body>
+    <div id="cad-viewer"></div>
+  </body>
+</html>

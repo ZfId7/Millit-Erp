@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% block scripts %}{% endblock %}
+{% block styles %}{% endblock %}
+
+    <meta charset="UTF-8">
+    <title>{% block title %}Millit Knives{% endblock %}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #f0f0f0;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: #1a1a1a;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #333;
+        }
+
+        .sidebar h2 a {
+            text-align: center;
+            color: #00bfff;
+            font-size: 20px;
+            text-decoration: none;
+            display: block;
+            transition: color 0.2s;
+        }
+
+        .sidebar h2 a:hover {
+            color: #33ccff;
+        }
+
+        .sidebar a {
+            color: #ccc;
+            text-decoration: none;
+            padding: 12px 20px;
+            transition: background 0.2s, color 0.2s;
+            font-size: 15px;
+        }
+
+        .sidebar a:hover {
+            background-color: #2a2a2a;
+            color: #00bfff;
+        }
+
+        .sidebar a.active {
+            background-color: #2a2a2a;
+            color: #00bfff;
+            font-weight: bold;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            background-color: #202020;
+            padding: 16px 24px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar .topbar-left {
+            font-size: 16px;
+            font-weight: bold;
+            color: #00bfff;
+        }
+
+        .topbar .topbar-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .topbar .topbar-links a {
+            font-size: 14px;
+            color: #ccc;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .topbar .topbar-links a:hover {
+            background-color: #2a2a2a;
+            color: #00bfff;
+        }
+
+        .content {
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+
+        <h2><a href="{{ url_for('auth_bp.login') }}"
+				class="{% if request.endpoint.startswith('auth_bp.') %}active{% endif %}">
+				🛠 Millit Knives
+			</a>
+		</h2>
+		
+        <a href="{{ url_for('dashboard_bp.dashboard') }}" 
+			class="{% if request.endpoint.startswith('dashboard_bp.') %}active{% endif %}">
+			🏠 Overview
+		</a>
+		
+        <a href="{{ url_for('surface_grinding_bp.surface_index') }}"
+			class="{% if request.endpoint.startswith('surface_bp.') %}active{% endif %}">
+			🧱 Surface Grinding
+		</a>
+		
+        <a href="{{ url_for('bevel_bp.bevel_index') }}"
+			class="{% if request.endpoint.startswith('bevel_bp') %}active{% endif %}">
+			🔪 Bevel Grinding
+		</a>
+		
+        <a href="{{ url_for('inventory_bp.inventory_index') }}"
+			class="{% if request.endpoint.startswith('inventory_bp') %}active{% endif %}">
+			📦 Inventory
+		</a>
+		
+         <a href="{{ url_for('assembly_bp.assembly_index') }}"
+			class="{% if request.endpoint.startswith('assembly_bp') %}active{% endif %}">
+			🧰 Assembly
+		</a>
+		
+		<a href="{{ url_for('mfg_bp.mfg_index') }}"
+			class="{% if request.endpoint.startswith('mfg_bp') %}active{% endif %}">
+			🏭Manufacturing
+		</a>
+		
+        <a href="{{ url_for('analytics_bp.analytics_index') }}"
+			class="{% if request.endpoint.startswith('analytics_bp') %}active{% endif %}">
+			📊 Analytics
+		</a>
+		
+		<a href="{{ url_for('jobs_bp.jobs_index') }}"
+			class="{% if request.endpoint.startswith('jobs_bp.') %}active{% endif %}">
+			📋 Job Management
+		</a>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar-left">
+                {% block topbar %}{% endblock %}
+            </div>
+            <div class="topbar-links">
+                {% block toplinks %}{% endblock %}
+            </div>
+        </div>
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+</body>
+</html>

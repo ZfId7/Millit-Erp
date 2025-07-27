@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Upload CAD File{% endblock %}
+{% block topbar %}📤 Upload CAD File{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  <form method="POST" enctype="multipart/form-data" class="upload-form">
+    <input type="hidden" name="assembly_id" value="{{ request.args.get('assembly_id', '') }}">
+
+    <div class="form-field">
+      <label for="cad_file">CAD File (.STEP or .STP)</label>
+      <input type="file" name="cad_file" accept=".step,.stp" required>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit">Upload</button>
+    </div>
+  </form>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul class="flash-messages">
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+{% endblock %}
+
+{% block styles %}
+<style>
+  .form-wrapper {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 10px;
+  }
+  .form-field {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  label {
+    color: #ccc;
+    margin-bottom: 6px;
+  }
+  input[type="file"] {
+    color: #eee;
+  }
+  .form-actions {
+    text-align: right;
+  }
+  .form-actions button {
+    background-color: #00bfff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .form-actions button:hover {
+    background-color: #1aaaff;
+  }
+  .flash-messages {
+    margin-top: 20px;
+    list-style: none;
+    padding: 0;
+  }
+  .flash-messages li {
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+  .success { background-color: #2d7337; color: #cdeacd; }
+  .danger { background-color: #732d2d; color: #f5cccc; }
+</style>
+{% endblock %}

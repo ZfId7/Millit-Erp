@@ -1,0 +1,47 @@
+<!-- /templates/assembly/view_bom.html -->
+{% extends "base.html" %}
+
+{% block title %}View BOM{% endblock %}
+{% block topbar %}🔎 BOM Viewer{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  <h2>Select Part to View BOM</h2>
+  <form method="GET">
+    <div class="form-field">
+      <select name="part_id" onchange="this.form.submit()">
+        <option disabled selected value="">-- Select an Assembly --</option>
+        {% for part in parts if part.type == 'assembly' %}
+        <option value="{{ part.id }}" {% if selected_part and selected_part.id == part.id %}selected{% endif %}>
+          {{ part.name }} ({{ part.part_number }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+</div>
+
+{% if tree %}
+<div class="form-wrapper" style="margin-top: 40px;">
+  <h3>{{ selected_part.name }} ({{ selected_part.part_number }}) BOM</h3>
+  <ul>
+    {% macro render_tree(node) %}
+    <li>
+      {{ node.child.name }} ({{ node.child.part_number }}) × {{ node.quantity }}
+      {% if node.child.children %}
+      <ul>
+        {% for child_line in node.child.children %}
+        {{ render_tree(child_line) }}
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </li>
+    {% endmacro %}
+
+    {% for line in tree %}
+      {{ render_tree(line) }}
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Assembly{% endblock %}
+{% block topbar %}➕ Add New Assembly{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+    <form method="POST" class="job-form" action="{{ url_for('assembly_bp.add_assy') }}">
+        <div class="form-section">
+            <div class="form-field">
+                <label for="name">Assembly Name</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+
+            <div class="form-field">
+                <label for="assembly_number">Assembly Number</label>
+                <input type="text" id="assembly_number" name="assembly_number" required>
+            </div>
+
+            <div class="form-field">
+                <label for="revision">Revision</label>
+                <input type="text" id="revision" name="revision">
+            </div>
+
+            <div class="form-field">
+                <label for="lead_time">Lead Time (days)</label>
+                <input type="number" id="lead_time" name="lead_time" min="0">
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-field full-width">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="3"></textarea>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">Create Assembly</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .form-wrapper {
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+        background-color: #1a1a1a;
+        border: 1px solid #444;
+        border-radius: 10px;
+        box-shadow: 0 0 0 1px #333;
+    }
+
+    .job-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-section {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .form-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-field.full-width {
+        flex: 1 0 100%;
+    }
+
+    label {
+        margin-bottom: 6px;
+        color: #ccc;
+        font-weight: 500;
+    }
+
+    input, select, textarea {
+        padding: 8px;
+        background-color: #2a2a2a;
+        border: 1px solid #555;
+        border-radius: 6px;
+        color: #eee;
+        font-size: 14px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: #00bfff;
+        outline: none;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .form-actions button {
+        padding: 10px 20px;
+        background-color: #00bfff;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .form-actions button:hover {
+        background-color: #1aaaff;
+    }
+</style>
+{% endblock %}

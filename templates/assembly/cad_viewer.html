@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}CAD Viewer{% endblock %}
+{% block topbar %}🧩 CAD Viewer for {{ assembly.name }}{% endblock %}
+{% block styles %}
+	<!-- Link the CSS for viewer icons & layout -->
+    <link rel="stylesheet" href="/static/vendor/three-cad-viewer/dist/three-cad-viewer.css" />
+{% endblock %}
+
+{% block content %}
+<div id="cad-viewer" class="w-full h-[600px] border border-gray-700 rounded-lg"></div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { Viewer, Display } from "/static/vendor/three-cad-viewer/dist/three-cad-viewer.esm.js";
+
+  const container = document.getElementById("cad-viewer");
+
+  const displayOptions = {
+    cadWidth: 850,
+    height: 600,
+    treeWidth: 240,
+    theme: "dark",
+    pinning: true,
+    showAxes: true,
+    showGrid: true,
+  };
+
+  const renderOptions = {
+    ambientIntensity: 1.0,
+    directIntensity: 1.1,
+    metalness: 0.30,
+    roughness: 0.65,
+    edgeColor: 0x707070,
+    defaultOpacity: 0.5,
+    normalLen: 0
+  };
+
+  const viewerOptions = {
+    target: [0, 0, 0],
+    up: "Z"
+  };
+
+  const display = new Display(container, displayOptions);
+  const viewer = new Viewer(display, viewerOptions, () => {});
+
+  const jsonPath = "/static/uploads/cad/{{ assembly.shapes_filename }}";
+  fetch(jsonPath)
+    .then(response => response.json())
+    .then(shapes => viewer.render(shapes, renderOptions, viewerOptions))
+    .catch(error => {
+      console.error("Failed to load shapes JSON:", error);
+    });
+</script>
+{% endblock %}

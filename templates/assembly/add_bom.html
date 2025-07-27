@@ -1,0 +1,149 @@
+<!-- /templates/assembly/add_bom.html -->
+{% extends "base.html" %}
+
+{% block title %}Define BOM{% endblock %}
+{% block topbar %}🧩 Define Bill of Materials{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+    <form method="POST" class="job-form">
+        <div class="form-section">
+            <div class="form-field full-width">
+                <label for="parent_part">Parent Part (Assembly)</label>
+                <select id="parent_part" name="parent_part" required>
+                    {% for part in parts if part.type == 'assembly' %}
+                    <option value="{{ part.id }}">{{ part.name }} ({{ part.part_number }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <hr>
+        <h3>Child Parts</h3>
+        <div id="child-container">
+            <div class="form-section child-line">
+                <div class="form-field">
+                    <label for="child_part_1">Part</label>
+                    <select name="child_part_id[]">
+                        {% for part in parts %}
+                        <option value="{{ part.id }}">{{ part.name }} ({{ part.part_number }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="quantity_1">Quantity</label>
+                    <input type="number" step="any" name="quantity[]">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" onclick="addChildRow()">➕ Add Child</button>
+            <button type="submit">Save BOM</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let count = 1;
+    function addChildRow() {
+        count++;
+        const container = document.getElementById("child-container");
+        const template = `
+        <div class="form-section child-line">
+            <div class="form-field">
+                <label for="child_part_${count}">Part</label>
+                <select name="child_part_id[]">
+                    {% for part in parts %}
+                    <option value="{{ part.id }}">{{ part.name }} ({{ part.part_number }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label for="quantity_${count}">Quantity</label>
+                <input type="number" step="any" name="quantity[]">
+            </div>
+        </div>`;
+        container.insertAdjacentHTML('beforeend', template);
+    }
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .form-wrapper {
+        max-width: 900px;
+        margin: auto;
+        padding: 20px;
+        background-color: #1a1a1a;
+        border: 1px solid #444;
+        border-radius: 10px;
+        box-shadow: 0 0 0 1px #333;
+    }
+
+    .job-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-section {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .form-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-field.full-width {
+        flex: 1 0 100%;
+    }
+
+    label {
+        margin-bottom: 6px;
+        color: #ccc;
+        font-weight: 500;
+    }
+
+    input, select, textarea {
+        padding: 8px;
+        background-color: #2a2a2a;
+        border: 1px solid #555;
+        border-radius: 6px;
+        color: #eee;
+        font-size: 14px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: #00bfff;
+        outline: none;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    .form-actions button {
+        padding: 10px 20px;
+        background-color: #00bfff;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .form-actions button:hover {
+        background-color: #1aaaff;
+    }
+</style>
+{% endblock %}

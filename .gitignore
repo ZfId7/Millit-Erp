@@ -5,6 +5,13 @@ __pycache__/
 # SQLite databases
 *.db
 
+# Flask instance folder
+instance/
+
+# Uploaded CAD + JSON data
+/static/uploads/cad/*
+!/static/uploads/cad/.gitkeep
+
 # Environment variables
 .env
 
@@ -14,3 +21,7 @@ __pycache__/
 # Logs and backups
 *.log
 *.bak
+
+# System files
+.DS_Store
+Thumbs.db
