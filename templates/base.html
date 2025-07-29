@@ -108,7 +108,7 @@
 
     <div class="sidebar">
 
-        <h2><a href="{{ url_for('auth_bp.login') }}"
+        <h2><a href="{{ url_for('dashboard_bp.dashboard') }}"
 				class="{% if request.endpoint.startswith('auth_bp.') %}active{% endif %}">
 				🛠 Millit Knives
 			</a>
@@ -153,6 +153,13 @@
 			class="{% if request.endpoint.startswith('jobs_bp.') %}active{% endif %}">
 			📋 Job Management
 		</a>
+		
+		{% if session.get('is_admin') %}
+        <a href="{{ url_for('admin_users_bp.manage_users') }}"
+			class="{% if request.endpoint.startswith('admin_users_bp') %}active{% endif %}">
+			👤 User Management
+		</a>
+        {% endif %}
     </div>
 
     <div class="main">
@@ -161,7 +168,13 @@
                 {% block topbar %}{% endblock %}
             </div>
             <div class="topbar-links">
-                {% block toplinks %}{% endblock %}
+                {% block toplinks %}
+					{% if session.get('user') %}
+					<a href="{{ url_for('auth_bp.logout') }}" class="text-sm text-red-400 hover:text-red-300">
+						🔒 Logout
+					</a>
+					{% endif %}
+				{% endblock %}
             </div>
         </div>
         <div class="content">

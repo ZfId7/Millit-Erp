@@ -4,10 +4,12 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for
 from database.models import db, Part, BOMLine, Assembly
 from .upload_cad import cad_upload_bp
+from modules.user.decorators import login_required, admin_required
 
 assembly_bp = Blueprint("assembly_bp", __name__)
 
 @assembly_bp.route("/")
+@login_required
 def assembly_index():
     assemblies = Assembly.query.all()
     return render_template("assembly/index.html", assemblies=assemblies)
@@ -35,6 +37,7 @@ def assembly_index():
     return render_template("assembly/add_part.html")
 
 @assembly_bp.route("/add", methods=["GET", "POST"])
+@login_required
 def add_assy():
     if request.method == "POST":
         name = request.form.get("name")
@@ -57,6 +60,7 @@ def add_assy():
     return render_template("assembly/add_assy.html")
 
 @assembly_bp.route("/add_bom", methods=["GET", "POST"])
+@login_required
 def add_bom():
     parts = Part.query.all()
 
@@ -81,6 +85,7 @@ def add_bom():
 
 
 @assembly_bp.route("/view_bom", methods=["GET"])
+@login_required
 def view_bom():
     parts = Part.query.all()
     part_id = request.args.get("part_id")
@@ -98,11 +103,13 @@ def view_bom():
     return render_template("assembly/view_bom.html", parts=parts, selected_part=selected_part, tree=tree)
 
 @assembly_bp.route("/view/<int:part_id>")
+@login_required
 def assy_view(part_id):
     part = Part.query.get_or_404(part_id)
     return render_template("assembly/assy_view.html", part=part)
 
 @assembly_bp.route("/cad_viewer/<int:assembly_id>")
+@login_required
 def cad_viewer(assembly_id):
     assembly = Assembly.query.get_or_404(assembly_id)
     return render_template("assembly/cad_viewer.html", assembly=assembly)

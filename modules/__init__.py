@@ -8,6 +8,8 @@ from .jobs_management.routes import jobs_bp
 from .manufacturing.routes import mfg_bp
 from .assembly.routes import assembly_bp, cad_upload_bp
 from .analytics.routes import analytics_bp
+from .user.routes import admin_users_bp
+
 
 module_blueprints = [
     ("inventory_bp", inventory_bp, "/inventory"),
@@ -18,6 +20,7 @@ module_blueprints = [
     ("assembly_bp", assembly_bp, "/assembly"),
     ("upload_cad", cad_upload_bp, "/assembly"),
     ("analytics_bp", analytics_bp, "/analytics"),
+    ("admin_users_bp", admin_users_bp, ""),
 ]
 
 # Optional: export list so app.py can loop through them

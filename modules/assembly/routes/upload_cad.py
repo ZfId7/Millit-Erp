@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from database.models import db, Assembly
 from modules.assembly.parser.step_parser import parse_step
+from modules.user.decorators import login_required, admin_required
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../uploads/cad')
 PUBLIC_FOLDER = os.path.join("static/uploads/cad")
@@ -17,6 +18,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @cad_upload_bp.route("/upload_cad", methods=["GET", "POST"])
+@login_required
 def upload_cad():
     if request.method == "POST":
         file = request.files.get("cad_file")

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Machine Shop</title>
+    <title>Login - Millit ERP</title>
     <style>
         body {
             background-color: #121212;
@@ -21,28 +21,31 @@
             padding: 40px 60px;
             border-radius: 12px;
             box-shadow: 0 0 20px rgba(0, 187, 255, 0.1);
+            width: 360px;
         }
 
         h1 {
-            font-size: 28px;
+            font-size: 26px;
             margin-bottom: 20px;
             color: #00bfff;
         }
 
-        input[type="text"] {
+        input[type="text"],
+        input[type="password"] {
             padding: 10px;
-            width: 260px;
+            width: 100%;
             font-size: 16px;
             border: none;
             border-radius: 6px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             background-color: #2a2a2a;
             color: #f0f0f0;
         }
 
         button {
-            padding: 12px 40px;
-            font-size: 18px;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
             background-color: #00bfff;
             color: white;
             border: none;
@@ -54,16 +57,34 @@
         button:hover {
             background-color: #0099cc;
         }
+
+        .flash {
+            background-color: #ff4d4d;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h1>Millit Knives App</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <form method="POST">
-            <input type="text" name="username" placeholder="Enter your name" required><br>
-            <button type="submit">ENTER</button>
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
         </form>
     </div>
 </body>
 </html>
- 
