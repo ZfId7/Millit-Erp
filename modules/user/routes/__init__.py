@@ -3,13 +3,19 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from database.models import db, User
 from werkzeug.security import generate_password_hash
-from modules.user.decorators import admin_required
+from modules.user.decorators import login_required, admin_required
 
-admin_users_bp = Blueprint("admin_users_bp", __name__, url_prefix="/admin")
+admin_users_bp = Blueprint("admin_users_bp", __name__)
 
-@admin_users_bp.route("/users", methods=["GET", "POST"])
+@admin_users_bp.route("/")
 @admin_required
-def manage_users():
+def user_index():
+    users = User.query.all()
+    return render_template("user/index.html", users=users)
+
+@admin_users_bp.route("/add_user", methods=["GET", "POST"])
+@admin_required
+def add_user():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -25,10 +31,10 @@ def manage_users():
             db.session.add(user)
             db.session.commit()
             flash(f"✅ User '{username}' added successfully.", "success")
-            return redirect(url_for("admin_users_bp.manage_users"))
+            return redirect(url_for("admin_users_bp.user_index"))
 
     users = User.query.order_by(User.id).all()
-    return render_template("user/index.html", users=users)
+    return render_template("user/add_user.html", users=users)
 
 @admin_users_bp.route("/users/edit/<int:user_id>", methods=["POST"])
 @admin_required

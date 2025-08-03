@@ -6,11 +6,13 @@ from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
 from modules import module_blueprints
 from database.models import db  # ✅ Adjusted to match /Millit_ERP/database/models.py
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = "your-secret-key"
+    app.secret_key = os.getenv("SECRET_KEY")
 
     # ✅ Use correct relative path from project root
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))

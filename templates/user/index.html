@@ -4,33 +4,11 @@
 {% block topbar %}👤 User Management{% endblock %}
 
 {% block content %}
-<div class="form-wrapper">
-  <h2 class="text-xl font-bold mb-4">Add New User</h2>
-  <form method="POST" class="job-form">
-    <div class="form-section">
-      <div class="form-field">
-        <label for="username">Username</label>
-        <input type="text" name="username" required>
-      </div>
-      <div class="form-field">
-        <label for="password">Password</label>
-        <input type="password" name="password" required>
-      </div>
-      <div class="form-field">
-        <label for="role">Role</label>
-        <select name="role">
-          <option value="employee">Employee</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-actions">
-      <button type="submit">➕ Create User</button>
-    </div>
-  </form>
-</div>
+<a href="{{ url_for('admin_users_bp.add_user') }}" class="add-user-btn">
+    ➕ Add New User
+</a>
 
-<hr class="my-8">
+
 
 <h2 class="text-xl font-bold mb-4">Current Users</h2>
 <table class="w-full table-auto">
@@ -62,4 +40,25 @@
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+{% block styles %}
+<style>
+  .add-user-btn {
+    padding: 6px 14px;
+    background-color: #1a1a1a;
+    border: 1px solid #666;
+    color: #00bfff;
+    border-radius: 6px;
+    font-size: 13px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin-left: auto;
+  }
+
+  .add-user-btn:hover {
+    background-color: #2a2a2a;
+    border-color: #888;
+    color: #33ccff;
+  }
+</style>
 {% endblock %}
