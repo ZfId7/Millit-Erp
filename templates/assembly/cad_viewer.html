@@ -1,13 +1,34 @@
 {% extends "base.html" %}
 {% block title %}CAD Viewer{% endblock %}
 {% block topbar %}🧩 CAD Viewer for {{ assembly.name }}{% endblock %}
+{% block toplinks %}
+	<a href="{{ url_for('assembly_bp.assembly_index') }}">
+		← Back to Assemblies
+	</a>
+	{{ super() }}
+{% endblock %}
 {% block styles %}
-	<!-- Link the CSS for viewer icons & layout -->
-    <link rel="stylesheet" href="/static/vendor/three-cad-viewer/dist/three-cad-viewer.css" />
+  <link rel="stylesheet" href="/static/vendor/three-cad-viewer/dist/three-cad-viewer.css" />
+  <style>
+    #viewer-wrap{position:relative}
+    #part-info{position:absolute;top:64px;right:16px;padding:10px 12px;background:#111;border:1px solid #333;border-radius:10px;color:#e5e7eb;font-size:12px;z-index:9999;max-width:320px;box-shadow:0 4px 18px rgba(0,0,0,.35);pointer-events:none}
+    #part-info[hidden]{display:none}
+    .viewer-toolbar{position:absolute;left:16px;top:64px;display:flex;gap:.5rem;z-index:9999}
+    .tb-btn{background:#1f2937;color:#d1d5db;border:1px solid #374151;border-radius:.5rem;padding:.35rem .55rem;font-size:12px;cursor:pointer}
+    .tb-btn:hover{background:#111827}
+  </style>
 {% endblock %}
 
 {% block content %}
-<div id="cad-viewer" class="w-full h-[600px] border border-gray-700 rounded-lg"></div>
+<div id="viewer-wrap">
+  <div class="viewer-toolbar">
+    <button id="btn-edges" class="tb-btn">Toggle Edges</button>
+    <button id="btn-isolate" class="tb-btn">Isolate</button>
+    <button id="btn-reset" class="tb-btn">Reset</button>
+  </div>
+  <div id="part-info" hidden>Click a part…</div>
+  <div id="cad-viewer" class="w-full h-[600px] border border-gray-700 rounded-lg"></div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -15,41 +36,118 @@
   import { Viewer, Display } from "/static/vendor/three-cad-viewer/dist/three-cad-viewer.esm.js";
 
   const container = document.getElementById("cad-viewer");
+  const hud = document.getElementById("part-info");
 
-  const displayOptions = {
-    cadWidth: 850,
-    height: 600,
-    treeWidth: 240,
-    theme: "dark",
-    pinning: true,
-    showAxes: true,
-    showGrid: true,
+  // If you don't already have these buttons in your HTML, add 3 small buttons above the canvas:
+  // <div id="viewer-tools">
+  //   <button id="btn-isolate">Isolate</button>
+  //   <button id="btn-reset">Reset</button>
+  //   <button id="btn-edges">Toggle Edges</button>
+  // </div>
+  const btnIso   = document.getElementById("btn-isolate");
+  const btnReset = document.getElementById("btn-reset");
+  const btnEdges = document.getElementById("btn-edges");
+
+  const displayOptions = { cadWidth: 850, height: 600, treeWidth: 260, theme: "dark", pinning: true, showAxes: true, showGrid: true };
+  let renderOptions    = { ambientIntensity: 1.1, directIntensity: 1.15, metalness: 0.1, roughness: 0.9, edgeColor: 0x909090, defaultOpacity: 1.0, showEdges: false, normalLen: 0 };
+
+  const viewer = new Viewer(new Display(container, displayOptions), { up: "Z", target: [0,0,0] }, (ev) => {
+    if (ev?.type === "selected" && ev.part) {
+      lastSelected = ev.part;
+      hud.hidden = false;
+      const vol  = ev.part.metrics?.volume != null ? ev.part.metrics.volume.toFixed(5) : "—";
+      const hash = ev.part.metrics?.mesh_hash ? ev.part.metrics.mesh_hash.slice(0,8) + "…" : "—";
+      hud.innerHTML = `<div style="font-weight:700;">${ev.part.name || ev.part.id}</div>
+                       <div><small>${ev.part.id}</small></div>
+                       <div>Volume: ${vol}</div><div>Hash: ${hash}</div>`;
+    }
+  });
+
+  // Helpers
+  const padBb = (bb, pad = 0.02) => {
+    if (!bb) return null;
+    const dx = (bb.xmax - bb.xmin) * pad || 1e-6;
+    const dy = (bb.ymax - bb.ymin) * pad || 1e-6;
+    const dz = (bb.zmax - bb.zmin) * pad || 1e-6;
+    return {
+      xmin: bb.xmin - dx, xmax: bb.xmax + dx,
+      ymin: bb.ymin - dy, ymax: bb.ymax + dy,
+      zmin: bb.zmin - dz, zmax: bb.zmax + dz
+    };
+  };
+  const computeOverallBb = (parts) => {
+    const acc = { xmin: +Infinity, ymin: +Infinity, zmin: +Infinity, xmax: -Infinity, ymax: -Infinity, zmax: -Infinity };
+    for (const p of (parts || [])) {
+      const bb = p.bb; if (!bb) continue;
+      acc.xmin = Math.min(acc.xmin, bb.xmin); acc.xmax = Math.max(acc.xmax, bb.xmax);
+      acc.ymin = Math.min(acc.ymin, bb.ymin); acc.ymax = Math.max(acc.ymax, bb.ymax);
+      acc.zmin = Math.min(acc.zmin, bb.zmin); acc.zmax = Math.max(acc.zmax, bb.zmax);
+    }
+    if (!isFinite(acc.xmin)) return null;
+    return acc;
   };
 
-  const renderOptions = {
-    ambientIntensity: 1.0,
-    directIntensity: 1.1,
-    metalness: 0.30,
-    roughness: 0.65,
-    edgeColor: 0x707070,
-    defaultOpacity: 0.5,
-    normalLen: 0
-  };
-
-  const viewerOptions = {
-    target: [0, 0, 0],
-    up: "Z"
-  };
-
-  const display = new Display(container, displayOptions);
-  const viewer = new Viewer(display, viewerOptions, () => {});
+  let originalShapes = null, currentShapes = null, lastSelected = null;
 
   const jsonPath = "/static/uploads/cad/{{ assembly.shapes_filename }}";
-  fetch(jsonPath)
-    .then(response => response.json())
-    .then(shapes => viewer.render(shapes, renderOptions, viewerOptions))
-    .catch(error => {
-      console.error("Failed to load shapes JSON:", error);
-    });
+  fetch(jsonPath).then(r => r.json()).then(shapes => {
+    // HOTFIX 1: force double-sided rendering (back faces visible)
+    for (const p of (shapes.parts || [])) p.renderback = true;
+
+    // HOTFIX 2: compute & set padded top-level bbox to stabilize near/far
+    const bb = computeOverallBb(shapes.parts);
+    shapes.bb = padBb(bb, 0.03);
+
+    originalShapes = structuredClone(shapes);
+    currentShapes  = structuredClone(shapes);
+
+    viewer.render(currentShapes, renderOptions, {});
+
+    // (Optional) nudge camera near/far if accessible
+    try {
+      const cam = viewer?.camera || viewer?.renderer?.camera;
+      if (cam && shapes.bb) {
+        const dx = shapes.bb.xmax - shapes.bb.xmin, dy = shapes.bb.ymax - shapes.bb.ymin, dz = shapes.bb.zmax - shapes.bb.zmin;
+        const diag = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1;
+        cam.near = Math.max(diag / 10000, 0.01);
+        cam.far  = diag * 50;
+        cam.updateProjectionMatrix?.();
+      }
+    } catch {}
+
+  }).catch(err => console.error("Failed to fetch shapes JSON:", err));
+
+  // --- Minimal, robust tools ---
+  btnEdges?.addEventListener("click", () => {
+    renderOptions = { ...renderOptions, showEdges: !renderOptions.showEdges };
+    try { viewer.updateRenderOptions?.(renderOptions); }
+    catch { if (currentShapes) viewer.render(currentShapes, renderOptions, {}); }
+  });
+
+  btnReset?.addEventListener("click", () => {
+    if (!originalShapes) return;
+    currentShapes = structuredClone(originalShapes);
+    try { viewer.reset?.(); } catch {}
+    viewer.render(currentShapes, renderOptions, {});
+    hud.hidden = true; lastSelected = null;
+  });
+
+  btnIso?.addEventListener("click", () => {
+    if (!lastSelected || !originalShapes) return;
+
+    // Try native visibility first
+    try {
+      const all = viewer.getAllParts?.() || [];
+      if (all.length && typeof viewer.setPartVisibility === "function") {
+        all.forEach(p => viewer.setPartVisibility(p, p === lastSelected));
+        return;
+      }
+    } catch {}
+    // Fallback: re-render with only the selected part
+    const keepId = lastSelected.id || lastSelected.name;
+    currentShapes = { ...originalShapes, parts: originalShapes.parts.filter(p => p.id === keepId || p.name === keepId) };
+    viewer.render(currentShapes, renderOptions, {});
+  });
 </script>
+
 {% endblock %}

@@ -1,42 +1,57 @@
 {% extends "base.html" %}
 
 {% block title %}Add New Assembly{% endblock %}
-{% block topbar %}➕ Add New Assembly{% endblock %}
+{% block topbar %}
+<h1>
+  {% if assembly %}
+    ✏️ Edit Assembly: {{ assembly.name }}
+  {% else %}
+    ➕ Add New Assembly
+  {% endif %}
+</h1>
+{% endblock %}
 
 {% block content %}
 <div class="form-wrapper">
-    <form method="POST" class="job-form" action="{{ url_for('assembly_bp.add_assy') }}">
+    <form method="POST" class="job-form" action="{{ url_for('assembly_bp.edit_assembly', id=assembly.id) if assembly else url_for('assembly_bp.add_assy') }}">
         <div class="form-section">
             <div class="form-field">
                 <label for="name">Assembly Name</label>
-                <input type="text" id="name" name="name" required>
+                <input type="text" id="name" name="name" value="{{ assembly.name if assembly else'' }}" required>
             </div>
 
             <div class="form-field">
                 <label for="assembly_number">Assembly Number</label>
-                <input type="text" id="assembly_number" name="assembly_number" required>
+                <input type="text" id="assembly_number" name="assembly_number" value="{{ assembly.assembly_number if assembly else '' }}" required>
             </div>
 
             <div class="form-field">
                 <label for="revision">Revision</label>
-                <input type="text" id="revision" name="revision">
+                <input type="text" id="revision" name="revision" value="{{ assembly.revision if assembly else '' }}">
             </div>
 
             <div class="form-field">
                 <label for="lead_time">Lead Time (days)</label>
-                <input type="number" id="lead_time" name="lead_time" min="0">
+                <input type="number" id="lead_time" name="lead_time" min="0" value="{{ assembly.lead_time if assembly else '' }}">
             </div>
         </div>
 
         <div class="form-section">
             <div class="form-field full-width">
                 <label for="description">Description</label>
-                <textarea id="description" name="description" rows="3"></textarea>
+                <textarea id="description" name="description" rows="3">{{ assembly.description if assembly else '' }}</textarea>
             </div>
         </div>
 
         <div class="form-actions">
-            <button type="submit">Create Assembly</button>
+            <button type="submit">
+				{% if assembly %}
+					💾 Save Changes
+				{% else %}
+					✅ Create Assembly
+				{% endif %}
+			</button>
+
         </div>
     </form>
 </div>

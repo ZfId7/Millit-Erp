@@ -1,7 +1,7 @@
 # /Millit_ERP/modules/assembly/routes/__init__.py
 
 import os
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from database.models import db, Part, BOMLine, Assembly
 from .upload_cad import cad_upload_bp
 from modules.user.decorators import login_required, admin_required
@@ -111,5 +111,30 @@ def assy_view(part_id):
 @assembly_bp.route("/cad_viewer/<int:assembly_id>")
 @login_required
 def cad_viewer(assembly_id):
-    assembly = Assembly.query.get_or_404(assembly_id)
-    return render_template("assembly/cad_viewer.html", assembly=assembly)
+    assembly = Assembly.query.get(assembly_id)
+    return render_template("assembly/cad_viewer.html", hide_sidebar=True, assembly=assembly)
+
+@assembly_bp.route("/assemblies/<int:id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_assembly(id):
+    assembly = Assembly.query.get_or_404(id)
+
+    if request.method == "POST":
+        assembly.name = request.form["name"]
+        assembly.assembly_number = request.form["assembly_number"]
+        assembly.revision = request.form["revision"]
+        assembly.description = request.form["description"]
+        db.session.commit()
+        flash("✅ Assembly updated successfully.", "success")
+        return redirect(url_for("assembly_bp.assembly_index", id=assembly.id))
+
+    return render_template("assembly/add_assy.html", assembly=assembly)
+
+@assembly_bp.route("/assemblies/<int:id>/delete", methods=["POST"])
+@admin_required
+def delete_assembly(id):
+    assembly = Assembly.query.get_or_404(id)
+    db.session.delete(assembly)
+    db.session.commit()
+    flash("🗑 Assembly deleted successfully.", "success")
+    return redirect(url_for("assembly_bp.assembly_index"))

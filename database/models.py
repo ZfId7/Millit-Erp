@@ -1,3 +1,9 @@
+# File path: database/models.py
+# Change summary:
+# - Adds ParsedComponent table to store per-solid geometry extracted from STEP uploads
+# - Adds relationship from Assembly → ParsedComponent (cascade delete)
+# - Keeps existing Parts/BOM/Inventory intact
+
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -5,6 +11,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # You must initialize this in your app factory
 # db = SQLAlchemy(app)
 db = SQLAlchemy()
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -22,7 +29,8 @@ class User(db.Model):
 
     def is_admin(self):
         return self.role == 'admin'
-        
+
+
 class Part(db.Model):
     __tablename__ = 'parts'
 
@@ -91,5 +99,34 @@ class Assembly(db.Model):
     shapes_filename = db.Column(db.String(256))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # New: link to parsed SOLID components extracted from uploaded STEP
+    parsed_components = db.relationship(
+        "ParsedComponent",
+        back_populates="assembly",
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f"<Assembly {self.assembly_number}>"
+
+
+class ParsedComponent(db.Model):
+    __tablename__ = 'parsed_components'
+
+    id = db.Column(db.Integer, primary_key=True)
+    assembly_id = db.Column(db.Integer, db.ForeignKey('assemblies.id'), nullable=False, index=True)
+
+    # index in the emitted parts[] array (helps correlate viewer selection → db row)
+    solid_index = db.Column(db.Integer, nullable=False)
+
+    # viewer/parse metadata
+    name = db.Column(db.String(128))
+    color = db.Column(db.String(16))
+    mesh_hash = db.Column(db.String(64), index=True)
+    volume = db.Column(db.Float)
+    bb = db.Column(db.JSON)
+
+    assembly = db.relationship("Assembly", back_populates="parsed_components")
+
+    def __repr__(self):
+        return f"<ParsedComponent asm={self.assembly_id} solid_index={self.solid_index} hash={self.mesh_hash}>"

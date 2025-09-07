@@ -23,6 +23,10 @@
     <div class="flex justify-end gap-2 mt-2">
       <a href="{{ url_for('assembly_bp.cad_viewer', assembly_id=assembly.id) }}" class="add-assy-btn" target="_blank">🔍 View CAD</a>
       <a href="{{ url_for('cad_upload_bp.upload_cad', assembly_id=assembly.id) }}" class="add-assy-btn">📤 Upload CAD</a>
+	  <a href="{{ url_for('assembly_bp.edit_assembly', id=assembly.id) }}" class="add-assy-btn">✏️ Edit</a>
+	  <form action="{{ url_for('assembly_bp.delete_assembly', id=assembly.id) }}" class="add-assy-btn" method="POST" style="display:inline;">
+        <button type="submit" onclick="return confirm('Are you sure?')">🗑 Delete</button>
+      </form>
     </div>
   </div>
   {% endfor %}
