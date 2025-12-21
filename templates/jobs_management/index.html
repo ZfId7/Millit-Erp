@@ -1,9 +1,93 @@
 {% extends "base.html" %}
 
 {% block title %}Job Management{% endblock %}
-{% block topbar %}📋 Job Management{% endblock %}
+{% block topbar %}📋 Job Management
+{% if session.get("is_admin") %}
+  <a href="{{ url_for('jobs_bp.jobs_archived_index') }}" class="btn btn-secondary">
+    Archived Jobs
+  </a>
+{% endif %}
+
+{% endblock %}
 
 {% block content %}
-<h2>Job Management Dashboard (Coming Soon)</h2>
-<p>This is a placeholder for the Job Management Module.</p>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Job Management</h1>
+      <p class="page-subtitle">Customers → Jobs → Builds → BOM components</p>
+    </div>
+
+    <a href="{{ url_for('jobs_bp.jobs_new') }}" class="btn btn-primary">➕ Add Job</a>
+  </div>
+
+  <div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width: 170px;">Job #</th>
+                <th style="width: 220px;">Customer</th>
+                <th>Title</th>
+                <th style="width: 160px;">Status</th>
+                <th style="width: 140px;">Due</th>
+                {% if session.get("is_admin") %}
+                    <th style="width: 140px; text-align: right;">Actions</th>      
+                {% endif %}
+            </tr>
+        </thead>
+
+      <tbody>
+        {% for j in jobs %}
+          <tr>
+            <td>
+              <a href="/jobs/{{ j.id }}" class="job-link">
+                {{ j.job_number }}
+              </a>
+            </td>
+            <td class="muted">{{ j.customer.name if j.customer else "" }}</td>
+            <td>{{ j.title }}</td>
+            <td>
+              {% set s = (j.status or '') %}
+              <span class="badge
+                {% if s == 'queue' %}badge-queue
+                {% elif s == 'in_progress' %}badge-in-progress
+                {% elif s == 'complete' %}badge-complete
+                {% endif %}">
+                {{ s.replace('_', ' ') }}
+              </span>
+            </td>
+            <td class="muted">{{ j.due_date or "" }}</td>
+            {% if session.get("is_admin") %}
+              <td style="text-align:right;">
+                <a class="btn btn-danger btn-sm" href="{{ url_for('jobs_bp.job_archive_confirm', job_id=j.id) }}">
+                  Archive
+                </a>
+              </td>
+            {% endif %}
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="{% if session.get("is_admin") %}6{% else %}5{% endif %}" class="muted">
+              No jobs yet. Click <strong>➕ Add Job</strong> to create the first one.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  /* Only what base.html doesn't already define */
+  .job-link {
+    color: #33ccff;
+    text-decoration: none;
+    font-weight: 800;
+  }
+  .job-link:hover {
+    text-decoration: underline;
+  }
+</style>
 {% endblock %}

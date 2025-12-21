@@ -7,7 +7,8 @@ from routes.dashboard import dashboard_bp
 from modules import module_blueprints
 from database.models import db  # ✅ Adjusted to match /Millit_ERP/database/models.py
 from dotenv import load_dotenv
-
+from database.models import User
+from werkzeug.security import generate_password_hash
 load_dotenv()
 
 def create_app():
@@ -22,8 +23,11 @@ def create_app():
 
     db.init_app(app)
 
-    with app.app_context():
-        db.create_all()
+    if os.getenv("MERP_CREATE_DB") == "1":
+        with app.app_context():
+            db.create_all()
+
+
 
     # Register Blueprints
     app.register_blueprint(auth_bp)
@@ -39,5 +43,5 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(debug=True, use_reloader=False, threaded=False)
+    app.run(debug=False, use_reloader=False, threaded=True)
 

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Routing{% endblock %}
+{% block topbar %}🧭 Routing Templates{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Routing Templates</h1>
+      <p class="page-subtitle">Defines which queued operations are created for BOM components by part type.</p>
+    </div>
+    <div class="row">
+      <a class="btn" href="{{ url_for('inventory_bp.part_types_index') }}">Part Types</a>
+      <a class="btn btn-primary" href="{{ url_for('inventory_bp.routing_new') }}">➕ New Step</a>
+    </div>
+  </div>
+
+  {% for block in grouped.values() %}
+    <div class="card" style="margin-bottom: 14px;">
+      <h2 style="margin-bottom: 6px;">{{ block.type.name }} <span class="muted">({{ block.type.key }})</span></h2>
+
+      <table class="table" style="margin-top: 12px;">
+        <thead>
+          <tr>
+            <th style="width: 120px;">Seq</th>
+            <th style="width: 180px;">Op Key</th>
+            <th>Op Name</th>
+            <th style="width: 220px;">Module</th>
+            <th style="width: 140px;">Outsourced</th>
+            <th style="width: 140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in block.steps %}
+            <tr>
+              <td class="muted">{{ s.sequence }}</td>
+              <td style="font-weight: 900;">{{ s.op_key }}</td>
+              <td>{{ s.op_name }}</td>
+              <td class="muted">{{ s.module_key }}</td>
+              <td class="muted">{{ "yes" if s.is_outsourced else "no" }}</td>
+              <td>
+                <form method="post" action="{{ url_for('inventory_bp.routing_delete', step_id=s.id) }}"
+                      onsubmit="return confirm('Delete this routing step?');">
+                  <button class="btn btn-danger" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="muted">No routing steps yet for this type.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

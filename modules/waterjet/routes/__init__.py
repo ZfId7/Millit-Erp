@@ -1,21 +1,21 @@
-# File path: modules/surface_grinding/routes/__init__.py
-from datetime import datetime
+# File path: modules/waterjet/routes/__init__.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from sqlalchemy import case
+
 from database.models import db, BuildOperation, Build, Job
+from sqlalchemy import case
+
+waterjet_bp = Blueprint("waterjet_bp", __name__)
 
 
-surface_bp = Blueprint("surface_grinding_bp", __name__)
+@waterjet_bp.route("/")
+def waterjet_index():
+    return render_template("waterjet/index.html")
 
 
-@surface_bp.route("/")
-def surface_index():
-    return render_template("surface_grinding/index.html")
-
-@surface_bp.route("/queue", methods=["GET"])
-def surface_queue():
+@waterjet_bp.route("/queue", methods=["GET"])
+def waterjet_queue():
     """
-    Shows all queued/in-progress/cancelled/completed operations for the surface grinding module.
+    Shows all queued/in-progress/cancelled operations for the waterjet module.
     Optional filters: job_id, build_id
 
     Archive rules:
@@ -40,7 +40,7 @@ def surface_queue():
         .join(Build, BuildOperation.build_id == Build.id)
         .join(Job, Build.job_id == Job.id)
         .filter(Job.is_archived == False)  # ✅ critical
-        .filter(BuildOperation.module_key == "surface_grinding")
+        .filter(BuildOperation.module_key == "waterjet")
         .filter(BuildOperation.status.in_(["queue", "in_progress", "cancelled", "completed"]))
         .order_by(
             Job.created_at.desc(),
@@ -69,7 +69,7 @@ def surface_queue():
         )
 
     return render_template(
-        "surface_grinding/queue.html",
+        "waterjet/queue.html",
         ops=ops,
         jobs=jobs,
         builds=builds,
@@ -79,39 +79,38 @@ def surface_queue():
 
 
 
-@surface_bp.route("/op/<int:op_id>/start", methods=["POST"])
-def surface_op_start(op_id):
+@waterjet_bp.route("/op/<int:op_id>/start", methods=["POST"])
+def waterjet_op_start(op_id):
     op = BuildOperation.query.get_or_404(op_id)
 
-    if op.module_key != "surface_grinding":
-        flash("That operation does not belong to Surface Grinding.", "error")
-        return redirect(url_for("surface_grinding_bp.surface_queue"))
+    if op.module_key != "waterjet":
+        flash("That operation does not belong to Waterjet.", "error")
+        return redirect(url_for("waterjet_bp.waterjet_queue"))
 
-    # Only allow starting from queue
     if op.status == "complete":
         flash("Cannot start: operation is already complete.", "error")
-        return redirect(url_for("surface_grinding_bp.surface_queue"))
+        return redirect(url_for("waterjet_bp.waterjet_queue"))
 
     op.status = "in_progress"
     db.session.commit()
     flash("Operation started.", "success")
-    return redirect(url_for("surface_grinding_bp.surface_queue"))
+    return redirect(url_for("waterjet_bp.waterjet_queue"))
 
 
-@surface_bp.route("/op/<int:op_id>/complete", methods=["POST"])
-def surface_op_complete(op_id):
+@waterjet_bp.route("/op/<int:op_id>/complete", methods=["POST"])
+def waterjet_op_complete(op_id):
     op = BuildOperation.query.get_or_404(op_id)
 
-    if op.module_key != "surface_grinding":
-        flash("That operation does not belong to Surface Grinding.", "error")
-        return redirect(url_for("surface_grinding_bp.surface_queue"))
+    if op.module_key != "waterjet":
+        flash("That operation does not belong to Waterjet.", "error")
+        return redirect(url_for("waterjet_bp.waterjet_queue"))
 
     qty_done = request.form.get("qty_done", type=float) or 0.0
     qty_scrap = request.form.get("qty_scrap", type=float) or 0.0
 
     if qty_done < 0 or qty_scrap < 0:
         flash("Quantities cannot be negative.", "error")
-        return redirect(url_for("surface_grinding_bp.surface_queue"))
+        return redirect(url_for("waterjet_bp.waterjet_queue"))
 
     op.qty_done = qty_done
     op.qty_scrap = qty_scrap
@@ -119,4 +118,4 @@ def surface_op_complete(op_id):
 
     db.session.commit()
     flash("Operation completed.", "success")
-    return redirect(url_for("surface_grinding_bp.surface_queue"))
+    return redirect(url_for("waterjet_bp.waterjet_queue"))

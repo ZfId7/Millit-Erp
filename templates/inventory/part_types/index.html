@@ -1,0 +1,42 @@
+<!-- templates/inventory/part_types/index.html -->
+
+{% extends "base.html" %}
+{% block title %}Part Types{% endblock %}
+{% block topbar %}🏷️ Part Types{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Part Types</h1>
+      <p class="page-subtitle">Used for routing (blade, hardware, frame, etc.).</p>
+    </div>
+    <div class="row">
+      <a class="btn" href="{{ url_for('inventory_bp.parts_index') }}">← Parts</a>
+      <a class="btn btn-primary" href="{{ url_for('inventory_bp.part_types_new') }}">➕ New Type</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead><tr><th style="width:200px;">Key</th><th>Name</th><th style="width:160px;">Actions</th></tr></thead>
+      <tbody>
+        {% for t in types %}
+          <tr>
+            <td style="font-weight: 900;">{{ t.key }}</td>
+            <td>{{ t.name }}</td>
+            <td>
+              <form method="post" action="{{ url_for('inventory_bp.part_types_delete', type_id=t.id) }}"
+                    onsubmit="return confirm('Delete this part type?');">
+                <button class="btn btn-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="3" class="muted">No part types yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

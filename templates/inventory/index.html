@@ -1,9 +1,33 @@
+<!-- File path: templates/inventory/index.html -->
 {% extends "base.html" %}
 
 {% block title %}Inventory{% endblock %}
 {% block topbar %}📦 Inventory{% endblock %}
 
 {% block content %}
-<h2>Inventory Dashboard (Coming Soon)</h2>
-<p>This is a placeholder for Inventory management.</p>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Inventory</h1>
+      <p class="page-subtitle">Catalog + routing foundations (stock tracking comes later).</p>
+    </div>
+  </div>
+
+  <div class="row" style="gap: 12px; flex-wrap: wrap;">
+    <a class="card" href="{{ url_for('inventory_bp.parts_index') }}" style="min-width: 320px; text-decoration:none;">
+      <h2 style="margin: 0 0 6px 0;">Parts Catalog</h2>
+      <p class="muted" style="margin: 0;">Create/edit reusable parts used in BOM.</p>
+    </a>
+
+    <a class="card" href="{{ url_for('inventory_bp.part_types_index') }}" style="min-width: 320px; text-decoration:none;">
+      <h2 style="margin: 0 0 6px 0;">Part Types</h2>
+      <p class="muted" style="margin: 0;">Categories like blade, hardware, frame (drives routing).</p>
+    </a>
+
+    <a class="card" href="{{ url_for('inventory_bp.routing_index') }}" style="min-width: 320px; text-decoration:none;">
+      <h2 style="margin: 0 0 6px 0;">Routing Templates</h2>
+      <p class="muted" style="margin: 0;">Define queued operations generated from BOM.</p>
+    </a>
+  </div>
+</div>
 {% endblock %}

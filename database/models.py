@@ -1,132 +1,278 @@
 # File path: database/models.py
 # Change summary:
-# - Adds ParsedComponent table to store per-solid geometry extracted from STEP uploads
-# - Adds relationship from Assembly → ParsedComponent (cascade delete)
-# - Keeps existing Parts/BOM/Inventory intact
+# - Job Management backbone models (Customer → Job → Build → BOM)
+# - BuildDrawing stores PDF metadata for in-browser viewing
+# - Work logs and notes provide richer job-level tracking
+# - User table supports admin/employee auth
+
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import UniqueConstraint
 
-# You must initialize this in your app factory
-# db = SQLAlchemy(app)
+
 db = SQLAlchemy()
+
+
+# OPTIONAL: tiny perf wins
+# Add index=True where you’ll filter/sort often.
 
 
 class User(db.Model):
     __tablename__ = 'users'
 
+
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
+    username = db.Column(db.String(64), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(16), default='employee')  # 'admin' or 'employee'
+    role = db.Column(db.String(16), default='employee') # 'admin' or 'employee'
+
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
+
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
 
     def is_admin(self):
         return self.role == 'admin'
 
-
-class Part(db.Model):
-    __tablename__ = 'parts'
-
+class Customer(db.Model):
+    __tablename__ = "customers"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    part_number = db.Column(db.String(64), unique=True, nullable=False)
-    description = db.Column(db.Text)
-    type = db.Column(db.String(32))  # 'purchased', 'manufactured', 'assembly'
-    unit = db.Column(db.String(16))
-    revision = db.Column(db.String(16))
-    cad_file_path = db.Column(db.String(256))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # Relationships
-    children = db.relationship("BOMLine", back_populates="parent", foreign_keys='BOMLine.parent_part_id')
-    parents = db.relationship("BOMLine", back_populates="child", foreign_keys='BOMLine.child_part_id')
-    inventory = db.relationship("Inventory", back_populates="part", uselist=False)
-
-    def __repr__(self):
-        return f"<Part {self.part_number}>"
-
-
-class BOMLine(db.Model):
-    __tablename__ = 'bom_lines'
-
-    id = db.Column(db.Integer, primary_key=True)
-    parent_part_id = db.Column(db.Integer, db.ForeignKey('parts.id'), nullable=False)
-    child_part_id = db.Column(db.Integer, db.ForeignKey('parts.id'), nullable=False)
-    quantity = db.Column(db.Float, nullable=False)
-    unit = db.Column(db.String(16))
+    name = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(50))
     notes = db.Column(db.Text)
 
-    parent = db.relationship("Part", foreign_keys=[parent_part_id], back_populates="children")
-    child = db.relationship("Part", foreign_keys=[child_part_id], back_populates="parents")
 
-    def __repr__(self):
-        return f"<BOM {self.parent_part_id} → {self.child_part_id} x{self.quantity}>"
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
-class Inventory(db.Model):
-    __tablename__ = 'inventory'
+    jobs = db.relationship("Job", back_populates="customer", cascade="all, delete-orphan")
 
+class Job(db.Model):
+    __tablename__ = "jobs"
+    __table_args__ = {"sqlite_autoincrement": True}
     id = db.Column(db.Integer, primary_key=True)
-    part_id = db.Column(db.Integer, db.ForeignKey('parts.id'), nullable=False)
-    on_hand = db.Column(db.Float, default=0)
-    location = db.Column(db.String(64))
-    min_stock = db.Column(db.Float, default=0)
-    status = db.Column(db.String(32), default="active")
-
-    part = db.relationship("Part", back_populates="inventory")
-
-    def __repr__(self):
-        return f"<Inventory for Part {self.part_id}: {self.on_hand}>"
 
 
-class Assembly(db.Model):
-    __tablename__ = 'assemblies'
+    customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False, index=True)
+    customer = db.relationship("Customer", back_populates="jobs")
 
+
+    job_number = db.Column(db.String(32), nullable=False, unique=True, index=True)
+    title = db.Column(db.String(200), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="queue", index=True)
+
+
+    priority = db.Column(db.String(20), default="normal")
+    due_date = db.Column(db.Date)
+    notes = db.Column(db.Text)
+
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    builds = db.relationship("Build", back_populates="job", cascade="all, delete-orphan")
+    work_logs = db.relationship("JobWorkLog", back_populates="job", cascade="all, delete-orphan")
+    job_notes = db.relationship("JobNote", back_populates="job", cascade="all, delete-orphan")
+    # archive batch 001 here
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
+    archived_at = db.Column(db.DateTime, nullable=True)
+    archived_by = db.Column(db.Integer, nullable=True)  # store user_id if you have it	
+    
+class Build(db.Model):
+    __tablename__ = "builds"
+    __table_args__ = {"sqlite_autoincrement": True}
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    assembly_number = db.Column(db.String(100), unique=True, nullable=False)
-    revision = db.Column(db.String(20))
-    lead_time = db.Column(db.Integer)
+
+
+    job_id = db.Column(db.Integer, db.ForeignKey("jobs.id"), nullable=False, index=True)
+    job = db.relationship("Job", back_populates="builds")
+
+
+    name = db.Column(db.String(120), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="queue", index=True)
+
+
+    qty_ordered = db.Column(db.Integer, nullable=False, default=1)
+    qty_completed = db.Column(db.Integer, nullable=False, default=0)
+    qty_scrap = db.Column(db.Integer, nullable=False, default=0)
+
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+    bom_items = db.relationship("BOMItem", back_populates="build", cascade="all, delete-orphan")
+    drawings = db.relationship("BuildDrawing", back_populates="build", cascade="all, delete-orphan")    
+
+class Part(db.Model):
+    __tablename__ = "parts"
+    id = db.Column(db.Integer, primary_key=True)
+
+
+    part_number = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    cad_filename = db.Column(db.String(256))
-    shapes_filename = db.Column(db.String(256))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # New: link to parsed SOLID components extracted from uploaded STEP
-    parsed_components = db.relationship(
-        "ParsedComponent",
-        back_populates="assembly",
-        cascade="all, delete-orphan"
+    part_type_id = db.Column(db.Integer, db.ForeignKey("part_types.id"))
+    part_type = db.relationship("PartType")
+    
+    unit = db.Column(db.String(20), default="ea")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+class BOMItem(db.Model):
+    __tablename__ = "bom_items"
+    __table_args__ = {"sqlite_autoincrement": True}
+    id = db.Column(db.Integer, primary_key=True)
+
+
+    build_id = db.Column(db.Integer, db.ForeignKey("builds.id"), nullable=False, index=True)
+    build = db.relationship("Build", back_populates="bom_items")
+
+
+    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"))
+    part = db.relationship("Part")
+
+
+    line_no = db.Column(db.Integer, nullable=False, default=1)
+
+
+    part_number = db.Column(db.String(64))
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+
+
+    qty = db.Column(db.Float, nullable=False, default=1.0)
+    unit = db.Column(db.String(20), default="ea")
+
+
+    source = db.Column(db.String(20), default="manual") # manual | template | csv
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+    __table_args__ = (
+    UniqueConstraint("build_id", "line_no", name="uq_bom_build_line"),
     )
 
-    def __repr__(self):
-        return f"<Assembly {self.assembly_number}>"
-
-
-class ParsedComponent(db.Model):
-    __tablename__ = 'parsed_components'
-
+class BuildDrawing(db.Model):
+    __tablename__ = "build_drawings"
     id = db.Column(db.Integer, primary_key=True)
-    assembly_id = db.Column(db.Integer, db.ForeignKey('assemblies.id'), nullable=False, index=True)
 
-    # index in the emitted parts[] array (helps correlate viewer selection → db row)
-    solid_index = db.Column(db.Integer, nullable=False)
 
-    # viewer/parse metadata
-    name = db.Column(db.String(128))
-    color = db.Column(db.String(16))
-    mesh_hash = db.Column(db.String(64), index=True)
-    volume = db.Column(db.Float)
-    bb = db.Column(db.JSON)
+    build_id = db.Column(db.Integer, db.ForeignKey("builds.id"), nullable=False, index=True)
+    build = db.relationship("Build", back_populates="drawings")
 
-    assembly = db.relationship("Assembly", back_populates="parsed_components")
 
-    def __repr__(self):
-        return f"<ParsedComponent asm={self.assembly_id} solid_index={self.solid_index} hash={self.mesh_hash}>"
+    filename = db.Column(db.String(260), nullable=False)
+    stored_path = db.Column(db.String(500), nullable=False)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+class JobWorkLog(db.Model):
+    __tablename__ = "job_work_logs"
+    id = db.Column(db.Integer, primary_key=True)
+
+
+    job_id = db.Column(db.Integer, db.ForeignKey("jobs.id"), nullable=False, index=True)
+    job = db.relationship("Job", back_populates="work_logs")
+
+
+    entry_ts = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+    qty_completed_delta = db.Column(db.Integer, default=0, nullable=False)
+    qty_scrap_delta = db.Column(db.Integer, default=0, nullable=False)
+
+
+    runtime_seconds = db.Column(db.Integer, default=0, nullable=False)
+
+
+    note = db.Column(db.Text)
+
+class JobNote(db.Model):
+    __tablename__ = "job_notes"
+    id = db.Column(db.Integer, primary_key=True)
+
+
+    job_id = db.Column(db.Integer, db.ForeignKey("jobs.id"), nullable=False, index=True)
+    job = db.relationship("Job", back_populates="job_notes")
+
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    
+class PartType(db.Model):
+    __tablename__ = "part_types"
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(50), unique=True, nullable=False)   # e.g. "blade"
+    name = db.Column(db.String(120), nullable=False)              # e.g. "Blade"
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+class RoutingTemplate(db.Model):
+    """
+    Defines the default routing steps for a PartType.
+    """
+    __tablename__ = "routing_templates"
+    id = db.Column(db.Integer, primary_key=True)
+
+    part_type_id = db.Column(db.Integer, db.ForeignKey("part_types.id"), nullable=False)
+    part_type = db.relationship("PartType")
+
+    op_key = db.Column(db.String(50), nullable=False)     # e.g. "surface_grind"
+    op_name = db.Column(db.String(120), nullable=False)   # e.g. "Surface Grind"
+    module_key = db.Column(db.String(50), nullable=False) # e.g. "surface_grinding"
+    sequence = db.Column(db.Integer, nullable=False)      # 10,20,30... (easy inserts later)
+
+    is_outsourced = db.Column(db.Boolean, default=False, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("part_type_id", "op_key", name="uq_routing_parttype_op"),
+    )
+
+
+class BuildOperation(db.Model):
+    """
+    Concrete queued operation instance generated from BOM.
+    """
+    __tablename__ = "build_operations"
+    __table_args__ = {"sqlite_autoincrement": True}
+    id = db.Column(db.Integer, primary_key=True)
+
+    build_id = db.Column(
+		db.Integer, 
+		db.ForeignKey("builds.id", ondelete="CASCADE"),
+		nullable=False
+	)
+    build = db.relationship("Build")
+
+    bom_item_id = db.Column(db.Integer, db.ForeignKey("bom_items.id"), nullable=True)
+    bom_item = db.relationship("BOMItem")
+
+    op_key = db.Column(db.String(50), nullable=False)
+    op_name = db.Column(db.String(120), nullable=False)
+    module_key = db.Column(db.String(50), nullable=False)
+
+    sequence = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="queue")  # queue/in_progress/complete
+
+    qty_planned = db.Column(db.Float, nullable=False, default=0.0)
+    qty_done = db.Column(db.Float, nullable=False, default=0.0)
+    qty_scrap = db.Column(db.Float, nullable=False, default=0.0)
+
+    is_outsourced = db.Column(db.Boolean, default=False, nullable=False)
+    vendor = db.Column(db.String(120))   # for outsourced ops later (heat treat)
+    notes = db.Column(db.Text)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    # archive batch 001 here
+    cancelled_at = db.Column(db.DateTime, nullable=True)
+    cancelled_reason = db.Column(db.String(255), nullable=True)
+    
+    __table_args__ = (
+        UniqueConstraint("build_id", "bom_item_id", "op_key", name="uq_build_bom_op"),
+    )
+

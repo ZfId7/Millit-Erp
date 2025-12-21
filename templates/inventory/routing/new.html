@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}New Routing Step{% endblock %}
+{% block topbar %}🧭 New Routing Step{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Create Routing Step</h1>
+      <p class="page-subtitle">This defines a queued operation created from BOM items.</p>
+    </div>
+    <a class="btn" href="{{ url_for('inventory_bp.routing_index') }}">← Back</a>
+  </div>
+
+  <form method="post" class="stack">
+    <div class="card">
+      <div class="row">
+        <div class="field" style="min-width: 280px;">
+          <label>Part Type *</label>
+          <select name="part_type_id" required>
+            <option value="">— Select —</option>
+            {% for pt in part_types %}
+              <option value="{{ pt.id }}">{{ pt.name }} ({{ pt.key }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field" style="min-width: 180px;">
+          <label>Sequence *</label>
+          <input name="sequence" type="number" value="10" step="10" />
+          <div class="help">Use 10,20,30… so you can insert later.</div>
+        </div>
+
+        <div class="field" style="min-width: 220px;">
+          <label>Module Key *</label>
+          <input name="module_key" type="text" placeholder="e.g. surface_grinding" required />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 10px;">
+        <div class="field" style="min-width: 260px;">
+          <label>Op Key *</label>
+          <input name="op_key" type="text" placeholder="e.g. heat_treat" required />
+          <div class="help">Lowercase, underscores, unique per part type.</div>
+        </div>
+
+        <div class="field" style="min-width: 520px; flex: 1;">
+          <label>Op Name *</label>
+          <input name="op_name" type="text" placeholder="e.g. Heat Treat (Outsourced)" required />
+        </div>
+
+        <div class="field" style="min-width: 180px;">
+          <label>&nbsp;</label>
+          <label style="display:flex; align-items:center; gap:10px; margin-top: 8px;">
+            <input type="checkbox" name="is_outsourced" />
+            Outsourced
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn btn-primary" type="submit">✅ Create Step</button>
+      <a class="btn" href="{{ url_for('inventory_bp.routing_index') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

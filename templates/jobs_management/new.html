@@ -1,0 +1,157 @@
+<!-- File path: templates/jobs_management/new.html -->
+{% extends "base.html" %}
+
+{% block title %}New Job{% endblock %}
+{% block topbar %}📋 New Job{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Create Job</h1>
+      <p class="page-subtitle">Create a customer job, then add one or more builds (assemblies).</p>
+    </div>
+
+    <a class="btn" href="/jobs/">← Back to Jobs</a>
+  </div>
+
+  <form method="post" class="stack" autocomplete="off">
+
+    <!-- Customer -->
+    <div class="card">
+      <h2>Customer</h2>
+      <div class="row">
+        <div class="field" style="min-width: 320px;">
+          <label for="customer_id">Existing customer</label>
+          <select id="customer_id" name="customer_id">
+            <option value="">— Select —</option>
+            {% for c in customers %}
+              <option value="{{ c.id }}" {% if form.customer_id and form.customer_id|int == c.id %}selected{% endif %}>
+				{{ c.name }}
+			  </option>
+            {% endfor %}
+          </select>
+          <div class="help">Choose an existing customer, or create a new one below.</div>
+        </div>
+
+        <div class="field" style="min-width: 360px;">
+          <label for="new_customer_name">New customer name</label>
+          <input id="new_customer_name" type="text" name="new_customer_name" value="{{ form.new_customer_name }}" />
+          <div class="help">If you enter a new name, it will be created automatically.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job -->
+    <div class="card">
+      <h2>Job</h2>
+      <div class="row">
+        <div class="field" style="min-width: 520px; flex: 1;">
+          <label for="title">Title <span class="muted">(required)</span></label>
+          <input id="title" type="text" name="title" required value="{{ form.title }}" />
+        </div>
+
+        <div class="field" style="min-width: 180px;">
+          <label for="due_date">Due date</label>
+          <input id="due_date" type="date" name="due_date" value="{{ form.due_date }}" />
+        </div>
+
+        <div class="field" style="min-width: 180px;">
+          <label for="priority">Priority</label>
+          <select id="priority" name="priority">
+            <option value="normal" {% if form.priority == 'normal' %}selected{% endif %}>normal</option>
+			<option value="high" {% if form.priority == 'high' %}selected{% endif %}>high</option>
+			<option value="rush" {% if form.priority == 'rush' %}selected{% endif %}>rush</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 10px;">
+        <div class="field" style="min-width: 720px; flex: 1;">
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes">{{ form.notes }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Builds -->
+    <div class="card">
+      <div class="row" style="justify-content: space-between;">
+        <div>
+          <h2 style="margin-bottom: 6px;">Builds</h2>
+          <div class="muted">Add one or more builds (assemblies). At least one build is required.</div>
+        </div>
+
+        <!-- v1: static rows; later we’ll make “Add build” dynamic -->
+        
+      </div>
+
+      <div style="margin-top: 12px;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Build name</th>
+              <th style="width: 140px;">Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in form.builds %}
+			<tr>
+				<td>
+					<input 
+					type="text" 
+					name="build_name" 
+					value="{{ b.name }}" 
+					placeholder="e.g. Build — Model / Spec" 
+					style="width:100%;" 
+				/>
+				</td>
+				<td>
+					<input 
+					type="number" 
+					name="build_qty" 
+					value="{{ b.qty or '1' }}" 
+					min="1" 
+					style="width:100%;" 
+				/>
+				</td>
+			</tr>
+			{% endfor %}
+          </tbody>
+        </table>
+
+        <div class="help" style="margin-top: 10px;">
+          Tip: You can leave unused build rows blank.
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row">
+      <button class="btn btn-primary" type="submit">✅ Create Job</button>
+      <a class="btn" href="/jobs/">Cancel</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const sel = document.getElementById("customer_id");
+    const inp = document.getElementById("new_customer_name");
+
+    if (!sel || !inp) return;
+
+    sel.addEventListener("change", () => {
+      if (sel.value) inp.value = "";
+    });
+
+    inp.addEventListener("input", () => {
+      if (inp.value.trim().length) sel.value = "";
+    });
+  });
+</script>
+{% endblock %}

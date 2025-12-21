@@ -1,0 +1,61 @@
+<!-- templates/inventory/parts/new.html -->
+
+{% extends "base.html" %}
+{% block title %}New Part{% endblock %}
+{% block topbar %}📦 New Part{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Create Part</h1>
+      <p class="page-subtitle">Catalog parts can be selected in BOM and reused across builds.</p>
+    </div>
+    <a class="btn" href="{{ url_for('inventory_bp.parts_index') }}">← Back</a>
+  </div>
+
+  <form method="post" class="stack">
+    <div class="card">
+      <div class="row">
+        <div class="field" style="min-width: 260px;">
+          <label>Part Number *</label>
+          <input name="part_number" type="text" placeholder="e.g. HW-000123" required />
+        </div>
+
+        <div class="field" style="min-width: 420px; flex: 1;">
+          <label>Name *</label>
+          <input name="name" type="text" placeholder="e.g. Pivot Screw T8" required />
+        </div>
+
+        <div class="field" style="min-width: 160px;">
+          <label>Unit</label>
+          <input name="unit" type="text" value="ea" />
+        </div>
+
+        <div class="field" style="min-width: 220px;">
+          <label>Part Type</label>
+          <select name="part_type_id">
+            <option value="">— None —</option>
+            {% for t in types %}
+              <option value="{{ t.id }}">{{ t.name }} ({{ t.key }})</option>
+            {% endfor %}
+          </select>
+          <div class="help">Part type drives routing later.</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 10px;">
+        <div class="field" style="flex: 1; min-width: 640px;">
+          <label>Description</label>
+          <textarea name="description" placeholder="Optional details..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn btn-primary" type="submit">✅ Create</button>
+      <a class="btn" href="{{ url_for('inventory_bp.parts_index') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

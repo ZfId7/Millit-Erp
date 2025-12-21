@@ -6,103 +6,386 @@
 
     <meta charset="UTF-8">
     <title>{% block title %}Millit Knives{% endblock %}</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #121212;
-            color: #f0f0f0;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            height: 100vh;
-        }
+<style>
+	:root {
+		--bg: #121212;
+		--panel: #1a1a1a;
+		--panel-2: #202020;
+		--panel-3: #242424;
 
-        .sidebar {
-            width: 240px;
-            background-color: #1a1a1a;
-            padding-top: 20px;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid #333;
-        }
 
-        .sidebar h2 a {
-            text-align: center;
-            color: #00bfff;
-            font-size: 20px;
-            text-decoration: none;
-            display: block;
-            transition: color 0.2s;
-        }
+		--border: #2f2f2f;
+		--border-2: #3a3a3a;
 
-        .sidebar h2 a:hover {
-            color: #33ccff;
-        }
 
-        .sidebar a {
-            color: #ccc;
-            text-decoration: none;
-            padding: 12px 20px;
-            transition: background 0.2s, color 0.2s;
-            font-size: 15px;
-        }
+		--text: #f0f0f0;
+		--muted: #b8b8b8;
+		--muted-2: #8b8b8b;
 
-        .sidebar a:hover {
-            background-color: #2a2a2a;
-            color: #00bfff;
-        }
 
-        .sidebar a.active {
-            background-color: #2a2a2a;
-            color: #00bfff;
-            font-weight: bold;
-        }
+		--accent: #00bfff;
+		--accent-2: #33ccff;
 
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
 
-        .topbar {
-            background-color: #202020;
-            padding: 16px 24px;
-            border-bottom: 1px solid #333;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+		--good: #2ecc71;
+		--warn: #f1c40f;
+		--bad: #e74c3c;
 
-        .topbar .topbar-left {
-            font-size: 16px;
-            font-weight: bold;
-            color: #00bfff;
-        }
 
-        .topbar .topbar-links {
-            display: flex;
-            gap: 12px;
-        }
+		--shadow: 0 10px 30px rgba(0,0,0,.35);
+		--radius: 12px;
+		--radius-sm: 8px;
 
-        .topbar .topbar-links a {
-            font-size: 14px;
-            color: #ccc;
-            text-decoration: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            transition: background 0.2s, color 0.2s;
-        }
 
-        .topbar .topbar-links a:hover {
-            background-color: #2a2a2a;
-            color: #00bfff;
-        }
+		--pad: 24px;
+		--pad-sm: 14px;
 
-        .content {
-            padding: 24px;
-        }
-    </style>
+
+		--font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+	}
+
+
+	* { box-sizing: border-box; }
+
+
+	body {
+		margin: 0;
+		padding: 0;
+		background-color: var(--bg);
+		color: var(--text);
+		font-family: var(--font);
+		display: flex;
+		height: 100vh;
+	}
+
+	a { color: inherit; }
+
+
+	.sidebar {
+		width: 240px;
+		background-color: var(--panel);
+		padding-top: 20px;
+		display: flex;
+		flex-direction: column;
+		border-right: 1px solid var(--border);
+	}
+
+
+	.sidebar h2 a {
+		text-align: center;
+		color: var(--accent);
+		font-size: 20px;
+		text-decoration: none;
+		display: block;
+		transition: color 0.15s ease;
+	}
+
+
+	.sidebar h2 a:hover { color: var(--accent-2); }
+
+	.sidebar a {
+		color: #ccc;
+		text-decoration: none;
+		padding: 12px 20px;
+		transition: background 0.15s ease, color 0.15s ease;
+		font-size: 15px;
+	}
+
+
+	.sidebar a:hover {
+		background-color: #2a2a2a;
+		color: var(--accent);
+	}
+
+
+	.sidebar a.active {
+		background-color: #2a2a2a;
+		color: var(--accent);
+		font-weight: 700;
+		border-left: 3px solid var(--accent);
+		padding-left: 17px;
+	}
+
+	.main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		overflow-y: auto;
+	}
+
+	.topbar {
+		background-color: var(--panel-2);
+		padding: 16px 24px;
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+
+	.topbar .topbar-left {
+		font-size: 16px;
+		font-weight: 800;
+		color: var(--accent);
+		letter-spacing: .2px;
+	}
+
+
+	.topbar .topbar-links {
+		display: flex;
+		gap: 10px;
+	}
+
+
+	.topbar .topbar-links a {
+		font-size: 14px;
+		color: #ccc;
+		text-decoration: none;
+		padding: 8px 12px;
+		border-radius: var(--radius-sm);
+		transition: background 0.15s ease, color 0.15s ease;
+	}
+
+
+	.topbar .topbar-links a:hover {
+		background-color: #2a2a2a;
+		color: var(--accent);
+	}
+
+
+	.content {
+		padding: var(--pad);
+	}
+
+
+	/* ---------- Layout helpers ---------- */
+	.page {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		max-width: 1200px;
+	}
+
+
+	.page-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+
+	.page-title {
+		font-size: 22px;
+		font-weight: 900;
+		margin: 0;
+	}
+
+	.page-subtitle {
+		margin: 4px 0 0 0;
+		color: var(--muted);
+		font-size: 13px;
+	}
+
+
+	.stack { display: flex; flex-direction: column; gap: 10px; }
+	.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+	/* ---------- Cards ---------- */
+	.card {
+		background: linear-gradient(180deg, var(--panel-3), var(--panel));
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		box-shadow: var(--shadow);
+		padding: 16px;
+	}
+
+	.card h2 {
+		margin: 0 0 10px 0;
+		font-size: 16px;
+		font-weight: 800;
+		color: var(--text);
+	}
+
+
+	.card .muted { color: var(--muted); font-size: 13px; }
+
+
+	/* ---------- Buttons ---------- */
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 9px 12px;
+		border-radius: 10px;
+		border: 1px solid var(--border-2);
+		background: #1f1f1f;
+		color: var(--text);
+		text-decoration: none;
+		font-size: 14px;
+		cursor: pointer;
+		transition: transform .06s ease, background .15s ease, border-color .15s ease;
+		user-select: none;
+	}
+	.btn:hover { background: #2a2a2a; border-color: #4a4a4a; }
+	.btn:active { transform: translateY(1px); }
+
+
+	.btn-primary {
+		background: rgba(0,191,255,.14);
+		border-color: rgba(0,191,255,.35);
+		color: var(--accent-2);
+	}
+	.btn-primary:hover { background: rgba(0,191,255,.22); border-color: rgba(0,191,255,.55); }
+
+
+	.btn-danger {
+		background: rgba(231,76,60,.14);
+		border-color: rgba(231,76,60,.35);
+		color: #ff7b70;
+	}
+	.btn-danger:hover { background: rgba(231,76,60,.22); border-color: rgba(231,76,60,.55); }
+
+
+	/* ---------- Forms ---------- */
+	label { font-size: 13px; color: var(--muted); }
+
+
+	.field {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		min-width: 220px;
+	}
+
+
+	input[type="text"],
+	input[type="number"],
+	input[type="date"],
+	select,
+	textarea {
+		background: #161616;
+		color: var(--text);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 10px 12px;
+		outline: none;
+		transition: border-color .15s ease, box-shadow .15s ease;
+	}
+
+
+	textarea { min-height: 90px; resize: vertical; }	
+	
+	input:focus, select:focus, textarea:focus {
+		border-color: rgba(0,191,255,.55);
+		box-shadow: 0 0 0 3px rgba(0,191,255,.12);
+	}
+
+
+	.help {
+		font-size: 12px;
+		color: var(--muted-2);
+	}
+
+	/* ---------- Tables ---------- */
+	.table {
+		width: 100%;
+		border-collapse: collapse;
+		overflow: hidden;
+		border-radius: var(--radius);
+		border: 1px solid var(--border);
+	}
+
+
+	.table th,
+	.table td {
+		padding: 12px 12px;
+		border-bottom: 1px solid var(--border);
+		text-align: left;
+		font-size: 14px;
+	}
+
+
+	.table th {
+		background: #171717;
+		color: var(--muted);
+		font-weight: 800;
+		font-size: 12px;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+	}
+
+
+	.table tr:hover td {
+		background: rgba(255,255,255,.03);
+	}
+	
+	.table select {
+		padding: 8px 10px;
+		border-radius: 999px;
+		font-weight: 800;
+	}
+
+
+	/* ---------- Badges ---------- */
+	.badge {
+		display: inline-flex;
+		align-items: center;
+		padding: 4px 10px;
+		border-radius: 999px;
+		font-size: 12px;
+		font-weight: 800;
+		border: 1px solid var(--border);
+		background: rgba(255,255,255,.03);
+		color: var(--muted);
+	}
+
+
+	.badge-queue {
+		border-color: rgba(0,191,255,.30);
+		color: var(--accent-2);
+		background: rgba(0,191,255,.10);
+	}
+
+
+	.badge-in-progress {
+		border-color: rgba(241,196,15,.35);
+		color: #ffd35c;
+		background: rgba(241,196,15,.10);
+	}
+
+
+	.badge-complete {
+		border-color: rgba(46,204,113,.35);
+		color: #6dffb0;
+		background: rgba(46,204,113,.10);
+	}
+
+
+	/* ---------- Flash messages ---------- */
+	.flash-wrap { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+
+
+	.flash {
+		border-radius: 12px;
+			border: 1px solid var(--border);
+		padding: 12px 14px;
+		background: rgba(255,255,255,.03);
+		display: flex;
+		gap: 10px;
+		align-items: flex-start;
+	}
+
+
+	.flash.success { border-color: rgba(46,204,113,.35); background: rgba(46,204,113,.10); }
+	.flash.error { border-color: rgba(231,76,60,.35); background: rgba(231,76,60,.10); }
+	.flash.info { border-color: rgba(0,191,255,.35); background: rgba(0,191,255,.10); }
+
+
+	/* ---------- Small utilities ---------- */
+	.muted { color: var(--muted); }
+	.spacer { flex: 1; }
+</style>
 </head>
 <body>
 {% if not hide_sidebar %}
@@ -134,16 +417,16 @@
 			📦 Inventory
 		</a>
 		
-         <a href="{{ url_for('assembly_bp.assembly_index') }}"
-			class="{% if request.endpoint.startswith('assembly_bp') %}active{% endif %}">
-			🧰 Assembly
-		</a>
-		
 		<a href="{{ url_for('mfg_bp.mfg_index') }}"
 			class="{% if request.endpoint.startswith('mfg_bp') %}active{% endif %}">
 			🏭Manufacturing
 		</a>
 		
+        <a href="{{ url_for('waterjet_bp.waterjet_index') }}"
+            class="{% if request.endpoint.startswith('waterjet_bp') %}active{% endif %}">
+            💧 Waterjet
+        </a>
+        
         <a href="{{ url_for('analytics_bp.analytics_index') }}"
 			class="{% if request.endpoint.startswith('analytics_bp') %}active{% endif %}">
 			📊 Analytics
@@ -180,6 +463,15 @@
             </div>
         </div>
         <div class="content">
+			{% with messages = get_flashed_messages(with_categories=true) %}
+				{% if messages %}
+					<div class="flash-wrap">
+						{% for category, message in messages %}
+							<div class="flash {{ category }}">{{ message }}</div>
+						{% endfor %}
+					</div>
+				{% endif %}
+			{% endwith %}
             {% block content %}{% endblock %}
         </div>
     </div>

@@ -1,0 +1,143 @@
+<!-- File path: templates/jobs_management/detail.html -->
+{% extends "base.html" %}
+
+{% block title %}Job {{ job.job_number }}{% endblock %}
+{% block topbar %}📋 Job {{ job.job_number }}{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ job.job_number }} — {{ job.title }}</h1>
+      <p class="page-subtitle">
+        Customer: <strong>{{ job.customer.name if job.customer else "" }}</strong>
+        {% if job.due_date %} • Due: <strong>{{ job.due_date }}</strong>{% endif %}
+        {% if job.priority %} • Priority: <strong>{{ job.priority }}</strong>{% endif %}
+      </p>
+    </div>
+
+    <div class="row">
+      <a class="btn" href="/jobs/">← Back to Jobs</a>
+
+      {# status badge for job #}
+      {% set js = (job.status or '') %}
+      <span class="badge
+        {% if js == 'queue' %}badge-queue
+        {% elif js == 'in_progress' %}badge-in-progress
+        {% elif js == 'complete' %}badge-complete
+        {% endif %}">
+        {{ js.replace('_', ' ') }}
+      </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Builds</h2>
+    <p class="muted">Track each assembly’s status and quantities. (Next: inline updates + drawings + BOM per build.)</p>
+
+    <table class="table" style="margin-top: 12px;">
+      <thead>
+        <tr>
+          <th>Build</th>
+          <th style="width: 160px;">Status</th>
+          <th style="width: 140px;">Qty Ordered</th>
+          <th style="width: 140px;">Qty Completed</th>
+          <th style="width: 120px;">Scrap</th>
+		  <th style="width: 160px;">BOM</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in job.builds %}
+          <tr>
+            <td style="font-weight: 800;">{{ b.name }}</td>
+            <td>
+				<form method="post" action="{{ url_for('jobs_bp.build_update_status', build_id=b.id) }}">
+					<select name="status" onchange="this.form.submit()">
+						<option value="queue" {% if (b.status or '') == 'queue' %}selected{% endif %}>queue</option>
+						<option value="in_progress" {% if (b.status or '') == 'in_progress' %}selected{% endif %}>in progress</option>
+						<option value="complete" {% if (b.status or '') == 'complete' %}selected{% endif %}>complete</option>
+					</select>
+
+					{# keep job_id so we can redirect back cleanly #}
+					<input type="hidden" name="job_id" value="{{ job.id }}">
+			    </form>
+			</td>
+			
+
+            <td class="muted">{{ b.qty_ordered }}</td>
+            <td class="muted">{{ b.qty_completed }}</td>
+            <td class="muted">{{ b.qty_scrap }}</td>
+			<td>
+				<a class="btn" href="{{ url_for('jobs_bp.build_bom', build_id=b.id) }}">View BOM</a>
+			</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="5" class="muted">No builds found for this job.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+    <div class="card" style="margin-top: 14px;">
+        <h2>Operations Queue</h2>
+        <p class="muted">These are auto-generated from BOM routing. Next: modules will consume these queues.</p>
+
+        {% for b in job.builds %}
+            <div style="margin-top: 14px;">
+                <div class="row" style="justify-content: space-between; align-items: center;">
+                    <div style="font-weight: 900;">{{ b.name }}</div>
+                    <a class="btn" href="{{ url_for('jobs_bp.build_bom', build_id=b.id) }}">View BOM</a>
+                </div>
+
+                <table class="table" style="margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 90px;">Seq</th>
+                            <th>Operation</th>
+                            <th style="width: 220px;">Module</th>
+                            <th style="width: 160px;">Status</th>
+                            <th style="width: 140px;">Planned</th>
+                            <th style="width: 140px;">Done</th>
+                            <th style="width: 140px;">Scrap</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set ops = ops_by_build.get(b.id, []) %}
+                        {% for op in ops %}
+                            <tr>
+                                <td class="muted">{{ op.sequence }}</td>
+                                <td style="font-weight: 900;">
+                                    {{ op.op_name }}
+                                    {% if op.is_outsourced %}
+                                        <span class="badge badge-queue" style="margin-left: 8px;">outsourced</span>
+                                    {% endif %}
+                                </td>
+                                <td class="muted">{{ op.module_key }}</td>
+                                <td>
+                                    {% set s = (op.status or '') %}
+                                    <span class="badge
+                                        {% if s == 'queue' %}badge-queue
+                                        {% elif s == 'in_progress' %}badge-in-progress
+                                        {% elif s == 'complete' %}badge-complete
+                                        {% endif %}">
+                                        {{ s.replace('_',' ') }}
+                                    </span>
+                                </td>
+                                <td class="muted">{{ op.qty_planned }}</td>
+                                <td class="muted">{{ op.qty_done }}</td>
+                                <td class="muted">{{ op.qty_scrap }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="7" class="muted">No operations generated for this build yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+ 
+</div>
+{% endblock %}

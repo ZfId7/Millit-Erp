@@ -1,0 +1,67 @@
+<!-- templates/inventory/parts/index.html -->
+
+{% extends "base.html" %}
+{% block title %}Parts Catalog{% endblock %}
+{% block topbar %}📦 Parts Catalog{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Parts Catalog</h1>
+      <p class="page-subtitle">Reusable parts used across builds (hardware, blades, etc.)</p>
+    </div>
+
+    <div class="row">
+      <a class="btn" href="{{ url_for('inventory_bp.part_types_index') }}">Part Types</a>
+      <a class="btn btn-primary" href="{{ url_for('inventory_bp.parts_new') }}">➕ New Part</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="get" class="row" style="margin-bottom: 12px;">
+      <div class="field" style="min-width: 320px; flex: 1;">
+        <label>Search</label>
+        <input type="text" name="q" value="{{ q }}" placeholder="Search part #, name, description..." />
+      </div>
+      <div class="field" style="min-width: 140px;">
+        <label>&nbsp;</label>
+        <button class="btn" type="submit">Search</button>
+      </div>
+    </form>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width: 180px;">Part #</th>
+          <th>Name</th>
+          <th style="width: 160px;">Type</th>
+          <th style="width: 120px;">Unit</th>
+          <th style="width: 160px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in parts %}
+          <tr>
+            <td style="font-weight: 900;">{{ p.part_number }}</td>
+            <td>{{ p.name }}</td>
+            <td class="muted">{{ p.part_type.name if p.part_type else "" }}</td>
+            <td class="muted">{{ p.unit }}</td>
+            <td>
+              <div class="row">
+                <a class="btn" href="{{ url_for('inventory_bp.parts_edit', part_id=p.id) }}">Edit</a>
+                <form method="post" action="{{ url_for('inventory_bp.parts_delete', part_id=p.id) }}"
+                      onsubmit="return confirm('Delete this part?');">
+                  <button class="btn btn-danger" type="submit">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="muted">No parts yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

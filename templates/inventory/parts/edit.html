@@ -1,0 +1,72 @@
+<!-- File path: templates/inventory/parts/edit.html -->
+{% extends "base.html" %}
+
+{% block title %}Edit Part{% endblock %}
+{% block topbar %}📦 Edit Part{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Edit Part</h1>
+      <p class="page-subtitle">Update catalog details used by BOM + routing + inventory.</p>
+    </div>
+    <a class="btn" href="{{ url_for('inventory_bp.parts_index') }}">← Back</a>
+  </div>
+
+  <form method="post" class="stack">
+    <div class="card">
+      <div class="row">
+        <div class="field" style="min-width: 260px;">
+          <label>Part Number *</label>
+          <input name="part_number" type="text" required value="{{ part.part_number }}" />
+          <div class="help">Must be unique.</div>
+        </div>
+
+        <div class="field" style="min-width: 420px; flex: 1;">
+          <label>Name *</label>
+          <input name="name" type="text" required value="{{ part.name }}" />
+        </div>
+
+        <div class="field" style="min-width: 160px;">
+          <label>Unit</label>
+          <input name="unit" type="text" value="{{ part.unit or 'ea' }}" />
+        </div>
+
+        <div class="field" style="min-width: 220px;">
+          <label>Part Type</label>
+          <select name="part_type_id">
+            <option value="">— None —</option>
+            {% for t in types %}
+              <option value="{{ t.id }}"
+                {% if part.part_type_id == t.id %}selected{% endif %}>
+                {{ t.name }} ({{ t.key }})
+              </option>
+            {% endfor %}
+          </select>
+          <div class="help">Part type drives routing (ops queue) later.</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 10px;">
+        <div class="field" style="flex: 1; min-width: 640px;">
+          <label>Description</label>
+          <textarea name="description" placeholder="Optional details...">{{ part.description or "" }}</textarea>
+        </div>
+      </div>
+    </div>
+
+	<div class="row">
+		<button class="btn btn-primary" type="submit">✅ Save Changes</button>
+		<a class="btn" href="{{ url_for('inventory_bp.parts_index') }}">Cancel</a>
+	</div>
+  </form>
+
+	<form method="post"
+			action="{{ url_for('inventory_bp.parts_delete', part_id=part.id) }}"
+			onsubmit="return confirm('Delete this part?');">
+		<button class="btn btn-danger" type="submit">Delete Part</button>
+	</form>
+    
+</div>
+{% endblock %}
