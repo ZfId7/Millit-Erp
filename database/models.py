@@ -1,11 +1,11 @@
 # File path: database/models.py
 # Change summary:
-# - Job Management backbone models (Customer → Job → Build → BOM)
-# - BuildDrawing stores PDF metadata for in-browser viewing
-# - Work logs and notes provide richer job-level tracking
-# - User table supports admin/employee auth
-
-
+# -V1 Job Management backbone models (Customer → Job → Build → BOM)
+# -V1 BuildDrawing stores PDF metadata for in-browser viewing
+# -V1 Work logs and notes provide richer job-level tracking
+# -V1 User table supports admin/employee auth
+# -V2 Inventory Tables for managing shop stock
+# -V3 Waterjet Integration/Consumables
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -276,3 +276,105 @@ class BuildOperation(db.Model):
         UniqueConstraint("build_id", "bom_item_id", "op_key", name="uq_build_bom_op"),
     )
 
+class RawStock(db.Model):
+    __tablename__ = "raw_stock"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Core identity
+    name = db.Column(db.String(128), nullable=False)          # e.g. "CPM Magnacut Sheet"
+    material_type = db.Column(db.String(32), nullable=False)  # steel, titanium, g10, micarta, cf, wood, etc.
+    grade = db.Column(db.String(64), nullable=True)           # e.g. "Magnacut", "Ti-6Al-4V", "AEB-L"
+    form = db.Column(db.String(32), nullable=False)           # sheet, plate, bar, round, tube, scale, block, etc.
+
+    # “Defaults” Waterjet cares about
+    thickness_in = db.Column(db.Float, nullable=True)         # inches; optional for wood/etc
+    width_in = db.Column(db.Float, nullable=True)
+    length_in = db.Column(db.Float, nullable=True)
+
+    # Inventory controls (v1 simple)
+    qty_on_hand = db.Column(db.Float, default=0.0, nullable=False)   # sheets count, feet, pieces, lbs—depends on unit
+    uom = db.Column(db.String(16), default="ea", nullable=False)     # ea, sheet, in, ft, lb, etc.
+
+    vendor = db.Column(db.String(128), nullable=True)
+    location = db.Column(db.String(64), nullable=True)        # rack/bin/shelf
+    notes = db.Column(db.Text, nullable=True)
+
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class WaterjetOperationDetail(db.Model):
+    __tablename__ = "waterjet_operation_details"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    build_operation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("build_operations.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    raw_stock_id = db.Column(
+        db.Integer,
+        db.ForeignKey("raw_stock.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # per-op overrides (optional)
+    thickness_override = db.Column(db.Float, nullable=True)
+    width_override = db.Column(db.Float, nullable=True)
+    length_override = db.Column(db.Float, nullable=True)
+
+    material_source = db.Column(db.String(32), nullable=True)  # inventory/customer_supplied/outsourced/other
+    yield_note = db.Column(db.String(128), nullable=True)
+    # material / stock usage
+    material_remaining = db.Column(db.Boolean, nullable=True)  # True = some left, False = all used
+
+
+    file_name = db.Column(db.String(255), nullable=True)
+    program_revision = db.Column(db.String(64), nullable=True)
+
+    runtime_est_min = db.Column(db.Integer, nullable=True)
+    runtime_actual_min = db.Column(db.Integer, nullable=True)
+
+    blocked_reason = db.Column(db.String(64), nullable=True)   # required when op.status == 'blocked'
+    blocked_notes = db.Column(db.Text, nullable=True)
+
+    notes = db.Column(db.Text, nullable=True)
+
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # relationships (optional but handy)
+    operation = db.relationship("BuildOperation", backref=db.backref("waterjet_detail", uselist=False))
+    raw_stock = db.relationship("RawStock")
+
+class WaterjetConsumable(db.Model):
+    __tablename__ = "waterjet_consumables"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(db.String(128), nullable=False)          # "0.010 Orifice", "Mixing Tube", "Garnet 80 mesh"
+    category = db.Column(db.String(32), nullable=False)       # nozzle, orifice, garnet, seal, filter, other
+    part_number = db.Column(db.String(64), nullable=True)
+    vendor = db.Column(db.String(128), nullable=True)
+
+    qty_on_hand = db.Column(db.Float, default=0.0, nullable=False)
+    uom = db.Column(db.String(16), default="ea", nullable=False)     # ea, lb, bag, etc.
+    reorder_point = db.Column(db.Float, nullable=True)              # when <= reorder_point => low
+    reorder_qty = db.Column(db.Float, nullable=True)
+
+    location = db.Column(db.String(64), nullable=True)        # bin/rack
+    notes = db.Column(db.Text, nullable=True)
+
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

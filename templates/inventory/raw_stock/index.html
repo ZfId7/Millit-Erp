@@ -1,0 +1,67 @@
+<!-- File path: templates/inventory/raw_stock/index.html -->
+<!-- V1 Base Raw Stock Catalog Build-->
+{% extends "base.html" %}
+
+{% block title %}Raw Stock{% endblock %}
+{% block topbar %}🧱 Inventory — Raw Stock{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Raw Stock</h1>
+      <p class="page-subtitle">Sheet goods, bar stock, handle materials</p>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <a href="{{ url_for('inventory_bp.raw_stock_new') }}" class="btn btn-primary">➕ Add Raw Stock</a>
+      <a href="{{ url_for('inventory_bp.raw_stock_index', show_inactive='1' if not show_inactive else None) }}"
+         class="btn btn-secondary">
+        {% if show_inactive %}Hide Inactive{% else %}Show Inactive{% endif %}
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Name</th>
+          <th style="width:120px;">Form</th>
+          <th style="width:160px;">Thickness</th>
+          <th style="width:200px;">Size</th>
+          <th style="width:160px;">On Hand</th>
+          <th style="width:180px;">Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in items %}
+          <tr class="{% if not r.is_active %}muted{% endif %}">
+            <td>{{ r.material_type }}</td>
+            <td>
+              <strong>{{ r.name }}</strong>
+              {% if r.grade %}<span class="muted"> — {{ r.grade }}</span>{% endif %}
+            </td>
+            <td class="muted">{{ r.form }}</td>
+            <td class="muted">
+              {% if r.thickness_in is not none %}{{ "%.4f"|format(r.thickness_in) }}"{% endif %}
+            </td>
+            <td class="muted">
+              {% if r.width_in is not none and r.length_in is not none %}
+                {{ "%.2f"|format(r.width_in) }}" × {{ "%.2f"|format(r.length_in) }}"
+              {% endif %}
+            </td>
+            <td>{{ r.qty_on_hand }} {{ r.uom }}</td>
+            <td class="muted">{{ r.location or "" }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" class="muted">No raw stock items yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

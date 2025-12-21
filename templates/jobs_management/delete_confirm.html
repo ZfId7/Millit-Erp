@@ -1,0 +1,55 @@
+<!-- File path: templates/jobs_management/delete_confirm.html -->
+<!-- V1 Delete Job Verification -->
+
+{% extends "base.html" %}
+
+{% block title %}Delete Job{% endblock %}
+{% block topbar %}🗑️ Delete Job{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Delete Job #{{ job.job_number }}</h1>
+      <p class="page-subtitle">{{ job.title }}</p>
+    </div>
+
+    <a href="{{ url_for('jobs_bp.jobs_index') }}" class="btn btn-secondary">← Back</a>
+  </div>
+
+  <div class="card">
+    <div class="alert alert-warning">
+      <strong>Warning:</strong> This will permanently delete the job, all builds, BOM items, and generated operations.
+      This cannot be undone.
+    </div>
+
+    {% if completed_count and completed_count > 0 %}
+      <div class="alert alert-danger">
+        This job has <strong>{{ completed_count }}</strong> completed operation(s).
+        Deleting will remove that history.
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('jobs_bp.job_delete_confirm', job_id=job.id) }}">
+      <input type="hidden" name="confirm_delete" value="yes">
+
+      {% if completed_count and completed_count > 0 %}
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" value="yes" id="allowCompleted" name="allow_completed">
+          <label class="form-check-label" for="allowCompleted">
+            Delete even if completed operations exist
+          </label>
+        </div>
+      {% endif %}
+
+      <label class="form-label">Type <strong>DELETE</strong> to confirm</label>
+      <input class="form-control mb-3" name="typed" autocomplete="off" placeholder="DELETE">
+
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <a class="btn btn-secondary" href="{{ url_for('jobs_bp.jobs_index') }}">Cancel</a>
+        <button type="submit" class="btn btn-danger">Delete Job</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

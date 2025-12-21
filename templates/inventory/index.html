@@ -1,4 +1,7 @@
 <!-- File path: templates/inventory/index.html -->
+<!-- V1 Inventory Index | Parts catalog | Part types | Routing Templates -->
+<!-- V2 Raw Stock Catalog -->
+
 {% extends "base.html" %}
 
 {% block title %}Inventory{% endblock %}
@@ -12,7 +15,7 @@
       <p class="page-subtitle">Catalog + routing foundations (stock tracking comes later).</p>
     </div>
   </div>
-
+    <!-- Inventory configuration -->
   <div class="row" style="gap: 12px; flex-wrap: wrap;">
     <a class="card" href="{{ url_for('inventory_bp.parts_index') }}" style="min-width: 320px; text-decoration:none;">
       <h2 style="margin: 0 0 6px 0;">Parts Catalog</h2>
@@ -29,5 +32,16 @@
       <p class="muted" style="margin: 0;">Define queued operations generated from BOM.</p>
     </a>
   </div>
+    <!-- Operational inventory -->
+    <div class="row" style="gap: 12px; flex-wrap: wrap;">
+      <a class="card"
+         href="{{ url_for('inventory_bp.raw_stock_index') }}"
+         style="min-width: 320px; text-decoration:none; border-left: 4px solid #6f8cff;">
+        <h2 style="margin: 0 0 6px 0;">🧱 Raw Stock</h2>
+        <p class="muted" style="margin: 0;">
+          Sheets, bar stock, handle materials, and shop raw inventory.
+        </p>
+      </a>
+    </div>
 </div>
 {% endblock %}

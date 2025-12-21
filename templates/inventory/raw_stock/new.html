@@ -1,0 +1,91 @@
+<!-- File path: templates/inventory/raw_stock/new.html -->
+<!-- V1 Raw Stock Catalog Editor Base Build -->
+{% extends "base.html" %}
+
+{% block title %}Add Raw Stock{% endblock %}
+{% block topbar %}➕ Add Raw Stock{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Add Raw Stock</h1>
+      <p class="page-subtitle">Create a new raw material entry</p>
+    </div>
+    <a href="{{ url_for('inventory_bp.raw_stock_index') }}" class="btn btn-secondary">← Back</a>
+  </div>
+
+  <div class="card" style="max-width: 980px;">
+    <form method="POST">
+      <div class="row" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:320px; flex:1;">
+          <label class="form-label">Name *</label>
+          <input class="form-control" name="name" placeholder='e.g. "CPM Magnacut Sheet"' required>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="form-label">Material Type *</label>
+          <input class="form-control" name="material_type" placeholder="steel / titanium / g10 / wood" required>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="form-label">Form *</label>
+          <input class="form-control" name="form" placeholder="sheet / bar / scale / block" required>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="form-label">Grade (optional)</label>
+          <input class="form-control" name="grade" placeholder="Magnacut / Ti-6Al-4V / AEB-L">
+        </div>
+      </div>
+
+      <hr style="opacity:0.15; margin:14px 0;">
+
+      <div class="row" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:200px;">
+          <label class="form-label">Thickness (in)</label>
+          <input class="form-control" name="thickness_in" placeholder="0.125">
+        </div>
+        <div style="min-width:200px;">
+          <label class="form-label">Width (in)</label>
+          <input class="form-control" name="width_in" placeholder="48">
+        </div>
+        <div style="min-width:200px;">
+          <label class="form-label">Length (in)</label>
+          <input class="form-control" name="length_in" placeholder="96">
+        </div>
+      </div>
+
+      <hr style="opacity:0.15; margin:14px 0;">
+
+      <div class="row" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:220px;">
+          <label class="form-label">Qty On Hand</label>
+          <input class="form-control" name="qty_on_hand" value="0">
+        </div>
+        <div style="min-width:180px;">
+          <label class="form-label">UOM</label>
+          <input class="form-control" name="uom" value="ea" placeholder="sheet / ea / ft / in / lb">
+        </div>
+        <div style="min-width:260px; flex:1;">
+          <label class="form-label">Vendor (optional)</label>
+          <input class="form-control" name="vendor">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Location (optional)</label>
+          <input class="form-control" name="location" placeholder="Rack A / Bin 3">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" name="notes" rows="3"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+        <button class="btn btn-primary" type="submit">Create Raw Stock</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
