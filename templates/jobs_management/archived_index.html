@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Archived Jobs{% endblock %}
+{% block topbar %}📦 Archived Jobs{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Archived Jobs</h1>
+      <p class="page-subtitle">Read-only job history</p>
+    </div>
+
+    <a href="{{ url_for('jobs_bp.jobs_index') }}" class="btn btn-secondary">
+      ← Back to Active Jobs
+    </a>
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width: 170px;">Job #</th>
+          <th style="width: 220px;">Customer</th>
+          <th>Title</th>
+          <th style="width: 160px;">Status</th>
+          <th style="width: 180px;">Archived At</th>
+
+          {% if session.get("is_admin") %}
+            <th style="width: 140px; text-align: right;">Actions</th>
+          {% endif %}
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for j in jobs %}
+          <tr>
+            <td>
+              <a href="/jobs/{{ j.id }}" class="job-link">
+                {{ j.job_number }}
+              </a>
+            </td>
+
+            <td class="muted">
+              {{ j.customer.name if j.customer else "" }}
+            </td>
+
+            <td>{{ j.title }}</td>
+
+            <td>
+              <span class="badge badge-muted">
+                archived
+              </span>
+            </td>
+
+            <td class="muted">
+              {{ j.archived_at or "" }}
+            </td>
+
+            {% if session.get("is_admin") %}
+              <td style="text-align:right;">
+                <!-- Optional: enable later -->
+               
+                <a href="{{ url_for('jobs_bp.job_unarchive', job_id=j.id) }}"
+                   class="btn btn-sm btn-warning">
+                  Unarchive
+                </a>
+               
+              </td>
+            {% endif %}
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="{% if session.get('is_admin') %}6{% else %}5{% endif %}"
+                class="muted">
+              No archived jobs found.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  .job-link {
+    color: #888;
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .job-link:hover {
+    text-decoration: underline;
+  }
+
+  .badge-muted {
+    background: #555;
+    color: #ddd;
+  }
+</style>
+{% endblock %}

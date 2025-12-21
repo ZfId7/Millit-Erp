@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Unarchive Job{% endblock %}
+{% block topbar %}📤 Unarchive Job{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Unarchive Job #{{ job.job_number }}</h1>
+      <p class="page-subtitle">{{ job.title }}</p>
+    </div>
+
+    <a href="{{ url_for('jobs_bp.jobs_archived_index') }}" class="btn btn-secondary">
+      ← Back to Archived
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="alert alert-warning">
+      This will move the job back into Active Jobs and allow it to re-enter module queues.
+    </div>
+
+    <form method="POST" action="{{ url_for('jobs_bp.job_unarchive_post', job_id=job.id) }}">
+      <input type="hidden" name="confirm_unarchive" value="yes">
+
+      <label class="form-label">Type <strong>UNARCHIVE</strong> to confirm</label>
+      <input class="form-control mb-3" name="typed" autocomplete="off" placeholder="UNARCHIVE">
+
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <a class="btn btn-secondary" href="{{ url_for('jobs_bp.jobs_archived_index') }}">Cancel</a>
+        <button type="submit" class="btn btn-warning">Unarchive Job</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

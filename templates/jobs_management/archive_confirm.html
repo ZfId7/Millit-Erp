@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Archive Job{% endblock %}
+{% block topbar %}📦 Archive Job{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Archive Job #{{ job.job_number }}</h1>
+      <p class="page-subtitle">{{ job.title }}</p>
+    </div>
+    <a href="{{ url_for('jobs_bp.jobs_index') }}" class="btn btn-secondary">← Back</a>
+  </div>
+
+  <div class="card">
+    <div class="alert alert-warning">
+      Archiving hides this job from Active Jobs and prevents its operations from showing in module queues.
+      This preserves history and can be reversed later (unarchive).
+    </div>
+
+    {% if in_progress_count > 0 %}
+      <div class="alert alert-danger">
+        This job has <strong>{{ in_progress_count }}</strong> operation(s) currently <strong>in progress</strong>.
+        Archiving will cancel them if you approve the override below.
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('jobs_bp.job_archive_post', job_id=job.id) }}">
+      <input type="hidden" name="confirm_archive" value="yes">
+
+      {% if in_progress_count > 0 %}
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" value="yes"
+                 id="forceCancel" name="force_cancel_in_progress">
+          <label class="form-check-label" for="forceCancel">
+            Cancel in-progress operations and archive anyway
+          </label>
+        </div>
+      {% endif %}
+
+      <label class="form-label">Type <strong>ARCHIVE</strong> to confirm</label>
+      <input class="form-control mb-3" name="typed" autocomplete="off" placeholder="ARCHIVE">
+
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <a class="btn btn-secondary" href="{{ url_for('jobs_bp.jobs_index') }}">Cancel</a>
+        <button type="submit" class="btn btn-warning">Archive Job</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
