@@ -276,6 +276,31 @@ class BuildOperation(db.Model):
         UniqueConstraint("build_id", "bom_item_id", "op_key", name="uq_build_bom_op"),
     )
 
+class BuildOperationProgress(db.Model):
+    __tablename__ = "build_operation_progress"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    build_operation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("build_operations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    qty_done_delta = db.Column(db.Float, nullable=False, default=0.0)
+    qty_scrap_delta = db.Column(db.Float, nullable=False, default=0.0)
+
+    note = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    build_operation = db.relationship(
+        "BuildOperation",
+        backref=db.backref("progress_updates", cascade="all, delete-orphan"),
+    )
+
+    
 class RawStock(db.Model):
     __tablename__ = "raw_stock"
     __table_args__ = {"sqlite_autoincrement": True}
@@ -378,3 +403,48 @@ class WaterjetConsumable(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class SurfaceGrindingOperationDetail(db.Model):
+    __tablename__ = "surface_grinding_operation_details"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    build_operation_id = db.Column(
+        db.Integer,
+        db.ForeignKey("build_operations.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False
+    )
+
+    # Wheel / setup
+    wheel_brand = db.Column(db.String(80))
+    wheel_model = db.Column(db.String(120))
+    wheel_grit = db.Column(db.Integer)            # 46 / 60 / 80 / 120 etc
+    wheel_grade = db.Column(db.String(10))        # e.g. "G", "F", "K"
+    wheel_structure = db.Column(db.String(10))    # e.g. "10", "15"
+    wheel_bond = db.Column(db.String(10))         # e.g. "V"
+
+    #coolant = db.Column(db.String(80))            # optional: flood/mist/brand/etc
+
+    # Process notes (keep it flexible early)
+    cycles = db.Column(db.Integer)                # total passes (or cycles)
+    stock_removed_in = db.Column(db.Float)        # inches removed (total)
+    target_thickness_in = db.Column(db.Float)
+    actual_thickness_in = db.Column(db.Float)
+
+    finish_notes = db.Column(db.Text)
+    issue_notes = db.Column(db.Text)
+
+    # Optional “parameter” capture (don’t overdo: just enough)
+    wheel_speed_hz = db.Column(db.Float)
+    table_speed_setting = db.Column(db.String(20))      # "2.5", "3:00", etc (string is safer)
+    traverse_speed_setting = db.Column(db.String(20))   # "10.5", "11:00", etc
+    doc_per_pass_in = db.Column(db.Float)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    build_operation = db.relationship(
+        "BuildOperation",
+        backref=db.backref("surface_grinding_detail", uselist=False, cascade="all, delete-orphan")
+    )

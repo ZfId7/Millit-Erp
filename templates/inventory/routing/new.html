@@ -64,5 +64,117 @@
       <a class="btn" href="{{ url_for('inventory_bp.routing_index') }}">Cancel</a>
     </div>
   </form>
+  <div class="card">
+  <h2>Operation Sequence Legend</h2>
+
+  <div class="muted" style="margin-bottom: 10px;">
+    Use the following sequence ranges when defining operations.
+    This keeps routing consistent across modules and prevents overlap as jobs scale.
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width: 160px;">Sequence Range</th>
+        <th style="width: 220px;">Process Area</th>
+        <th style="width: 140px;">Module Key</th>
+        <th style="width: 170px;">Sequence : Op Keys</th>
+        <th>Op Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>10 – 19</strong></td>
+        <td>Raw Prep / Cutting</td>
+        <td>raw_materials</td>
+        <td>
+          <div>10: waterjet_cut</div>
+          <div>12: laser_cut</div>
+          <div>14: edm_cut</div>
+          <div>16: bandsaw_cut</div>
+          <div>18: tablesaw_cut</div>
+        </td>
+        <td>*Waterjet Blade*</td>
+      </tr>
+
+      <tr>
+        <td><strong>20 – 29</strong></td>
+        <td>Surface Grinding</td>
+        <td>surface_grinding
+        <td>
+            <div>20:surface_grind</div>
+        </td>
+        <td> *Surface Grind Blades*
+      </tr>
+
+      <tr>
+        <td><strong>30 – 39</strong></td>
+        <td>Manufacturing</td>
+        <td>manufacturing</td>
+        <td>
+          <div>30: haas</div>
+          <div>32: mori</div>
+          <div>34: fanuc</div>
+          <div>36: lathe</div>
+        </td>
+        <td>*Profile Blades*</td>
+      </tr>
+      
+      <tr>
+        <td><strong>40 - 49</strong></td>
+        <td>Heat Treat</td>
+        <td>heat_treat</td>
+        <td>
+            <div>40:out_sourced</div>
+            <div>45:in_house</div>
+        </td>
+        <td>*Send Blades out for HT*</td>
+      </tr>
+      
+      
+      <tr>
+        <td><strong>50 – 59</strong></td>
+        <td>Bevel Grinding</td>
+        <td>bevel_grinding</td>
+        <td>
+            <div>50:bevel_grind</div>
+            <div>54:secondary_grind</div> 
+            <div>58:distal_taper</div>
+        </td>
+        <td>*Bevel Grind Blades*
+      </tr>
+
+      <tr>
+        <td><strong>60 – 69</strong></td>
+        <td>Finishing</td>
+        <td class="muted">
+          Hand finish, stonewash, blasting, tumbling, sharpening
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>70 – 79</strong></td>
+        <td>Assembly</td>
+        <td class="muted">
+          Handle install, final fit, tuning
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>80 – 89</strong></td>
+        <td>Inspection / Packaging</td>
+        <td class="muted">
+          Final inspection, sharpening, packaging
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="muted" style="margin-top: 10px;">
+    Tip: Leave gaps between sequence numbers (e.g. 10, 12, 15) to allow future
+    operations to be inserted without re-numbering existing routes.
+    
+  </div>
+</div>
 </div>
 {% endblock %}

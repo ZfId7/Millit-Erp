@@ -1,0 +1,94 @@
+<!-- File path: modules/raw_materials/waterjet/templates/raw_materials/waterjet/manager/index.html -->
+<!-- V1 Base build Consumables Manager 
+    V2 Move to modules/raw_materials/waterjet/templates/...
+    blueprint changed to raw_mats_waterjet_bp
+-->
+
+{% extends "base.html" %}
+{% block title %}Waterjet Consumables{% endblock %}
+{% block topbar %}💧 Waterjet — Consumables{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Consumables</h1>
+      <p class="page-subtitle">Nozzles, orifices, garnet, seals, filters</p>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn btn-primary" href="{{ url_for('raw_mats_waterjet_bp.waterjet_manager_new') }}">➕ Add Consumable</a>
+      <a class="btn btn-secondary" href="{{ url_for('raw_mats_waterjet_bp.waterjet_index') }}">← Waterjet Home</a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px;">
+    <form method="GET" style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+      <div style="min-width:320px; flex:1;">
+        <label class="form-label">Search</label>
+        <input class="form-control" name="q" value="{{ q or '' }}" placeholder="name / vendor / part # / location">
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center;">
+        <label class="form-label" style="margin:0; display:flex; gap:8px; align-items:center;">
+          <input type="checkbox" name="low_only" value="1" {% if low_only %}checked{% endif %}>
+          Low only
+        </label>
+
+        <label class="form-label" style="margin:0; display:flex; gap:8px; align-items:center;">
+          <input type="checkbox" name="show_inactive" value="1" {% if show_inactive %}checked{% endif %}>
+          Show inactive
+        </label>
+
+        <button class="btn btn-secondary" type="submit">Apply</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:160px;">Category</th>
+          <th>Name</th>
+          <th style="width:160px;">On Hand</th>
+          <th style="width:200px;">Reorder</th>
+          <th style="width:160px;">Location</th>
+          <th style="width:120px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in items %}
+          {% set is_low = (i.reorder_point is not none and i.qty_on_hand <= i.reorder_point) %}
+          <tr class="{% if not i.is_active %}muted{% endif %}">
+            <td>{{ i.category }}</td>
+            <td>
+              <strong>{{ i.name }}</strong>
+              {% if is_low %}
+                <span class="badge badge-warning" style="margin-left:8px;">LOW</span>
+              {% endif %}
+              {% if i.part_number %}<div class="muted" style="font-size:12px;">PN: {{ i.part_number }}</div>{% endif %}
+              {% if i.vendor %}<div class="muted" style="font-size:12px;">Vendor: {{ i.vendor }}</div>{% endif %}
+            </td>
+            <td>{{ i.qty_on_hand }} {{ i.uom }}</td>
+            <td class="muted">
+              {% if i.reorder_point is not none %}
+                ≤ {{ i.reorder_point }} {{ i.uom }}
+                {% if i.reorder_qty is not none %} (order {{ i.reorder_qty }}){% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="muted">{{ i.location or "—" }}</td>
+            <td style="text-align:right;">
+              <a class="btn btn-sm btn-secondary" href="{{ url_for('raw_mats_waterjet_bp.waterjet_manager_edit', item_id=i.id) }}">Edit</a>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="muted">No consumables yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

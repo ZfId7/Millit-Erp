@@ -1,0 +1,289 @@
+<!-- File path: modules/surface_grinding/templates/surface_grinding/details.html -->
+<!-- V1 Base Build Details Template-->
+<!-- V2 Made change to card layout
+     row > stack -->
+<!-- V3 Remove Operation/Sequence from Context table
+    add BOM Part # and Name -->
+    
+{% extends "base.html" %}
+
+{% block topbar %}
+🧱 Surface Grinding
+{% endblock %}
+
+{% block content %}
+{% set s = op.status or "queue" %}
+{% set detail = op.surface_grinding_detail %}
+
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Operation Details</h1>
+      <div class="page-subtitle">
+        Operation ID: {{ op.id }}
+        {% if op.module_key %} • Module: {{ op.module_key }}{% endif %}
+      </div>
+    </div>
+
+    <div class="row" style="justify-content: flex-end;">
+      <a class="btn" href="{{ url_for('surface_grinding_bp.surface_queue') }}">← Back to Queue</a>
+      <a class="btn btn-primary" href="{{ url_for('surface_grinding_bp.surface_details_edit', op_id=op.id) }}">Edit Details</a>
+
+      {% if s == "queue" %}
+        <span class="badge badge-queue">Queued</span>
+      {% elif s == "in_progress" %}
+        <span class="badge badge-in-progress">In Progress</span>
+      {% elif s == "completed" %}
+        <span class="badge badge-complete">Completed</span>
+      {% elif s == "blocked" %}
+        <span class="badge">Blocked</span>
+      {% elif s == "cancelled" %}
+        <span class="badge">Cancelled</span>
+      {% else %}
+        <span class="badge">{{ s }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="stack">
+    <!-- Left: Context + Actions -->
+    <div class="card">
+      <h2>Operation Context</h2>
+        <div class="page-subtitle">
+            Operation ID: {{ op.id }} • {{ op.op_name }}
+        </div>
+
+      <table class="table">
+        <tbody>
+          <tr>
+            <th style="width: 34%;">Job</th>
+            <td>
+              {% if op.build and op.build.job %}
+                #{{ op.build.job.id }}
+                {% if op.build.job.customer_name %} — {{ op.build.job.customer_name }}{% endif %}
+              {% else %}
+                <span class="muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <th>Build</th>
+            <td>
+              {% if op.build %}
+                #{{ op.build.id }}{% if op.build.name %} — {{ op.build.name }}{% endif %}
+              {% else %}
+                <span class="muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+
+          {% set item = op.bom_item %}
+
+          <tr>
+            <th>Part #</th>
+            <td style="font-weight: 900;">
+              {% if item %}
+                {{ item.part_number or "" }}
+              {% else %}
+                <span class="muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <th>Part Name</th>
+            <td>
+              {% if item %}
+                {{ item.name }}
+              {% else %}
+               <span class="muted">—</span>
+             {% endif %}
+            </td>
+          </tr>
+
+
+          <tr>
+            <th>Qty Done</th>
+            <td>{{ op.qty_done if op.qty_done is not none else "—" }}</td>
+          </tr>
+
+          <tr>
+            <th>Qty Scrap</th>
+            <td>{{ op.qty_scrap if op.qty_scrap is not none else "—" }}</td>
+          </tr>
+
+          <tr>
+            <th>Updated</th>
+            <td>{{ op.updated_at if op.updated_at else "—" }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="stack" style="margin-top: 12px;">
+        <div class="muted" style="font-weight: 700;">Status Actions</div>
+
+        <div class="row">
+          {% if s in ["queue", "blocked"] %}
+            <form method="post" action="{{ url_for('surface_grinding_bp.surface_start', op_id=op.id) }}">
+              <button class="btn btn-primary" type="submit">Start</button>
+            </form>
+          {% endif %}
+
+          {% if s in ["queue", "in_progress", "blocked"] %}
+            <form method="post" action="{{ url_for('surface_grinding_bp.surface_block', op_id=op.id) }}">
+              <button class="btn" type="submit">Block</button>
+            </form>
+          {% endif %}
+
+          {% if s in ["queue", "in_progress", "blocked"] %}
+            <form method="post" action="{{ url_for('surface_grinding_bp.surface_cancel', op_id=op.id) }}">
+              <button class="btn btn-danger" type="submit" onclick="return confirm('Cancel this operation?');">
+                Cancel
+              </button>
+            </form>
+          {% endif %}
+        </div>
+
+        {% if s in ["queue", "in_progress", "blocked"] %}
+          <div class="row">
+            <form method="post"
+                  action="{{ url_for('surface_grinding_bp.surface_complete', op_id=op.id) }}"
+                  class="row" style="gap: 10px; align-items: flex-end;">
+              <div class="field" style="min-width: 160px;">
+                <label>Qty Done</label>
+                <input type="number" name="qty_done" step="1" min="0" placeholder="e.g. 10">
+              </div>
+              <div class="field" style="min-width: 160px;">
+                <label>Qty Scrap</label>
+                <input type="number" name="qty_scrap" step="1" min="0" placeholder="e.g. 0">
+              </div>
+              <button class="btn btn-primary" type="submit">Complete</button>
+            </form>
+          </div>
+        {% endif %}
+
+        {% if s in ["blocked", "cancelled"] %}
+          <div class="row">
+            <form method="post" action="{{ url_for('surface_grinding_bp.surface_reopen', op_id=op.id) }}">
+              <button class="btn" type="submit">Reopen → Queue</button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right: Grinding Details -->
+    <div class="card">
+      <div class="row" style="justify-content: space-between; align-items: baseline;">
+        <h2 style="margin: 0;">Surface Grinding Details</h2>
+        <div class="muted" style="font-size: 13px;">
+          {% if detail and detail.updated_at %}Last updated: {{ detail.updated_at }}{% else %}—{% endif %}
+        </div>
+      </div>
+
+      <div class="stack" style="margin-top: 10px;">
+        <div class="muted" style="font-weight: 800;">Wheel / Setup</div>
+        <table class="table">
+          <tbody>
+            <tr>
+              <th style="width: 34%;">Wheel</th>
+              <td>
+                {% if detail %}
+                  {{ detail.wheel_brand or "" }} {{ detail.wheel_model or "" }}
+                  {% if detail.wheel_grit %} • {{ detail.wheel_grit }} grit{% endif %}
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>Grade / Structure / Bond</th>
+              <td>
+                {% if detail %}
+                  {{ detail.wheel_grade or "—" }} / {{ detail.wheel_structure or "—" }} / {{ detail.wheel_bond or "—" }}
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            <!--Hide Coolant
+            <tr>
+              <th>Coolant</th>
+              <td>{% if detail and detail.coolant %}{{ detail.coolant }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr> -->
+          </tbody>
+        </table>
+
+        <div class="muted" style="font-weight: 800;">Process</div>
+        <table class="table">
+          <tbody>
+            <tr>
+              <th style="width: 34%;">Cycles</th>
+              <td>{% if detail and detail.cycles is not none %}{{ detail.cycles }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+            <tr>
+              <th>Stock Removed (in)</th>
+              <td>{% if detail and detail.stock_removed_in is not none %}{{ "%.5f"|format(detail.stock_removed_in) }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+            <tr>
+              <th>DOC / pass (in)</th>
+              <td>{% if detail and detail.doc_per_pass_in is not none %}{{ "%.5f"|format(detail.doc_per_pass_in) }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+            <tr>
+              <th>Wheel Speed (Hz)</th>
+              <td>{% if detail and detail.wheel_speed_hz is not none %}{{ detail.wheel_speed_hz }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+            <tr>
+              <th>Table Speed</th>
+              <td>{% if detail and detail.table_speed_setting %}{{ detail.table_speed_setting }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+            <tr>
+              <th>Traverse Speed</th>
+              <td>{% if detail and detail.traverse_speed_setting %}{{ detail.traverse_speed_setting }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="muted" style="font-weight: 800;">Thickness</div>
+        <table class="table">
+          <tbody>
+            <tr>
+              <th style="width: 34%;">Target (in)</th>
+              <td>{% if detail and detail.target_thickness_in is not none %}{{ "%.5f"|format(detail.target_thickness_in) }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+            <tr>
+              <th>Actual (in)</th>
+              <td>{% if detail and detail.actual_thickness_in is not none %}{{ "%.5f"|format(detail.actual_thickness_in) }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="muted" style="font-weight: 800;">Notes</div>
+        <div class="card" style="box-shadow: none; background: rgba(255,255,255,.02);">
+          <div class="stack">
+            <div>
+              <div class="muted" style="font-weight: 800;">Finish Notes</div>
+              <div style="white-space: pre-wrap;">
+                {% if detail and detail.finish_notes %}{{ detail.finish_notes }}{% else %}<span class="muted">—</span>{% endif %}
+              </div>
+            </div>
+            <div>
+              <div class="muted" style="font-weight: 800;">Issues</div>
+              <div style="white-space: pre-wrap;">
+                {% if detail and detail.issue_notes %}{{ detail.issue_notes }}{% else %}<span class="muted">—</span>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="justify-content: flex-end; margin-top: 12px">
+          <a class="btn btn-primary" href="{{ url_for('surface_grinding_bp.surface_details_edit', op_id=op.id) }}">Edit Details</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

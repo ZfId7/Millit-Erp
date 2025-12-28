@@ -1,9 +1,11 @@
 # File path: modules/jobs_management/routes/__init__.py
+# V3 Add op_progress_add
+
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from sqlalchemy import func
 
-from database.models import db, Customer, Job, Build, JobWorkLog, BOMItem, Part, BuildOperation
+from database.models import db, Customer, Job, Build, JobWorkLog, BOMItem, Part, BuildOperation, BuildOperationProgress
 from modules.jobs_management.services.routing import ensure_operations_for_bom_item
 
 from functools import wraps
@@ -423,7 +425,7 @@ def build_bom_delete(bom_item_id):
 @jobs_bp.route("/build/<int:build_id>/ops/regenerate", methods=["POST"])
 def build_ops_regenerate(build_id):
     build = Build.query.get_or_404(build_id)
-    job = Job.query.get_or_404(job_id)
+    job = build.job
 
     if job.is_archived:
         flash("This job is archived. Regenerate Ops is disabled.", "danger")
@@ -493,3 +495,78 @@ def delete_job(job_id):
     flash("Job deleted.", "success")
     return redirect(url_for("jobs_bp.jobs_index"))
 
+@jobs_bp.route("/ops/<int:op_id>/progress/add", methods=["POST"])
+@login_required
+def op_progress_add(op_id):
+    op = BuildOperation.query.get_or_404(op_id)
+
+    # Ensure we can redirect back to the correct job page
+    job_id = request.form.get("job_id", type=int)
+    if not job_id and op.build:
+        job_id = op.build.job_id
+
+    qty_done_delta = request.form.get("qty_done_delta", type=float) or 0.0
+    qty_scrap_delta = request.form.get("qty_scrap_delta", type=float) or 0.0
+    note = (request.form.get("note") or "").strip()
+
+    if qty_done_delta < 0 or qty_scrap_delta < 0:
+        flash("Progress values cannot be negative.", "error")
+        return redirect(url_for("jobs_bp.job_detail", job_id=job_id))
+
+    if qty_done_delta == 0 and qty_scrap_delta == 0 and not note:
+        flash("Nothing to add. Enter qty and/or a note.", "error")
+        return redirect(url_for("jobs_bp.job_detail", job_id=job_id, _anchor=f"op-{op.id}"))
+
+    entry = BuildOperationProgress(
+        build_operation_id=op.id,
+        qty_done_delta=qty_done_delta,
+        qty_scrap_delta=qty_scrap_delta,
+        note=note or None,
+    )
+    db.session.add(entry)
+
+    # Update operation totals
+    op.qty_done = (op.qty_done or 0.0) + qty_done_delta
+    op.qty_scrap = (op.qty_scrap or 0.0) + qty_scrap_delta
+
+    db.session.commit()
+    flash("Progress added.", "success")
+    return redirect(url_for("jobs_bp.job_daily_update", job_id=job_id, _anchor=f"op-{op.id}"))
+
+@jobs_bp.route("/<int:job_id>/daily_update", methods=["GET"])
+@login_required
+def job_daily_update(job_id):
+    job = Job.query.get_or_404(job_id)
+
+    ops = (
+        BuildOperation.query
+        .join(Build, BuildOperation.build_id == Build.id)
+        .filter(Build.job_id == job.id)
+        .order_by(BuildOperation.build_id.asc())
+        .all()
+    )
+
+    ops_by_build = {}
+    op_ids = []
+    for op in ops:
+        ops_by_build.setdefault(op.build_id, []).append(op)
+        op_ids.append(op.id)
+
+    progress_by_op_id = {}
+    if op_ids:
+        progress_rows = (
+            BuildOperationProgress.query
+            .filter(BuildOperationProgress.build_operation_id.in_(op_ids))
+            .order_by(BuildOperationProgress.created_at.desc())
+            .limit(400)  # enough for "today-ish" visibility
+            .all()
+        )
+        for p in progress_rows:
+            progress_by_op_id.setdefault(p.build_operation_id, []).append(p)
+
+    return render_template(
+        "jobs_management/daily_update.html",
+        job=job,
+        ops_by_build=ops_by_build,
+        progress_by_op_id=progress_by_op_id,
+    )

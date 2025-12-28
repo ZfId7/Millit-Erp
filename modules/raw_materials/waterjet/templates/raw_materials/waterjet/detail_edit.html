@@ -1,0 +1,256 @@
+<!-- File path: modules/raw_materials/waterjet/templates/raw_materials/waterjet/detail_edit.html -->
+<!-- V1 Details Edit 
+    V2 Move to modules/raw_materials/ | Blueprint changed to raw_mats_waterjet_bp -->
+
+{% extends "base.html" %}
+{% block title %}Waterjet Details{% endblock %}
+{% block topbar %}💧 Waterjet — Details{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Waterjet Details</h1>
+      <p class="page-subtitle">
+        Job #{{ op.build.job.job_number if op.build and op.build.job else "" }} —
+        {{ op.build.job.customer.name if op.build and op.build.job and op.build.job.customer else "" }}
+      </p>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <a href="{{ url_for('raw_mats_waterjet_bp.waterjet_queue') }}" class="btn btn-secondary">← Back to Queue</a>
+      <a href="{{ url_for('raw_mats_waterjet_bp.waterjet_detail', op_id=op.id) }}" class="btn btn-secondary">
+        ← Back to Details
+      </a>
+
+      <span class="badge {% if op.status == 'in_progress' %}badge-in-progress{% elif op.status == 'queue' %}badge-queue{% elif op.status == 'completed' %}badge-complete{% elif op.status == 'cancelled' %}badge-danger{% elif op.status == 'blocked' %}badge-warning{% endif %}">
+        {{ op.status.replace('_', ' ') }}
+      </span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 12px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_start', op_id=op.id) }}">
+        <button class="btn btn-primary" type="submit">Start</button>
+      </form>
+
+      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_complete', op_id=op.id) }}">
+        <button class="btn btn-success" type="submit">Complete</button>
+      </form>
+
+      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_cancel', op_id=op.id) }}">
+        <button class="btn btn-danger" type="submit">Cancel</button>
+      </form>
+      
+      {% if op.status == 'cancelled' %}
+        <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_reopen', op_id=op.id) }}">
+          <button class="btn btn-secondary" type="submit">Reopen</button>
+        </form>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_detail_update', op_id=op.id) }}">
+      <h2 style="margin-top:0;">Material</h2>
+
+      <div class="row" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:320px; flex:1;">
+          <label class="form-label">Raw Stock Item</label>
+          <select class="form-select" name="raw_stock_id">
+            <option value="">— Select raw stock —</option>
+            {% for r in raw_stock_items %}
+              <option value="{{ r.id }}" {% if detail.raw_stock_id == r.id %}selected{% endif %}>
+                {{ r.material_type }} — {{ r.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="form-label">Material Source</label>
+          <select class="form-select" name="material_source">
+            {% set src = detail.material_source or "" %}
+            <option value="" {% if src == "" %}selected{% endif %}>—</option>
+            <option value="inventory" {% if src == "inventory" %}selected{% endif %}>Inventory</option>
+            <option value="customer_supplied" {% if src == "customer_supplied" %}selected{% endif %}>Customer supplied</option>
+            <option value="outsourced" {% if src == "outsourced" %}selected{% endif %}>Outsourced</option>
+            <option value="other" {% if src == "other" %}selected{% endif %}>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="gap:12px; flex-wrap:wrap; margin-top: 12px;">
+          <div style="min-width:200px;">
+            <div class="muted" style="font-size:12px; margin-bottom:4px;">Default Thickness</div>
+            <div id="rsThickness" style="font-weight:700;">—</div>
+          </div>
+          <div style="min-width:200px;">
+            <div class="muted" style="font-size:12px; margin-bottom:4px;">Default Width</div>
+            <div id="rsWidth" style="font-weight:700;">—</div>
+          </div>
+          <div style="min-width:200px;">
+            <div class="muted" style="font-size:12px; margin-bottom:4px;">Default Length</div>
+            <div id="rsLength" style="font-weight:700;">—</div>
+          </div>
+        
+
+
+        <div style="min-width:260px; flex:1;">
+          <label class="form-label">Yield</label>
+          <input class="form-control" name="yield_note" value="{{ detail.yield_note or '' }}" placeholder="e.g. 12/sheet, 2 sheets needed">
+        </div>
+      </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Material Remaining</label>
+          <select class="form-select" name="material_remaining">
+            <option value="" {% if detail.material_remaining is none %}selected{% endif %}>—</option>
+            <option value="yes" {% if detail.material_remaining is true %}selected{% endif %}>
+              Yes — some material left
+            </option>
+            <option value="no" {% if detail.material_remaining is false %}selected{% endif %}>
+              No — used all material
+            </option>
+          </select>
+        </div>
+
+      <hr style="opacity:.15; margin: 14px 0;">
+
+      <h2>Program / File</h2>
+      <div class="row" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:320px; flex:1;">
+          <label class="form-label">File Name</label>
+          <input class="form-control" name="file_name" value="{{ detail.file_name or '' }}" placeholder="example_knife_blank_v3.nc">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Program Revision</label>
+          <input class="form-control" name="program_revision" value="{{ detail.program_revision or '' }}" placeholder="v3">
+        </div>
+      </div>
+
+      <hr style="opacity:.15; margin: 14px 0;">
+
+      <h2>Runtime</h2>
+      <div class="row" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:200px;">
+          <label class="form-label">Estimated (min)</label>
+          <input class="form-control" name="runtime_est_min" value="{{ detail.runtime_est_min or '' }}">
+        </div>
+        <div style="min-width:200px;">
+          <label class="form-label">Actual (min)</label>
+          <input class="form-control" name="runtime_actual_min" value="{{ detail.runtime_actual_min or '' }}">
+        </div>
+      </div>
+    <!-- Save details action form -->
+        <form>
+          <div style="margin-top:10px; display:flex; gap:10px; justify-content:flex-end;">
+            <button class="btn btn-primary" type="submit">Save Details</button>
+          </div>
+        </form>
+      <hr style="opacity:.15; margin: 14px 0;">
+<!-- Block -->
+      <h2>Block</h2>
+      <div class="row" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:320px;">
+          <label class="form-label">Blocked Reason</label>
+          <select class="form-select" name="blocked_reason" id="blockedReason">
+            {% set br = detail.blocked_reason or "" %}
+            <option value="" {% if br == "" %}selected{% endif %}>—</option>
+            <option value="material_not_available" {% if br == "material_not_available" %}selected{% endif %}>Material not available</option>
+            <option value="file_missing" {% if br == "file_missing" %}selected{% endif %}>File missing</option>
+            <option value="programming_needed" {% if br == "programming_needed" %}selected{% endif %}>Programming needed</option>
+            <option value="machine_down" {% if br == "machine_down" %}selected{% endif %}>Machine down</option>
+            <option value="outsourced" {% if br == "outsourced" %}selected{% endif %}>Outsourced</option>
+            <option value="other" {% if br == "other" %}selected{% endif %}>Other</option>
+          </select>
+        </div>
+        
+        <div style="min-width:420px; flex:1;" id="blockedNotesWrap" style="display:none;">
+          <label class="form-label">Blocked Notes (optional)</label>
+          <input class="form-control" name="blocked_notes" value="{{ detail.blocked_notes or '' }}" placeholder="Optional">
+        </div>
+
+        <div style="min-width:180px; display:flex; align-items:end;">
+          <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_block', op_id=op.id) }}">
+            <!-- we submit reason/notes from this page via JS -->
+          </form>
+        </div>
+      </div>
+    
+    <!-- Block Status form -->
+    <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_block', op_id=op.id) }}" id="blockForm">
+        <input type="hidden" name="blocked_reason" id="blockReasonHidden" value="">
+        <input type="hidden" name="blocked_notes" id="blockNotesHidden" value="">
+        <button class="btn btn-warning" type="submit">Set Status: Blocked</button>
+      </form>
+    </div>
+
+    <hr style="opacity:.15; margin: 14px 0;">
+    <!-- Notes form -->
+    <h2>Notes</h2>
+    <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_detail_update', op_id=op.id) }}">
+      <textarea class="form-control" name="notes" rows="3">{{ detail.notes or '' }}</textarea>
+      <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+        <button class="btn btn-secondary" type="submit">Save Notes</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+    window.RAW_STOCK_MAP = {{ raw_stock_map|tojson }};
+</script>
+
+<script>
+  (function(){
+    const reason = document.getElementById("blockedReason");
+    const notesWrap = document.getElementById("blockedNotesWrap");
+    const notesInput = document.querySelector("input[name='blocked_notes']");
+    const reasonHidden = document.getElementById("blockReasonHidden");
+    const notesHidden = document.getElementById("blockNotesHidden");
+
+    function sync() {
+      const v = (reason.value || "").toLowerCase();
+      const showNotes = (v === "other");
+      notesWrap.style.display = showNotes ? "block" : "none";
+
+      reasonHidden.value = v;
+      notesHidden.value = notesInput ? (notesInput.value || "") : "";
+    }
+
+    if (reason) reason.addEventListener("change", sync);
+    if (notesInput) notesInput.addEventListener("input", sync);
+    sync();
+  })();
+</script>
+<script>
+(function(){
+  const sel = document.querySelector('select[name="raw_stock_id"]');
+  const tEl = document.getElementById('rsThickness');
+  const wEl = document.getElementById('rsWidth');
+  const lEl = document.getElementById('rsLength');
+
+  function fmt(v, digits) {
+    if (v === null || v === undefined || v === "") return "—";
+    const n = Number(v);
+    if (Number.isNaN(n)) return "—";
+    return n.toFixed(digits) + '"';
+  }
+
+  function updateDefaults() {
+    const id = sel && sel.value ? Number(sel.value) : null;
+    const info = (id && window.RAW_STOCK_MAP) ? window.RAW_STOCK_MAP[id] : null;
+
+    tEl.textContent = info ? fmt(info.thickness_in, 4) : "—";
+    wEl.textContent = info ? fmt(info.width_in, 2) : "—";
+    lEl.textContent = info ? fmt(info.length_in, 2) : "—";
+  }
+
+  if (sel) sel.addEventListener('change', updateDefaults);
+  updateDefaults();
+})();
+</script>
+
+{% endblock %}

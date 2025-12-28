@@ -1,0 +1,123 @@
+<!-- File path: templates/jobs_management/daily_update.html 
+    V1 Base Build | Daily Update -->
+    
+{% extends "base.html" %}
+
+{% block topbar %}
+📌 Daily Update
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Daily Update — Job #{{ job.id }}</h1>
+      <div class="page-subtitle">
+        {% if job.customer_name %}{{ job.customer_name }} • {% endif %}
+        Update progress across operations without completing them.
+      </div>
+    </div>
+
+    <div class="row" style="justify-content: flex-end;">
+      <a class="btn" href="{{ url_for('jobs_bp.job_detail', job_id=job.id) }}">← Back to Job</a>
+    </div>
+  </div>
+
+  {% for b in job.builds %}
+    <div class="card">
+      <h2>{{ b.name }}</h2>
+
+      {% set ops = ops_by_build.get(b.id, []) %}
+      {% if ops|length == 0 %}
+        <div class="muted">No operations generated for this build yet.</div>
+      {% else %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 80px;">Op</th>
+              <th style="width: 180px;">Part #</th>
+              <th>Part Name</th>
+              <th style="width: 140px;">Module</th>
+              <th style="width: 120px;">Status</th>
+              <th style="width: 110px;">Planned</th>
+              <th style="width: 110px;">Done</th>
+              <th style="width: 110px;">Scrap</th>
+              <!-- <th style="width: 520px;">Add Progress</th> -->
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for op in ops %}
+              {% set item = op.bom_item %}
+              <tr id="op-{{ op.id }}">
+                <td class="muted">{{ op.id }}</td>
+
+                <td style="font-weight: 900;">
+                  {% if item %}{{ item.part_number or "" }}{% else %}<span class="muted">—</span>{% endif %}
+                </td>
+
+                <td>
+                  {% if item %}{{ item.name }}{% else %}<span class="muted">—</span>{% endif %}
+                </td>
+
+                <td class="muted">{{ op.module_key }}</td>
+
+                <td>
+                  <span class="badge">{{ op.status }}</span>
+                </td>
+
+                <td class="muted">{{ op.qty_planned }}</td>
+                <td class="muted">{{ op.qty_done }}</td>
+                <td class="muted">{{ op.qty_scrap }}</td>
+              </tr>
+              
+              <tr>
+                <td colspan ="7">
+                  <form method="post"
+                        action="{{ url_for('jobs_bp.op_progress_add', op_id=op.id) }}"
+                        class="row"
+                        style="gap: 8px; align-items: flex-end; flex-wrap: wrap; margin_top: 6px;">
+
+                    <input type="hidden" name="job_id" value="{{ job.id }}">
+
+                    <div class="field" style="min-width: 140px;">
+                      <label>+Done</label>
+                      <input type="number" step="1" min="0" name="qty_done_delta" placeholder="0">
+                    </div>
+
+                    <div class="field" style="min-width: 140px;">
+                      <label>+Scrap</label>
+                      <input type="number" step="1" min="0" name="qty_scrap_delta" placeholder="0">
+                    </div>
+
+                    <div class="field" style="min-width: 320px; flex: 1;">
+                      <label>Note</label>
+                      <input type="text" name="note" placeholder="optional">
+                    </div>
+
+                    <button class="btn btn-primary" type="submit">Add</button>
+                  </form>
+
+                  {% set recent = (progress_by_op_id.get(op.id, [])[:3]) %}
+                  {% if recent|length > 0 %}
+                    <div class="muted" style="margin-top: 6px;">
+                      {% for p in recent %}
+                        <div>
+                          {{ p.created_at }} — +{{ p.qty_done_delta }} / +{{ p.qty_scrap_delta }}
+                          {% if p.note %} — {{ p.note }}{% endif %}
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+<!-- File path: modules/raw_materials/waterjet/templates/raw_materials/waterjet/manager/new.html -->
+<!-- V1 Base build Consumables Manager 
+    V2 Moved to modules/raw_materials/waterjet/templates/
+    blueprint changed to raw_mats_waterjet_bp
+-->
+
+{% extends "base.html" %}
+{% block title %}Add Consumable{% endblock %}
+{% block topbar %}➕ Waterjet — Add Consumable{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Add Consumable</h1>
+      <p class="page-subtitle">Create a waterjet consumable item</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('raw_mats_waterjet_bp.waterjet_manager_index') }}">← Back</a>
+  </div>
+
+  <div class="card" style="max-width:980px;">
+    <form method="POST">
+      <div class="row" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:320px; flex:1;">
+          <label class="form-label">Name *</label>
+          <input class="form-control" name="name" required placeholder="0.010 Orifice / Mixing Tube / Garnet 80 mesh">
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="form-label">Category *</label>
+          <select class="form-select" name="category" required>
+            <option value="">—</option>
+            <option value="nozzle">Nozzle</option>
+            <option value="orifice">Orifice</option>
+            <option value="garnet">Garnet</option>
+            <option value="seal">Seal</option>
+            <option value="filter">Filter</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="form-label">UOM</label>
+          <input class="form-control" name="uom" value="ea" placeholder="ea / lb / bag">
+        </div>
+      </div>
+
+      <div class="row" style="gap:12px; flex-wrap:wrap; margin-top:12px;">
+        <div style="min-width:220px;">
+          <label class="form-label">Qty On Hand</label>
+          <input class="form-control" name="qty_on_hand" value="0">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Reorder Point</label>
+          <input class="form-control" name="reorder_point" placeholder="e.g. 2">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Reorder Qty</label>
+          <input class="form-control" name="reorder_qty" placeholder="e.g. 10">
+        </div>
+      </div>
+
+      <div class="row" style="gap:12px; flex-wrap:wrap; margin-top:12px;">
+        <div style="min-width:260px; flex:1;">
+          <label class="form-label">Vendor</label>
+          <input class="form-control" name="vendor">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Part Number</label>
+          <input class="form-control" name="part_number">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Location</label>
+          <input class="form-control" name="location" placeholder="Bin / Rack">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" name="notes" rows="3"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+        <button class="btn btn-primary" type="submit">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

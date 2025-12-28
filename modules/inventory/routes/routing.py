@@ -30,7 +30,8 @@ def routing_new():
     part_types = PartType.query.order_by(PartType.name.asc()).all()
 
     ALLOWED_MODULE_KEYS = {
-        "waterjet",
+        #"waterjet",
+        "raw_materials",
         "surface_grinding",
         "bevel_grinding",
         "manufacturing",

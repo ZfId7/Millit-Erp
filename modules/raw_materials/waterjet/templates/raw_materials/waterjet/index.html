@@ -1,0 +1,43 @@
+<!-- File path: templates/waterjet/index.html -->
+<!-- V1 - Base index module with card to waterjet/queue -->
+<!-- V2 - Add card to Consumables Inventory waterjet/manager -->
+<!-- V3 - Refactor | move behind raw_materials/index -->
+{% extends "base.html" %}
+
+{% block title %}Raw Materials Processing{% endblock %}
+{% block topbar %}✂️ Raw Materials{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">💧 Waterjet</h1>
+      <p class="page-subtitle">
+        Blank cutting and raw material processing.
+      </p>
+    </div>
+    <div class="row">
+      <a class="btn" href="{{ url_for('raw_materials_bp.raw_mats_index') }}">← Raw Materials Home</a>
+    </div>
+  </div>
+
+  <div class="row" style="gap: 12px; flex-wrap: wrap;">
+    <a class="card" href="{{ url_for('raw_mats_waterjet_bp.waterjet_queue') }}"
+       style="min-width: 320px; text-decoration: none;">
+      <h2 style="margin: 0 0 6px 0;"> Waterjet Queue</h2>
+      <p class="muted" style="margin: 0;">
+        View and process waterjet operations generated from BOM routing.
+      </p>
+    </a>
+    
+    <a class="card" href="{{ url_for('raw_mats_waterjet_bp.waterjet_manager_index') }}" style="min-width: 320px; text-decoration:none;">
+        <h2 style="margin: 0 0 6px 0;">Consumables</h2>
+        <p class="muted" style="margin: 0;">Nozzles, orifices, garnet, seals, filters.</p>
+    </a>
+    
+
+  </div>
+
+</div>
+{% endblock %}

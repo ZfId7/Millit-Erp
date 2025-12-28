@@ -1,0 +1,154 @@
+<!-- File path: modules/surface_grinding/templates/surface_grinding/details_edit.html -->
+<!-- V1 Base Build Details Edit Template -->
+
+{% extends "base.html" %}
+
+{% block topbar %}
+🧱 Surface Grinding
+{% endblock %}
+
+{% block content %}
+{% set detail = op.surface_grinding_detail %}
+
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Edit Operation Details</h1>
+      <div class="page-subtitle">Operation ID: {{ op.id }}</div>
+    </div>
+
+    <div class="row" style="justify-content: flex-end;">
+      <a class="btn" href="{{ url_for('surface_grinding_bp.surface_details', op_id=op.id) }}">Cancel</a>
+      <button class="btn btn-primary" type="submit" form="sg-details-form">Save</button>
+    </div>
+  </div>
+
+  <form id="sg-details-form"
+        method="post"
+        action="{{ url_for('surface_grinding_bp.surface_details_edit', op_id=op.id) }}">
+
+    <div class="stack">
+
+      <div class="card">
+        <h2>Wheel / Setup</h2>
+        <div class="row">
+          <div class="field">
+            <label>Wheel Brand</label>
+            <input type="text" name="wheel_brand" value="{{ detail.wheel_brand if detail else '' }}">
+          </div>
+
+          <div class="field">
+            <label>Wheel Model</label>
+            <input type="text" name="wheel_model" value="{{ detail.wheel_model if detail else '' }}">
+          </div>
+
+          <div class="field">
+            <label>Grit</label>
+            <input type="number" name="wheel_grit" step="1" min="0"
+                   value="{{ detail.wheel_grit if detail and detail.wheel_grit is not none else '' }}">
+          </div>
+
+          <div class="field">
+            <label>Grade</label>
+            <input type="text" name="wheel_grade" value="{{ detail.wheel_grade if detail else '' }}" placeholder="e.g. F / G / K">
+          </div>
+
+          <div class="field">
+            <label>Structure</label>
+            <input type="text" name="wheel_structure" value="{{ detail.wheel_structure if detail else '' }}" placeholder="e.g. 10 / 15">
+          </div>
+
+          <div class="field">
+            <label>Bond</label>
+            <input type="text" name="wheel_bond" value="{{ detail.wheel_bond if detail else '' }}" placeholder="e.g. V">
+          </div>
+    <!-- HIDE 
+          <div class="field" style="min-width: 360px;">
+            <label>Coolant</label>
+            <input type="text" name="coolant" value="{{ detail.coolant if detail else '' }}" placeholder="flood / brand / notes">
+          </div>
+        </div>
+      </div> -->
+
+      <div class="card">
+        <h2>Process</h2>
+        <div class="row">
+          <div class="field">
+            <label>Cycles</label>
+            <input type="number" name="cycles" step="1" min="0"
+                   value="{{ detail.cycles if detail and detail.cycles is not none else '' }}">
+          </div>
+
+          <div class="field">
+            <label>Stock Removed (in)</label>
+            <input type="number" name="stock_removed_in" step="0.00001"
+                   value="{{ detail.stock_removed_in if detail and detail.stock_removed_in is not none else '' }}">
+            <div class="help">Use inches. (You log to 0.00000")</div>
+          </div>
+
+          <div class="field">
+            <label>DOC / pass (in)</label>
+            <input type="number" name="doc_per_pass_in" step="0.00001"
+                   value="{{ detail.doc_per_pass_in if detail and detail.doc_per_pass_in is not none else '' }}">
+          </div>
+
+          <div class="field">
+            <label>Wheel Speed (Hz)</label>
+            <input type="number" name="wheel_speed_hz" step="0.1"
+                   value="{{ detail.wheel_speed_hz if detail and detail.wheel_speed_hz is not none else '' }}">
+          </div>
+
+          <div class="field">
+            <label>Table Speed</label>
+            <input type="text" name="table_speed_setting"
+                   value="{{ detail.table_speed_setting if detail else '' }}"
+                   placeholder="e.g. 2.5 or 3:00">
+          </div>
+
+          <div class="field">
+            <label>Traverse Speed</label>
+            <input type="text" name="traverse_speed_setting"
+                   value="{{ detail.traverse_speed_setting if detail else '' }}"
+                   placeholder="e.g. 10.5 or 11:00">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Thickness</h2>
+        <div class="row">
+          <div class="field">
+            <label>Target Thickness (in)</label>
+            <input type="number" name="target_thickness_in" step="0.00001"
+                   value="{{ detail.target_thickness_in if detail and detail.target_thickness_in is not none else '' }}">
+          </div>
+
+          <div class="field">
+            <label>Actual Thickness (in)</label>
+            <input type="number" name="actual_thickness_in" step="0.00001"
+                   value="{{ detail.actual_thickness_in if detail and detail.actual_thickness_in is not none else '' }}">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Notes</h2>
+        <div class="stack">
+          <div class="field" style="min-width: 100%;">
+            <label>Finish Notes</label>
+            <textarea name="finish_notes" rows="5">{{ detail.finish_notes if detail and detail.finish_notes else '' }}</textarea>
+          </div>
+
+          <div class="field" style="min-width: 100%;">
+            <label>Issues</label>
+            <textarea name="issue_notes" rows="4">{{ detail.issue_notes if detail and detail.issue_notes else '' }}</textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </form>
+
+</div>
+{% endblock %}

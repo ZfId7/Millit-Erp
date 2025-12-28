@@ -1,0 +1,97 @@
+<!-- File path: modules/raw_materials/waterjet/templates/raw_materials/waterjet/manager/edit.html -->
+<!-- V1 Base Build Consumables Manager 
+    V2  moved to modules/raw_materials/waterjet/templates/..
+    blueprint changed to raw_mats_waterjet_bp
+-->
+
+{% extends "base.html" %}
+{% block title %}Edit Consumable{% endblock %}
+{% block topbar %}✏️ Waterjet — Edit Consumable{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Edit Consumable</h1>
+      <p class="page-subtitle">{{ item.category }} — {{ item.name }}</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('raw_mats_waterjet_bp.waterjet_manager_index') }}">← Back</a>
+  </div>
+
+  <div class="card" style="max-width:980px;">
+    <form method="POST">
+      <div class="row" style="gap:12px; flex-wrap:wrap;">
+        <div style="min-width:320px; flex:1;">
+          <label class="form-label">Name *</label>
+          <input class="form-control" name="name" required value="{{ item.name }}">
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="form-label">Category *</label>
+          <select class="form-select" name="category" required>
+            {% set c = item.category or '' %}
+            <option value="">—</option>
+            <option value="nozzle" {% if c=='nozzle' %}selected{% endif %}>Nozzle</option>
+            <option value="orifice" {% if c=='orifice' %}selected{% endif %}>Orifice</option>
+            <option value="garnet" {% if c=='garnet' %}selected{% endif %}>Garnet</option>
+            <option value="seal" {% if c=='seal' %}selected{% endif %}>Seal</option>
+            <option value="filter" {% if c=='filter' %}selected{% endif %}>Filter</option>
+            <option value="other" {% if c=='other' %}selected{% endif %}>Other</option>
+          </select>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="form-label">UOM</label>
+          <input class="form-control" name="uom" value="{{ item.uom or 'ea' }}">
+        </div>
+      </div>
+
+      <div class="row" style="gap:12px; flex-wrap:wrap; margin-top:12px;">
+        <div style="min-width:220px;">
+          <label class="form-label">Qty On Hand</label>
+          <input class="form-control" name="qty_on_hand" value="{{ item.qty_on_hand }}">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Reorder Point</label>
+          <input class="form-control" name="reorder_point" value="{{ item.reorder_point if item.reorder_point is not none else '' }}">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Reorder Qty</label>
+          <input class="form-control" name="reorder_qty" value="{{ item.reorder_qty if item.reorder_qty is not none else '' }}">
+        </div>
+      </div>
+
+      <div class="row" style="gap:12px; flex-wrap:wrap; margin-top:12px;">
+        <div style="min-width:260px; flex:1;">
+          <label class="form-label">Vendor</label>
+          <input class="form-control" name="vendor" value="{{ item.vendor or '' }}">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Part Number</label>
+          <input class="form-control" name="part_number" value="{{ item.part_number or '' }}">
+        </div>
+        <div style="min-width:220px;">
+          <label class="form-label">Location</label>
+          <input class="form-control" name="location" value="{{ item.location or '' }}">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" name="notes" rows="3">{{ item.notes or '' }}</textarea>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="form-label" style="display:flex; gap:10px; align-items:center;">
+          <input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %}>
+          Active
+        </label>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
