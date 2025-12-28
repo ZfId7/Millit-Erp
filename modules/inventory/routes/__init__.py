@@ -1,9 +1,9 @@
 # File path: modules/inventory/routes/__init__.py
 # -V1 Inventory index/parts catalog
 # -V2 Raw Stock index/new
-
+# -V3 Parts Inventory index
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from database.models import db, RawStock
+from database.models import db, RawStock, PartInventory
 
 inventory_bp = Blueprint("inventory_bp", __name__)
 
@@ -85,3 +85,15 @@ def raw_stock_new():
 
     return render_template("inventory/raw_stock/new.html")
 
+@inventory_bp.route("/parts_inventory", methods=["GET"])
+def parts_inventory_index():
+    stage = request.args.get("stage", "").strip()
+
+    q = PartInventory.query.join(PartInventory.part).filter(PartInventory.is_active.is_(True))
+
+    if stage:
+        q = q.filter(PartInventory.stage_key == stage)
+
+    items = q.order_by(PartInventory.stage_key.asc(), PartInventory.id.asc()).all()
+
+    return render_template("inventory/parts_inventory/index.html", items=items, stage=stage)

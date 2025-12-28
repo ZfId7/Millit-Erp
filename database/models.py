@@ -331,6 +331,33 @@ class RawStock(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
+class PartInventory(db.Model):
+    __tablename__ = "part_inventory"
+    __table_args__ = (
+        UniqueConstraint("part_id", "stage_key", name="uq_part_inventory_part_stage"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    part = db.relationship("Part")
+
+    # stage_key examples: "blank", "wip", "finished"
+    stage_key = db.Column(db.String(32), nullable=False, default="blank", index=True)
+
+    qty_on_hand = db.Column(db.Float, default=0.0, nullable=False)
+    uom = db.Column(db.String(16), default="ea", nullable=False)
+
+    location = db.Column(db.String(64), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class WaterjetOperationDetail(db.Model):
     __tablename__ = "waterjet_operation_details"
     __table_args__ = {"sqlite_autoincrement": True}
@@ -448,3 +475,4 @@ class SurfaceGrindingOperationDetail(db.Model):
         "BuildOperation",
         backref=db.backref("surface_grinding_detail", uselist=False, cascade="all, delete-orphan")
     )
+

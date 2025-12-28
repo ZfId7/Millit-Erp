@@ -1,12 +1,13 @@
 # File path: modules/jobs_management/routes/__init__.py
 # V3 Add op_progress_add
-
+# V4 Add Parts_inventory hook
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from sqlalchemy import func
 
 from database.models import db, Customer, Job, Build, JobWorkLog, BOMItem, Part, BuildOperation, BuildOperationProgress
 from modules.jobs_management.services.routing import ensure_operations_for_bom_item
+from modules.inventory.services.parts_inventory import apply_part_inventory_delta
 
 from functools import wraps
 from flask import abort
@@ -24,11 +25,11 @@ def _next_job_number():
 
 @jobs_bp.route("/")
 def jobs_index():
-	jobs = Job.query.filter(Job.is_archived == False).order_by(Job.id.desc()).all()
-	return render_template(
-		"jobs_management/index.html", 
-		jobs=jobs,
-		)
+    jobs = Job.query.filter(Job.is_archived == False).order_by(Job.id.desc()).all()
+    return render_template(
+        "jobs_management/index.html", 
+        jobs=jobs,
+        )
 
 @jobs_bp.route("/new", methods=["GET", "POST"])
 def jobs_new():
@@ -529,6 +530,35 @@ def op_progress_add(op_id):
     op.qty_done = (op.qty_done or 0.0) + qty_done_delta
     op.qty_scrap = (op.qty_scrap or 0.0) + qty_scrap_delta
 
+    # ---- Inventory posting (ops-driven) ----
+    # Only for raw materials ops that produce "blank" inventory
+    RAW_MATS_BLANK_OP_KEYS = {
+        "waterjet_cut",
+        "laser_cut",
+        "bandsaw_cut",
+        "tablesaw_cut",
+        "edm_cut",
+    }
+
+    if op.module_key == "raw_materials" and op.op_key in RAW_MATS_BLANK_OP_KEYS:
+        if op.bom_item and op.bom_item.part_id:
+            part_id = op.bom_item.part_id
+            uom = op.bom_item.unit or "ea"
+
+            # Done adds blanks
+            if qty_done_delta:
+                apply_part_inventory_delta(part_id, "blank", qty_done_delta, uom=uom)
+
+            # Scrap reduces blanks (delta)
+            if qty_scrap_delta:
+                apply_part_inventory_delta(part_id, "blank", -qty_scrap_delta, uom=uom)
+        else:
+            flash(
+                "Progress saved, but Parts Inventory was not updated (BOM item is not linked to a catalog Part).",
+                "warning",
+            )
+    # ---------------------------------------------
+
     db.session.commit()
     flash("Progress added.", "success")
     return redirect(url_for("jobs_bp.job_daily_update", job_id=job_id, _anchor=f"op-{op.id}"))
@@ -557,7 +587,7 @@ def job_daily_update(job_id):
         progress_rows = (
             BuildOperationProgress.query
             .filter(BuildOperationProgress.build_operation_id.in_(op_ids))
-            .order_by(BuildOperationProgress.created_at.desc())
+            .order_by(BuildOperationProgress.created_at.desc(), BuildOperationProgress.id.desc())
             .limit(400)  # enough for "today-ish" visibility
             .all()
         )
