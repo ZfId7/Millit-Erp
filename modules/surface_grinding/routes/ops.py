@@ -1,12 +1,12 @@
 # File path: modules/surface_grinding/routes/ops.py
 # V1 Refactor Ops
-
+# V2 Change complete route to run through ops_flow
 from flask import request, redirect, url_for, flash
 
 from database.models import db, BuildOperation
 from modules.user.decorators import login_required
 from modules.surface_grinding import surface_bp
-
+from modules.jobs_management.services.ops_flow import complete_operation
 def _redirect_queue(*args, **kwargs):
     return redirect(url_for("surface_grinding_bp.surface_queue"))
     
@@ -38,31 +38,12 @@ def surface_start(op_id):
 def surface_complete(op_id):
     op = BuildOperation.query.get_or_404(op_id)
 
-    if not _ensure_surface_grinding(op):
-        return _redirect_queue
-        
-    if op.status == "cancelled":
-        flash ("Cannot complete: operation is cancelled." "error")
-        return _redirect_queue()
-
-    qty_done = request.form.get("qty_done", type=float) or 0.0
-    qty_scrap = request.form.get("qty_scrap", type=float) or 0.0
-
-    if qty_done < 0 or qty_scrap < 0:
-        flash("Quantities cannot be negative.", "error")
-        return _redirect_queue
-    
-    if qty_scrap < 0 and qty_scrap <0:
-        flash("qty_scrap cannot be negative.", "error")
-        return _redirect_queue
-
-    op.qty_done = qty_done
-    op.qty_scrap = qty_scrap
-    op.status = "complete"
+   
+    complete_operation(op)
 
     db.session.commit()
     flash("Operation completed.", "success")
-    return _redirect_queue
+    return _redirect_queue()
     
 @surface_bp.route("/op/<int:op_id>/cancel", methods=["POST"])
 @login_required

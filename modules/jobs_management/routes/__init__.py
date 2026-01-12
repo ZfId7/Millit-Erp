@@ -6,8 +6,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from sqlalchemy import func
 
 from database.models import db, Customer, Job, Build, JobWorkLog, BOMItem, Part, BuildOperation, BuildOperationProgress
-from modules.jobs_management.services.routing import ensure_operations_for_bom_item
+from modules.jobs_management.services.routing import ensure_operations_for_bom_item, enforce_release_state_for_bom_item
 from modules.inventory.services.parts_inventory import apply_part_inventory_delta
+from modules.jobs_management.services.ops_flow import complete_operation
 
 from functools import wraps
 from flask import abort
@@ -333,7 +334,7 @@ def build_bom(build_id):
         bom_items=bom_items
     )
 
-
+# Updated
 @jobs_bp.route("/build/<int:build_id>/bom/add", methods=["POST"])
 def build_bom_add(build_id):
     build = Build.query.get_or_404(build_id)
@@ -347,11 +348,14 @@ def build_bom_add(build_id):
 
     # Parse qty as float (supports things like 0.5 for material lengths later)
     try:
-        qty = float(qty_raw)
+        qty_per = float(qty_raw)
     except ValueError:
-        qty = 1.0
-    if qty <= 0:
-        qty = 1.0
+        qty_per = 1.0
+    if qty_per <= 0:
+        qty_per = 1.0
+
+    assemblies = float(getattr(build, "qty_ordered", 0) or 0)
+    qty_planned = qty_per * assemblies  # ✅ snapshot truth
 
     # Next line number
     last_line = db.session.query(func.max(BOMItem.line_no)).filter_by(build_id=build.id).scalar() or 0
@@ -376,13 +380,16 @@ def build_bom_add(build_id):
             part_number=selected_part.part_number,
             name=selected_part.name,
             description=selected_part.description,
-            qty=qty,
+            # Legacy qty kept for compatibility during refactor
+            qty=qty_per,
+            qty_per=qty_per,
+            qty_planned=qty_planned,
             unit=selected_part.unit or unit,
             source="manual",
         )
         db.session.add(bom)
         db.session.flush()
-        ensure_operations_for_bom_item(bom)  # safe no-op until routing exists
+        ensure_operations_for_bom_item(bom)  # will set op.qty_planned = bom.qty_planned
         db.session.commit()
 
         flash("BOM item added from catalog part.", "success")
@@ -399,15 +406,20 @@ def build_bom_add(build_id):
         part_number=part_number or None,
         name=name,
         description=description or None,
-        qty=qty,
+        qty=qty_per,              # legacy mirror
+        qty_per=qty_per,
+        qty_planned=qty_planned,
         unit=unit or "ea",
         source="manual",
     )
     db.session.add(bom)
+    db.session.flush()
+    ensure_operations_for_bom_item(bom)      # ✅ generate ops too (you were missing this)
     db.session.commit()
 
     flash("BOM item added.", "success")
     return redirect(url_for("jobs_bp.build_bom", build_id=build.id))
+
 
 
 @jobs_bp.route("/bom/<int:bom_item_id>/delete", methods=["POST"])
@@ -421,8 +433,6 @@ def build_bom_delete(bom_item_id):
     flash("BOM item deleted.", "success")
     return redirect(url_for("jobs_bp.build_bom", build_id=build_id))
 
-
-
 @jobs_bp.route("/build/<int:build_id>/ops/regenerate", methods=["POST"])
 def build_ops_regenerate(build_id):
     build = Build.query.get_or_404(build_id)
@@ -430,11 +440,14 @@ def build_ops_regenerate(build_id):
 
     if job.is_archived:
         flash("This job is archived. Regenerate Ops is disabled.", "danger")
-        return redirect(url_for("jobs_bp.job_detail", job_id=job_id))
+        return redirect(url_for("jobs_bp.job_detail", job_id=job.id))  # ✅ job.id
 
     # Re-run routing for every BOM line on this build
     for bom in build.bom_items:
         ensure_operations_for_bom_item(bom)
+
+        # ✅ enforce release for THIS bom line
+        enforce_release_state_for_bom_item(build_id=build.id, bom_item_id=bom.id)
 
     db.session.commit()
     flash("Operations regenerated from BOM + routing.", "success")
@@ -459,6 +472,7 @@ def job_delete_confirm(job_id):
     )
     
 @jobs_bp.route("/<int:job_id>/delete", methods=["POST"])
+@login_required
 @admin_required
 def delete_job(job_id):
     job = Job.query.get_or_404(job_id)
@@ -489,12 +503,23 @@ def delete_job(job_id):
         )
         return redirect(url_for("jobs_bp.job_detail", job_id=job_id))
 
-    # Delete root; cascades should delete children
+    # ✅ HARD CLEANUP: delete ops + bom items + builds for this job (prevents orphan queue rows)
+    build_ids = [b.id for b in Build.query.filter_by(job_id=job_id).all()]
+    if build_ids:
+        # Delete ops first (children)
+        BuildOperation.query.filter(BuildOperation.build_id.in_(build_ids)).delete(synchronize_session=False)
+        # Delete snapshot BOM items
+        BOMItem.query.filter(BOMItem.build_id.in_(build_ids)).delete(synchronize_session=False)
+        # Delete builds
+        Build.query.filter(Build.id.in_(build_ids)).delete(synchronize_session=False)
+
+    # Delete root job
     db.session.delete(job)
     db.session.commit()
 
-    flash("Job deleted.", "success")
+    flash("Job deleted (including BOM + ops).", "success")
     return redirect(url_for("jobs_bp.jobs_index"))
+
 
 @jobs_bp.route("/ops/<int:op_id>/progress/add", methods=["POST"])
 @login_required
@@ -600,3 +625,44 @@ def job_daily_update(job_id):
         ops_by_build=ops_by_build,
         progress_by_op_id=progress_by_op_id,
     )
+
+def release_next_for_bom_item(current_op: BuildOperation):
+    # clear any releases for this bom item (enforces 1-released invariant)
+    BuildOperation.query.filter_by(
+        build_id=current_op.build_id,
+        bom_item_id=current_op.bom_item_id
+    ).update(
+        {BuildOperation.is_released: False},
+        synchronize_session=False
+    )
+    current_op.is_released = False
+    
+    next_op = (
+        BuildOperation.query
+        .filter(
+            BuildOperation.build_id == current_op.build_id,
+            BuildOperation.bom_item_id == current_op.bom_item_id,
+            BuildOperation.sequence > current_op.sequence,
+            BuildOperation.status.notin_(["complete", "cancelled"]),
+        )
+        .order_by(BuildOperation.sequence.asc(), BuildOperation.id.asc())
+        .first()
+    )
+
+    if next_op:
+        next_op.is_released = True
+        if next_op.status not in ("blocked", "in_progress"):
+            next_op.status = "queue"
+
+@jobs_bp.route("/ops/<int:op_id>/complete", methods=["POST"])
+@login_required
+def op_mark_complete(op_id):
+    op = BuildOperation.query.get_or_404(op_id)
+
+    job_id = request.form.get("job_id", type=int) or (op.build.job_id if op.build else None)
+
+    complete_operation(op)
+
+    db.session.commit()
+    flash("Operation marked complete. Next operation released.", "success")
+    return redirect(url_for("jobs_bp.job_daily_update", job_id=job_id, _anchor=f"op-{op.id}"))

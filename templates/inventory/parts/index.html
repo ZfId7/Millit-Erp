@@ -50,10 +50,13 @@
             <td>
               <div class="row">
                 <a class="btn" href="{{ url_for('inventory_bp.parts_edit', part_id=p.id) }}">Edit</a>
-                <form method="post" action="{{ url_for('inventory_bp.parts_delete', part_id=p.id) }}"
-                      onsubmit="return confirm('Delete this part?');">
-                  <button class="btn btn-danger" type="submit">Delete</button>
-                </form>
+                {% if session.get("is_admin") %}
+                  <form method="post" 
+                      action="{{ url_for('inventory_bp.parts_delete', part_id=p.id) }}"
+                        onsubmit="return confirm('Delete this part?');">
+                    <button class="btn btn-danger" type="submit">Delete</button>
+                  </form>
+                {% endif %}  
               </div>
             </td>
           </tr>

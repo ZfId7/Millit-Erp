@@ -1,0 +1,133 @@
+<!-- File path: templates/work_orders/work_orders/detail.html -->
+{% extends "base.html" %}
+
+{% block title %}Work Order{% endblock %}
+{% block topbar %}👥 Work Orders{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ wo.wo_number }}{% if wo.title %} — {{ wo.title }}{% endif %}</h1>
+      <p class="page-subtitle">
+        Status: <span class="badge">{{ wo.status }}</span>
+      </p>
+    </div>
+
+    <div class="row" style="gap: 10px; flex-wrap: wrap;">
+      <a class="btn" href="{{ url_for('work_orders_bp.work_orders_index') }}">← Home</a>
+      <a class="btn" href="{{ url_for('work_orders_bp.planning_json') }}">Planning JSON</a>
+      <a class="btn primary" href="{{ url_for('work_orders_bp.wo_apply_preview', wo_id=wo.id) }}">Apply → Build Run</a>
+
+    </div>
+  </div>
+
+  <div class="card" style="max-width: 980px;">
+    <h2 style="margin:0 0 10px 0;">Update Status</h2>
+    <form method="POST" action="{{ url_for('work_orders_bp.wo_update_status', wo_id=wo.id) }}">
+      <div class="row" style="gap:12px; align-items:end; flex-wrap:wrap;">
+        <div style="min-width: 220px;">
+          <label class="label">Status</label>
+          <select class="input" name="status">
+            {% for s in ["open","in_progress","complete","cancelled"] %}
+              <option value="{{ s }}" {% if wo.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <button class="btn primary" type="submit">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" style="max-width: 980px; margin-top: 14px;">
+    <h2 style="margin:0 0 10px 0;">Add Line</h2>
+    <form method="POST" action="{{ url_for('work_orders_bp.wo_add_line', wo_id=wo.id) }}">
+      <div class="row" style="gap: 12px; align-items:end; flex-wrap: wrap;">
+        <div style="min-width: 420px; flex: 1;">
+          <label class="label">Part</label>
+          <select class="input" name="part_id" required>
+            <option value="">Select...</option>
+            {% for p in parts %}
+              <option value="{{ p.id }}">{{ p.part_number }} — {{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="min-width: 140px;">
+          <label class="label">Qty</label>
+          <input class="input" name="qty_requested" type="number" step="0.0001" value="1.0" />
+        </div>
+        
+        <div style="min-width: 140px;">
+            <label class="label">Method</label>
+            <select class="input" name="make_method">
+              <option value="MAKE">MAKE</option>
+              <option value="BUY">BUY</option>
+              <option value="OUTSOURCE">OUTSOURCE</option>
+            </select>
+        </div>
+        
+        <div style="min-width: 160px;">
+          <label class="label">Config</label>
+          <input class="input" name="config_key" placeholder="Optional" />
+        </div>
+
+        <div style="min-width: 120px;">
+          <label class="label">Line #</label>
+          <input class="input" name="line_no" type="number" step="1" placeholder="Auto" />
+        </div>
+
+        <div style="min-width: 220px; flex: 1;">
+          <label class="label">Notes</label>
+          <input class="input" name="notes" placeholder="Optional" />
+        </div>
+
+        <div>
+          <button class="btn primary" type="submit">Add</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" style="overflow:auto; margin-top: 14px;">
+    <h2 style="margin:0 0 10px 0;">Lines</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Line</th>
+          <th>Part</th>
+          <th>Qty</th>
+          <th>Config</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in lines %}
+        <tr>
+          <td>{{ l.line_no }}</td>
+          <td>
+            <div><strong>{{ l.part_number }}</strong></div>
+            <div class="muted">{{ l.name }}</div>
+          </td>
+          <td>{{ "%.4f"|format(l.qty_requested) }} {{ l.unit }}</td>
+          <td class="muted">{{ l.config_key or "" }}</td>
+          <td class="muted">{{ l.notes or "" }}</td>
+          <td style="text-align:right;">
+            <form method="POST" action="{{ url_for('work_orders_bp.wo_delete_line', line_id=l.id) }}"
+                  onsubmit="return confirm('Delete this line?');">
+              <button class="btn danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="muted">No lines yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

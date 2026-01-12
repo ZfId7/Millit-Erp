@@ -1,42 +1,57 @@
-<!-- templates/inventory/part_types/new.html -->
-
+{# File path: templates/inventory/part_types/new.html #}
 {% extends "base.html" %}
-{% block title %}New Part Type{% endblock %}
-{% block topbar %}🏷️ New Part Type{% endblock %}
-
 {% block content %}
-<div class="page">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Create Part Type</h1>
-      <p class="page-subtitle">Example key: blade, hardware, frame</p>
-    </div>
-    <a class="btn" href="{{ url_for('inventory_bp.part_types_index') }}">← Back</a>
+
+<div class="page-header">
+  <h2 style="margin:0;">New Part Type Code</h2>
+  <div class="muted" style="margin-top:6px;">
+    Used for parsing part numbers (e.g. <strong>OV-BL001-…</strong> → <strong>BL</strong>) and classification.
   </div>
-
-  <form method="post" class="stack">
-    <div class="card">
-      <div class="row">
-        <div class="field" style="min-width: 260px;">
-          <label>Key *</label>
-          <input name="key" type="text" placeholder="e.g. blade" required />
-          <div class="help">Lowercase, no spaces (used internally).</div>
-        </div>
-        <div class="field" style="min-width: 420px; flex: 1;">
-          <label>Name *</label>
-          <input name="name" type="text" placeholder="e.g. Blade" required />
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <button class="btn btn-primary" type="submit">✅ Create</button>
-      <a class="btn" href="{{ url_for('inventory_bp.part_types_index') }}">Cancel</a>
-    </div>
-  </form>
-  
-
-  
-
 </div>
+
+<div class="card" style="margin-top:12px;">
+  <div class="card-body">
+    <form method="post" action="{{ url_for('inventory_bp.part_types_new') }}">
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+
+        <div style="min-width:120px;">
+          <label class="label">Code</label>
+          <input class="input" name="code" maxlength="12" placeholder="BL" required>
+        </div>
+
+        <div style="min-width:260px; flex:1;">
+          <label class="label">Name</label>
+          <input class="input" name="name" placeholder="Blade" required>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="label">Category</label>
+          <select class="input" name="category_key" required>
+            {% for opt in category_options %}
+              <option value="{{ opt }}" {% if opt == "component" %}selected{% endif %}>
+                {{ opt }}
+              </option>
+            {% endfor %}
+
+          </select>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="label">Key (legacy)</label>
+          <input class="input" name="key" placeholder="blade" required>
+          <div class="muted" style="margin-top:6px;">
+            Internal identifier. Keep stable once used.
+          </div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button class="btn btn-primary" type="submit">Create</button>
+        <a class="btn" href="{{ url_for('inventory_bp.part_types_index') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
 {% endblock %}

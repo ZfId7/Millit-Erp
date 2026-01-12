@@ -35,31 +35,6 @@
     </div>
   </div>
 
-  <!-- Status actions stay usable -->
-  <div class="card" style="margin-bottom: 12px;">
-    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-      {% if op.status == 'cancelled' %}
-        <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_reopen', op_id=op.id) }}">
-          <button class="btn btn-secondary" type="submit">Reopen</button>
-        </form>
-      {% endif %}
-
-      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_start', op_id=op.id) }}">
-        <button class="btn" type="submit">Start</button>
-      </form>
-
-      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_complete', op_id=op.id) }}">
-        <button class="btn btn-success" type="submit">Complete</button>
-      </form>
-
-      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_cancel', op_id=op.id) }}">
-        <button class="btn btn-danger" type="submit">Cancel</button>
-      </form>
-
-      
-    </div>
-  </div>
-
   <!-- Read-only cards -->
   <div class="card" style="margin-bottom: 12px;">
     <h2 style="margin-top:0;">Material</h2>
@@ -161,6 +136,29 @@
         <div class="muted">Operation is not blocked.</div>
       {% endif %}
     </div>
+    <!-- Status actions stay usable -->
+  <div class="card" style="margin-bottom: 12px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+      {% if op.status == 'cancelled' %}
+        <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_reopen', op_id=op.id) }}">
+          <button class="btn btn-secondary" type="submit">Reopen</button>
+        </form>
+      {% endif %}
+    {# Hide
+      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_start', op_id=op.id) }}">
+        <button class="btn" type="submit">Start</button>
+      </form>
 
+      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_complete', op_id=op.id) }}">
+        <button class="btn btn-success" type="submit">Complete</button>
+      </form>
+    #}
+      <form method="POST" action="{{ url_for('raw_mats_waterjet_bp.waterjet_cancel', op_id=op.id) }}">
+        <button class="btn btn-danger" type="submit">Cancel</button>
+      </form>
+    
+      
+    </div>
+  </div>
 </div>
 {% endblock %}

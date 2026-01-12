@@ -1,0 +1,33 @@
+<!-- File path: templates/heat_treat/index.html -->
+<!-- V1 - Base index module with card to heat_treat/queue -->
+<!-- V2 - Add outsourced vs in-house split -->
+{% extends "base.html" %}
+
+{% block title %}Heat Treat{% endblock %}
+{% block topbar %}🔥 Heat Treat{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">🔥 Heat Treat</h1>
+      <p class="page-subtitle">
+        Heat treat operations and batch workflow.
+      </p>
+    </div>
+    
+  </div>
+
+  <div class="row" style="gap: 12px; flex-wrap: wrap;">
+    <a class="card" href="{{ url_for('heat_treat_bp.heat_treat_queue') }}"
+       style="min-width: 320px; text-decoration: none;">
+      <h2 style="margin: 0 0 6px 0;">Heat Treat Queue</h2>
+      <p class="muted" style="margin: 0;">
+        View released heat treat operations generated from BOM routing.
+      </p>
+    </a>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+<!-- File path: templates/work_orders/index.html -->
+<!-- v1 Base Build -->
+
+{% extends "base.html" %}
+
+{% block title %}Work Orders{% endblock %}
+{% block topbar %}🧾 Work Orders{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Work Order and Customer Relations</h1>
+      <p class="page-subtitle">
+        Create and Update Work Orders + Manage Customer Database
+      </p>
+    </div>
+  </div>
+  <div class="row" style="gap: 12px; flex-wrap: wrap;">
+      <a class="card" href="{{ url_for('work_orders_bp.wo_index') }}"
+        style="min-width: 320px; text-decoration: none;">
+        <h2 style="margin: 0 0 6px 0;">🧾 Work Orders</h2>
+        <p class="muted" style="margin: 0;">
+          Create and manage demand lines for planning (assemblies/components).
+        </p>
+      </a>
+  </div> 
+  <div class="row" style="gap: 12px; flex-wrap: wrap;">
+    <a class="card" href="{{ url_for('work_orders_bp.customers_index') }}"
+       style="min-width: 320px; text-decoration: none;">
+       <h2 style="margin: 0 0 6px 0;">👥 Customers</h2>
+       <p class="muted" style="margin: 0;">Customer records tied to WOs and Jobs.</p>
+    </a>
+  </div>
+</div>
+{% endblock %}

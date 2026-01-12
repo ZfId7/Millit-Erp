@@ -6,6 +6,7 @@ from flask import redirect, url_for, flash
 
 from modules.user.decorators import login_required
 from modules.raw_materials.waterjet import raw_mats_waterjet_bp
+from modules.jobs_management.services.ops_flow import complete_operation
 from database.models import db, BuildOperation
 
 @raw_mats_waterjet_bp.route("/<int:op_id>/start", methods=["POST"])
@@ -31,7 +32,7 @@ def waterjet_complete(op_id):
     op = BuildOperation.query.get_or_404(op_id)
    
 
-    op.status = "complete"
+    complete_operation(op)
     db.session.commit()
     flash("Operation complete.", "success")
     return redirect(url_for("raw_mats_waterjet_bp.waterjet_detail", op_id=op.id))

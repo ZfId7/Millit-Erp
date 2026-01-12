@@ -421,6 +421,11 @@
 			class="{% if request.endpoint.startswith('mfg_bp') %}active{% endif %}">
 			🏭Manufacturing
 		</a>
+        
+        <a href="{{ url_for('heat_treat_bp.heat_treat_index') }}"
+			class="{% if request.endpoint.startswith('heat_treat_bp') %}active{% endif %}">
+			🔥 Heat Treat
+		</a>
 		
         <a href="{{ url_for('raw_materials_bp.raw_mats_index') }}"
             class="{% if request.endpoint.startswith('raw_mats_bp') %}active{% endif %}">
@@ -431,7 +436,10 @@
 			class="{% if request.endpoint.startswith('analytics_bp') %}active{% endif %}">
 			📊 Analytics
 		</a>
-		
+		<a href="{{ url_for('work_orders_bp.work_orders_index') }}"
+			class="{% if request.endpoint.startswith('work_orders_bp.') %}active{% endif %}">
+			🧾 Work Orders
+		</a>
 		<a href="{{ url_for('jobs_bp.jobs_index') }}"
 			class="{% if request.endpoint.startswith('jobs_bp.') %}active{% endif %}">
 			📋 Job Management

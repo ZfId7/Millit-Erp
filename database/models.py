@@ -6,10 +6,15 @@
 # -V1 User table supports admin/employee auth
 # -V2 Inventory Tables for managing shop stock
 # -V3 Waterjet Integration/Consumables
+# -V4 Ops Flow upgrade
+# -V5 V0 BOM Refactor
+
+
+
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, Index
 
 
 db = SQLAlchemy()
@@ -82,7 +87,7 @@ class Job(db.Model):
     # archive batch 001 here
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
     archived_at = db.Column(db.DateTime, nullable=True)
-    archived_by = db.Column(db.Integer, nullable=True)  # store user_id if you have it	
+    archived_by = db.Column(db.Integer, nullable=True)  # store user_id if you have it  
     
 class Build(db.Model):
     __tablename__ = "builds"
@@ -96,6 +101,8 @@ class Build(db.Model):
 
     name = db.Column(db.String(120), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="queue", index=True)
+    assembly_part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=True, index=True)
+    assembly_part = db.relationship("Part", foreign_keys=[assembly_part_id])
 
 
     qty_ordered = db.Column(db.Integer, nullable=False, default=1)
@@ -120,19 +127,27 @@ class Part(db.Model):
 
     part_type_id = db.Column(db.Integer, db.ForeignKey("part_types.id"))
     part_type = db.relationship("PartType")
-    
+    #updated 1/11/26
+    status = db.Column(db.String(16), nullable=False, default="draft", index=True)
+
     unit = db.Column(db.String(20), default="ea")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 class BOMItem(db.Model):
     __tablename__ = "bom_items"
-    __table_args__ = {"sqlite_autoincrement": True}
+    __table_args__ = ( 
+        UniqueConstraint("build_id", "line_no", name="uq_bom_build_line"),
+        {"sqlite_autoincrement": True},
+    )
+    
     id = db.Column(db.Integer, primary_key=True)
 
 
     build_id = db.Column(db.Integer, db.ForeignKey("builds.id"), nullable=False, index=True)
     build = db.relationship("Build", back_populates="bom_items")
 
+    bom_header_id = db.Column(db.Integer, db.ForeignKey("bom_headers.id"), nullable=True, index=True)
+    bom_header = db.relationship("BOMHeader")
 
     part_id = db.Column(db.Integer, db.ForeignKey("parts.id"))
     part = db.relationship("Part")
@@ -148,7 +163,15 @@ class BOMItem(db.Model):
 
     qty = db.Column(db.Float, nullable=False, default=1.0)
     unit = db.Column(db.String(20), default="ea")
+    
+    # qty_per = what the master BOM says per assembly
+    qty_per = db.Column(db.Float, nullable=False, default=1.0)
 
+    # planned quantity for THIS build run (materialized at snapshot time)
+    qty_planned = db.Column(db.Float, nullable=False, default=0.0)
+
+    # future-ready
+    scrap_factor = db.Column(db.Float, nullable=True)
 
     source = db.Column(db.String(20), default="manual") # manual | template | csv
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -209,6 +232,11 @@ class PartType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(50), unique=True, nullable=False)   # e.g. "blade"
     name = db.Column(db.String(120), nullable=False)              # e.g. "Blade"
+   
+   # NEW: planning + inventory designation
+    # allowed values (v0): assembly, sub_assembly, component, hardware, raw
+    category_key = db.Column(db.String(32), nullable=False, default="component", index=True)
+    code = db.Column(db.String(12), nullable=True, unique=True, index=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
@@ -232,6 +260,63 @@ class RoutingTemplate(db.Model):
     __table_args__ = (
         UniqueConstraint("part_type_id", "op_key", name="uq_routing_parttype_op"),
     )
+# File path: database/models.py
+
+class RoutingHeader(db.Model):
+    """
+    Defines the routing for a specific Part (component) and revision.
+    This is the new V1 routing driver (replaces part_type routing_templates).
+    """
+    __tablename__ = "routing_headers"
+    __table_args__ = (
+        Index("ix_routing_headers_part_rev", "part_id", "rev"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    part = db.relationship("Part", foreign_keys=[part_id])
+
+    rev = db.Column(db.String(16), nullable=False, default="A", index=True)
+    is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)
+
+    notes = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class RoutingStep(db.Model):
+    """
+    Ordered steps for a RoutingHeader.
+    """
+    __tablename__ = "routing_steps"
+    __table_args__ = (
+        UniqueConstraint("routing_id", "op_key", name="uq_routing_step_routing_op"),
+        Index("ix_routing_steps_routing_id", "routing_id"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    routing_id = db.Column(db.Integer, db.ForeignKey("routing_headers.id"), nullable=False, index=True)
+    routing = db.relationship(
+        "RoutingHeader",
+        backref=db.backref("steps", lazy=True, cascade="all, delete-orphan", order_by="RoutingStep.sequence.asc()"),
+    )
+
+    op_key = db.Column(db.String(50), nullable=False)     # e.g. "waterjet"
+    op_name = db.Column(db.String(120), nullable=False)   # e.g. "Waterjet"
+    module_key = db.Column(db.String(50), nullable=False) # e.g. "waterjet"
+    sequence = db.Column(db.Integer, nullable=False)      # 10,20,30...
+
+    is_outsourced = db.Column(db.Boolean, default=False, nullable=False)
+
+    notes = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class BuildOperation(db.Model):
@@ -239,14 +324,14 @@ class BuildOperation(db.Model):
     Concrete queued operation instance generated from BOM.
     """
     __tablename__ = "build_operations"
-    __table_args__ = {"sqlite_autoincrement": True}
+    
     id = db.Column(db.Integer, primary_key=True)
 
     build_id = db.Column(
-		db.Integer, 
-		db.ForeignKey("builds.id", ondelete="CASCADE"),
-		nullable=False
-	)
+        db.Integer, 
+        db.ForeignKey("builds.id", ondelete="CASCADE"),
+        nullable=False
+    )
     build = db.relationship("Build")
 
     bom_item_id = db.Column(db.Integer, db.ForeignKey("bom_items.id"), nullable=True)
@@ -257,8 +342,11 @@ class BuildOperation(db.Model):
     module_key = db.Column(db.String(50), nullable=False)
 
     sequence = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String(20), nullable=False, default="queue")  # queue/in_progress/complete
+    status = db.Column(db.String(20), nullable=False, default="queue")  # queue/in_progress/complete/blocked/cancelled
 
+    # New - gated ops flag
+    is_released = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    
     qty_planned = db.Column(db.Float, nullable=False, default=0.0)
     qty_done = db.Column(db.Float, nullable=False, default=0.0)
     qty_scrap = db.Column(db.Float, nullable=False, default=0.0)
@@ -266,7 +354,8 @@ class BuildOperation(db.Model):
     is_outsourced = db.Column(db.Boolean, default=False, nullable=False)
     vendor = db.Column(db.String(120))   # for outsourced ops later (heat treat)
     notes = db.Column(db.Text)
-
+    
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     # archive batch 001 here
     cancelled_at = db.Column(db.DateTime, nullable=True)
@@ -331,10 +420,11 @@ class RawStock(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
+# -V5 update here
 class PartInventory(db.Model):
     __tablename__ = "part_inventory"
     __table_args__ = (
-        UniqueConstraint("part_id", "stage_key", name="uq_part_inventory_part_stage"),
+        UniqueConstraint("part_id", "stage_key", "rev", "config_key", name="uq_part_inventory_part_stage_rev_cfg"),
         {"sqlite_autoincrement": True},
     )
 
@@ -343,8 +433,14 @@ class PartInventory(db.Model):
     part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
     part = db.relationship("Part")
 
-    # stage_key examples: "blank", "wip", "finished"
-    stage_key = db.Column(db.String(32), nullable=False, default="blank", index=True)
+    # stage_key examples (new canonical): "mfg_wip", "mfg_complete", "finish_wip", "finish_complete", "fg_complete"
+    stage_key = db.Column(db.String(32), nullable=False, default="mfg_wip", index=True)
+
+    # Revision tracking (latest preferred in planning)
+    rev = db.Column(db.String(16), nullable=False, default="A", index=True)
+
+    # Variant/config tracking (NULL for most; used for finished components/finished goods)
+    config_key = db.Column(db.String(64), nullable=True, index=True)
 
     qty_on_hand = db.Column(db.Float, default=0.0, nullable=False)
     uom = db.Column(db.String(16), default="ea", nullable=False)
@@ -475,4 +571,126 @@ class SurfaceGrindingOperationDetail(db.Model):
         "BuildOperation",
         backref=db.backref("surface_grinding_detail", uselist=False, cascade="all, delete-orphan")
     )
+# -v5 also here--
+class WorkOrder(db.Model):
+    __tablename__ = "work_orders"
+    __table_args__ = ({"sqlite_autoincrement": True},)
 
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(
+        db.Integer,
+        db.ForeignKey("customers.id"),
+        nullable=False,
+        index=True
+    )
+    customer = db.relationship("Customer")
+    
+    wo_number = db.Column(db.String(32), nullable=False, unique=True, index=True)
+    status = db.Column(db.String(16), nullable=False, default="open", index=True)  # open|in_progress|complete|cancelled
+
+    title = db.Column(db.String(128), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class WorkOrderLine(db.Model):
+    __tablename__ = "work_order_lines"
+    __table_args__ = (
+        UniqueConstraint("work_order_id", "line_no", name="uq_wo_line"),
+        Index("ix_wo_lines_work_order_id", "work_order_id"),
+        Index("ix_wo_lines_part_id", "part_id"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    work_order_id = db.Column(db.Integer, db.ForeignKey("work_orders.id"), nullable=False, index=True)
+    work_order = db.relationship("WorkOrder", backref=db.backref("lines", lazy=True))
+    
+    #Part reference
+    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    part = db.relationship("Part")
+
+    # Stable line number for editing + display
+    line_no = db.Column(db.Integer, nullable=False, default=1)
+
+    # Snapshot display fields (optional, but mirrors your BOMItem pattern)
+    part_number = db.Column(db.String(64), nullable=True)
+    name = db.Column(db.String(200), nullable=False, default="")
+    description = db.Column(db.Text, nullable=True)
+
+    qty_requested = db.Column(db.Float, nullable=False, default=1.0)
+    unit = db.Column(db.String(20), default="ea")
+    notes = db.Column(db.Text, nullable=True)
+    # Variant/config (NO BOM impact)
+    config_key = db.Column(db.String(64), nullable=True, index=True)
+    make_method = db.Column(db.String(16), nullable=False, default="MAKE")
+
+    
+    # Source marker
+    source = db.Column(db.String(20), default="manual")  # manual | bom_apply | csv
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class BOMHeader(db.Model):
+    __tablename__ = "bom_headers"
+    __table_args__ = (
+        Index("ix_bom_headers_assembly_rev", "assembly_part_id", "rev"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    assembly_part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    assembly_part = db.relationship("Part", foreign_keys=[assembly_part_id])
+    
+    # BOM revision label (e.g., "A", "B", "2026-01-01", etc.)
+    rev = db.Column(db.String(16), nullable=False, default="A", index=True)
+    
+    # Only one active rev per assembly is recommended (we can enforce in app logic)
+    is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)
+
+    notes = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class BOMLine(db.Model):
+    __tablename__ = "bom_lines"
+    __table_args__ = (
+        Index("ix_bom_lines_bom_id", "bom_id"),
+        Index("ix_bom_lines_component","component_part_id"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    bom_id = db.Column(db.Integer, db.ForeignKey("bom_headers.id"), nullable=False, index=True)
+    bom = db.relationship(
+        "BOMHeader",
+        backref=db.backref("lines", lazy=True, cascade="all, delete-orphan")
+    )
+
+    component_part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    component_part = db.relationship("Part", foreign_keys=[component_part_id])
+
+    qty_per = db.Column(db.Float, nullable=False, default=1.0)
+
+    # Optional: display ordering in UI (nice to have)
+    line_no = db.Column(db.Integer, nullable=False, default=1)
+    
+    # ✅ NEW: fulfillment method for this component in THIS assembly BOM
+    # allowed: "MAKE", "BUY", "OUTSOURCE"
+    make_method = db.Column(db.String(16), nullable=False, default="MAKE", index=True)
+
+    # ✅ NEW: rare override (if this assembly requires a special process plan)
+    routing_override_id = db.Column(db.Integer, db.ForeignKey("routing_headers.id"), nullable=True, index=True)
+    
+    notes = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

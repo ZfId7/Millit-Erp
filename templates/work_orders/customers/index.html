@@ -1,0 +1,46 @@
+<!-- File path: templates/work_orders/customers/index.html -->
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block topbar %}👥 Work Orders — Customers{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Customers</h1>
+      <p class="page-subtitle">Customer records (will tie to Work Orders + Jobs).</p>
+    </div>
+    <div class="row" style="gap:10px;">
+      <a class="btn" href="{{ url_for('work_orders_bp.work_orders_index') }}">← Home</a>
+      <a class="btn primary" href="{{ url_for('work_orders_bp.customers_new') }}">+ New Customer</a>
+    </div>
+  </div>
+
+  <div class="card" style="overflow:auto;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td><strong>{{ c.name }}</strong></td>
+          <td class="muted">{{ c.email or "" }}</td>
+          <td class="muted">{{ c.phone or "" }}</td>
+          <td style="text-align:right;">
+            <a class="btn" href="{{ url_for('work_orders_bp.customers_detail', customer_id=c.id) }}">Open</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="muted">No customers yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

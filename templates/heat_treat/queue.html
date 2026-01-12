@@ -1,0 +1,138 @@
+<!-- File path: templates/heat_treat/queue.html -->
+<!-- V1 Base Build -->
+
+{% extends "base.html" %}
+
+{% block title %}Heat Treat Queue{% endblock %}
+{% block topbar %}🔥 Heat Treat Queue{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Queue</h1>
+      <p class="page-subtitle">Generated from BOM routing (Build Operations).</p>
+    </div>
+    <div class="row">
+      <a class="btn" href="{{ url_for('heat_treat_bp.heat_treat_index') }}">← Heat Treat Home</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="get" class="row">
+      <div class="field" style="min-width: 360px; flex: 1;">
+        <label>Filter by Job</label>
+        <select name="job_id" onchange="this.form.submit()">
+          <option value="">— All Jobs —</option>
+          {% for j in jobs %}
+            <option value="{{ j.id }}" {% if selected_job_id == j.id %}selected{% endif %}>
+              {{ j.job_number }} — {{ j.title }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field" style="min-width: 360px; flex: 1;">
+        <label>Filter by Build</label>
+        <select name="build_id" {% if not builds %}disabled{% endif %} onchange="this.form.submit()">
+          <option value="">— All Builds —</option>
+          {% for b in builds %}
+            <option value="{{ b.id }}" {% if selected_build_id == b.id %}selected{% endif %}>
+              {{ b.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <div class="help">Pick a job first to filter builds.</div>
+      </div>
+
+      <div class="field" style="min-width: 140px;">
+        <label>&nbsp;</label>
+        <a class="btn" href="{{ url_for('heat_treat_bp.heat_treat_queue') }}">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width: 180px;">Job</th>
+          <th>Build</th>
+          <th style="width: 220px;">Operation</th>
+          <th style="width: 160px;">Status</th>
+          <th style="width: 120px;">Planned</th>
+          <th style="width: 120px;">Done</th>
+          <th style="width: 120px;">Scrap</th>
+          <th style="width: 260px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for op in ops %}
+          <tr>
+            <td class="muted">
+              <a href="{{ url_for(
+                    'jobs_bp.job_daily_update',
+                    job_id=op.build.job.id,
+                    _anchor='op-' ~ op.id
+                  ) }}">
+                {{ op.build.job.job_number }}
+              </a>
+            </td>
+
+            <td style="font-weight: 900;">{{ op.build.name }}</td>
+            <td>{{ op.op_name }}</td>
+
+            <td>
+              {% set s = (op.status or '') %}
+              <span class="badge
+                {% if s == 'queue' %}badge-queue
+                {% elif s == 'in_progress' %}badge-in-progress
+                {% elif s == 'complete' %}badge-complete
+                {% endif %}">
+                {{ s.replace('_',' ') }}
+              </span>
+            </td>
+
+            <td class="muted">{{ op.qty_planned }}</td>
+            <td class="muted">{{ op.qty_done }}</td>
+            <td class="muted">{{ op.qty_scrap }}</td>
+
+            <td>
+              <div class="row" style="gap: 8px; align-items: center; flex-wrap: wrap;">
+
+                {% if op.status != 'complete' %}
+
+                  {% if op.status == 'queue' %}
+                    <form method="post" action="{{ url_for('heat_treat_bp.heat_treat_start', op_id=op.id) }}">
+                      <button class="btn" type="submit">Start</button>
+                    </form>
+                  {% endif %}
+
+                  {% if op.status in ['in_progress', 'blocked'] %}
+                    <form method="post" action="{{ url_for('heat_treat_bp.heat_treat_complete', op_id=op.id) }}">
+                      <button class="btn btn-primary" type="submit">Complete</button>
+                    </form>
+                  {% endif %}
+
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+
+                <a class="btn btn-sm btn-secondary"
+                   href="{{ url_for('heat_treat_bp.heat_treat_details', op_id=op.id) }}">
+                  Details
+                </a>
+
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8" class="muted">No heat treat operations queued yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

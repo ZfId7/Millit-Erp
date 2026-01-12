@@ -1,0 +1,254 @@
+{# File path: templates/inventory/routing/detail.html #}
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+  <div>
+    <h2 style="margin:0;">Routing — {{ part.part_number }} (Rev {{ routing.rev }})</h2>
+    <div class="muted" style="margin-top:6px;">
+      {{ part.name }}{% if part.description %} — {{ part.description }}{% endif %}
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px;">
+      {% if bom_id %}
+        <a class="btn"
+           href="{{ url_for('inventory_bp.bom_details', bom_id=bom_id) }}">
+          ← Back to BOM
+        </a>
+      {% else %}
+        <a class="btn"
+           href="{{ url_for('inventory_bp.parts_index') }}">
+          Back to Parts
+        </a>
+      {% endif %}
+    </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+  <div class="card-header">
+    <h3 style="margin:0;">Steps</h3>
+    <div class="muted">These steps are used to generate component operations from BOM snapshot items.</div>
+  </div>
+
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:90px;">Seq</th>
+          <th>Operation</th>
+          <th style="width:180px;">Module</th>
+          <th style="width:120px;">Outsource</th>
+          <th>Notes</th>
+          <th style="width:120px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if steps %}
+          {% for s in steps %}
+          <tr>
+            <td class="muted">{{ s.sequence }}</td>
+            <td>
+              <div><strong>{{ s.op_name }}</strong></div>
+              <div class="muted">{{ s.op_key }}</div>
+            </td>
+            <td class="muted">{{ s.module_key }}</td>
+            <td>
+              {% if s.is_outsourced %}
+                <span class="badge warning">Yes</span>
+              {% else %}
+                <span class="badge">No</span>
+              {% endif %}
+            </td>
+            <td class="muted">{{ s.notes or "" }}</td>
+            <td style="text-align:right;">
+              <form method="post"
+                    action="{{ url_for('inventory_bp.routing_step_delete', step_id=s.id) }}"
+                    style="display:inline;"
+                    onsubmit="return confirm('Delete this routing step?');">
+                <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6" class="muted">No steps yet.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+  <div class="card-header">
+    <h3 style="margin:0;">Add Step</h3>
+  </div>
+
+  <div class="card-body">
+    <form method="post" action="{{ url_for('inventory_bp.routing_step_add', routing_id=routing.id) }}">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+        <div style="min-width:160px;">
+          <label class="label">Sequence</label>
+          <input class="input" type="number" name="sequence" value="10" step="10">
+        </div>
+
+        <div style="min-width:180px;">
+          <label class="label">op_key</label>
+          <input class="input" type="text" name="op_key" placeholder="waterjet" required>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="label">Operation Name</label>
+          <input class="input" type="text" name="op_name" placeholder="Waterjet Blanks" required>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="label">Module</label>
+          <select class="input" name="module_key" required>
+            {% for mk in allowed_module_keys %}
+              <option value="{{ mk }}">{{ mk }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="min-width:140px;">
+          <label class="label">Outsourced</label>
+          <div style="display:flex; align-items:center; gap:8px; height:42px;">
+            <input type="checkbox" name="is_outsourced">
+            <span class="muted">Yes</span>
+          </div>
+        </div>
+
+        <div style="flex:1; min-width:260px;">
+          <label class="label">Notes</label>
+          <input class="input" type="text" name="notes" placeholder="Optional">
+        </div>
+
+        <div>
+          <button class="btn btn-primary" type="submit">+ Add Step</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="muted" style="margin-top:10px;">
+      Tip: use sequence 10,20,30... so you can insert steps later (e.g. 15).
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+  <div class="card-header">
+    <h3 style="margin:0;">Sequence Index</h3>
+  </div>
+  <div class="muted" style="margin-bottom: 10px;">
+    Use the following sequence ranges when defining operations.
+    This keeps routing consistent across modules and prevents overlap as jobs scale.
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width: 160px;">Sequence Range</th>
+        <th style="width: 220px;">Process Area</th>
+        <th style="width: 140px;">Module Key</th>
+        <th style="width: 170px;">Sequence : Op Keys</th>
+        <th>Op Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>10 – 19</strong></td>
+        <td>Raw Prep / Cutting</td>
+        <td>raw_materials</td>
+        <td>
+          <div>10: waterjet_cut</div>
+          <div>12: laser_cut</div>
+          <div>14: edm_cut</div>
+          <div>16: bandsaw_cut</div>
+          <div>18: tablesaw_cut</div>
+        </td>
+        <td>*Waterjet Blade*</td>
+      </tr>
+
+      <tr>
+        <td><strong>20 – 29</strong></td>
+        <td>Surface Grinding</td>
+        <td>surface_grinding
+        <td>
+            <div>20: surface_grind</div>
+        </td>
+        <td> *Surface Grind Blades*
+      </tr>
+
+      <tr>
+        <td><strong>30 – 39</strong></td>
+        <td>Manufacturing</td>
+        <td>manufacturing</td>
+        <td>
+          <div>30: cnc_profile</div> {# Test #}
+          <div>32: haas</div>
+          <div>34: fanuc</div>
+          <div>36: lathe</div>
+        </td>
+        <td>*Profile Blades*</td>
+      </tr>
+      
+      <tr>
+        <td><strong>40 - 49</strong></td>
+        <td>Heat Treat</td>
+        <td>heat_treat</td>
+        <td>
+            <div>40: heat_treat</div> {# TEST #}
+            <div>45: in_house</div>
+        </td>
+        <td>*Send Blades out for HT*</td>
+      </tr>
+      
+      
+      <tr>
+        <td><strong>50 – 59</strong></td>
+        <td>Bevel Grinding</td>
+        <td>bevel_grinding</td>
+        <td>
+            <div>50: bevel_grind</div>
+            <div>54: secondary_grind</div> 
+            <div>58: distal_taper</div>
+        </td>
+        <td>*Bevel Grind Blades*
+      </tr>
+
+      <tr>
+        <td><strong>60 – 69</strong></td>
+        <td>Finishing</td>
+        <td class="muted">
+          Hand finish, stonewash, blasting, tumbling, sharpening
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>70 – 79</strong></td>
+        <td>Assembly</td>
+        <td class="muted">
+          Handle install, final fit, tuning
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>80 – 89</strong></td>
+        <td>Inspection / Packaging</td>
+        <td class="muted">
+          Final inspection, sharpening, packaging
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="muted" style="margin-top: 10px;">
+    Tip: Leave gaps between sequence numbers (e.g. 10, 12, 15) to allow future
+    operations to be inserted without re-numbering existing routes.
+    
+  </div>
+</div>
+</div>
+{% endblock %}

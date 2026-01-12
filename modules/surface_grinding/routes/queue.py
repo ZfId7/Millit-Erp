@@ -39,7 +39,8 @@ def surface_queue():
         .join(Job, Build.job_id == Job.id)
         .filter(Job.is_archived == False)  # ✅ critical
         .filter(BuildOperation.module_key == "surface_grinding")
-        .filter(BuildOperation.status.in_(["queue", "in_progress", "blocked", "cancelled"]))
+        .filter(BuildOperation.is_released.is_(True))
+        .filter(BuildOperation.status.in_(["queue", "in_progress", "blocked"]))
         .order_by(
             Job.created_at.desc(),
             status_sort.asc(),

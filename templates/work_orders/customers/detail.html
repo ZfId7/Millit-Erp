@@ -1,0 +1,63 @@
+<!-- File path: templates/work_orders/customers/detail.html -->
+{% extends "base.html" %}
+{% block title %}Customer{% endblock %}
+{% block topbar %}👥 Work Orders — Customer{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ customer.name }}</h1>
+      <p class="page-subtitle">{{ customer.email or "" }} {{ "• " + customer.phone if customer.phone else "" }}</p>
+    </div>
+    <div class="row" style="gap:10px;">
+      <a class="btn" href="{{ url_for('work_orders_bp.work_orders_index') }}">← Home</a>
+      <a class="btn" href="{{ url_for('work_orders_bp.customers_index') }}">← Customers</a>
+      <a class="btn" href="{{ url_for('work_orders_bp.customers_edit', customer_id=customer.id) }}">Edit</a>
+    </div>
+  </div>
+
+  <div class="card" style="max-width: 980px;">
+    <h2 style="margin:0 0 10px 0;">Notes</h2>
+    <div class="muted">{{ customer.notes or "—" }}</div>
+  </div>
+
+  <div class="card" style="overflow:auto; margin-top:14px;">
+    <h2 style="margin:0 0 10px 0;">Work Orders</h2>
+    <table class="table">
+      <thead><tr><th>WO #</th><th>Status</th><th>Created</th><th></th></tr></thead>
+      <tbody>
+        {% for wo in wos %}
+        <tr>
+          <td><strong>{{ wo.wo_number }}</strong></td>
+          <td><span class="badge">{{ wo.status }}</span></td>
+          <td class="muted">{{ wo.created_at.strftime("%Y-%m-%d") if wo.created_at else "" }}</td>
+          <td style="text-align:right;"><a class="btn" href="{{ url_for('work_orders_bp.wo_detail', wo_id=wo.id) }}">Open</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="muted">No work orders yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="overflow:auto; margin-top:14px;">
+    <h2 style="margin:0 0 10px 0;">Jobs</h2>
+    <table class="table">
+      <thead><tr><th>Job #</th><th>Title</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for j in jobs %}
+        <tr>
+          <td><strong>{{ j.job_number }}</strong></td>
+          <td>{{ j.title }}</td>
+          <td><span class="badge">{{ j.status }}</span></td>
+          <td style="text-align:right;"><a class="btn" href="{{ url_for('jobs_bp.job_detail', job_id=j.id) }}">Open</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="muted">No jobs yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

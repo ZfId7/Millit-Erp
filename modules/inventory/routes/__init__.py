@@ -15,6 +15,7 @@ def inventory_index():
 # IMPORTANT: import route modules AFTER blueprint creation
 from . import parts  # noqa: E402
 from . import routing #noqa: E402
+from . import bom #noqa: E402
 
 @inventory_bp.route("/raw_stock", methods=["GET"])
 def raw_stock_index():
@@ -97,3 +98,7 @@ def parts_inventory_index():
     items = q.order_by(PartInventory.stage_key.asc(), PartInventory.id.asc()).all()
 
     return render_template("inventory/parts_inventory/index.html", items=items, stage=stage)
+
+
+
+

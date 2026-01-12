@@ -62,6 +62,9 @@
                 <a class="btn btn-danger btn-sm" href="{{ url_for('jobs_bp.job_archive_confirm', job_id=j.id) }}">
                   Archive
                 </a>
+                <a class="btn btn-danger btn-sm" href="{{ url_for('jobs_bp.delete_job', job_id=j.id) }}">
+                  Delete Job
+                </a>
               </td>
             {% endif %}
           </tr>

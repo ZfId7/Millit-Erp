@@ -101,7 +101,7 @@
             <td>
               <div class="row" style="gap: 8px; align-items: center; flex-wrap: wrap;">
 
-                {% if op.status != 'completed' %}
+                {% if op.status != 'complete' %}
 
                   {% if op.status == 'queue' %}
                     <form method="post" action="{{ url_for('surface_grinding_bp.surface_start', op_id=op.id) }}">

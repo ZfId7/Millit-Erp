@@ -1,0 +1,216 @@
+<!-- File path: templates/inventory/bom/details.html -->
+{% extends "base.html" %}
+
+{% block title %}BOM Detail{% endblock %}
+{% block topbar %}📦 Inventory — BOM{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        {{ bom.assembly_part.part_number }} — {{ bom.assembly_part.name }}
+      </h1>
+      <p class="page-subtitle">
+        Rev <strong>{{ bom.rev }}</strong>
+        {% if bom.is_active %}
+          <span class="badge success" style="margin-left:8px;">active</span>
+        {% else %}
+          <span class="badge" style="margin-left:8px;">inactive</span>
+        {% endif %}
+      </p>
+    </div>
+
+    <div class="row" style="gap: 10px; flex-wrap: wrap;">
+      <a class="btn" href="{{ url_for('inventory_bp.bom_index') }}">← Master BOM</a>
+      {% if not bom.is_active %}
+      <form method="POST" action="{{ url_for('inventory_bp.bom_set_active', bom_id=bom.id) }}">
+        <button class="btn" type="submit">Set Active</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card" style="max-width: 980px;">
+    <h2 style="margin:0 0 10px 0;">Add BOM Line</h2>
+    <form method="POST" action="{{ url_for('inventory_bp.bom_add_line', bom_id=bom.id) }}">
+      <div class="row" style="gap: 12px; align-items: end; flex-wrap: wrap;">
+        <div style="min-width: 420px; flex: 1;">
+          <label class="label">Component</label>
+          <select class="input" name="component_part_id">
+            <option value="">Select...</option>
+            {% for p in components %}
+              <option value="{{ p.id }}">{{ p.part_number }} — {{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+
+        <div style="min-width: 120px;">
+          <label class="label">Qty/Assy</label>
+          <input class="input" name="qty_per" type="number" step="0.0001" value="1.0" />
+        </div>
+        
+        <div style="min-width: 160px;">
+          <label class="label">Make Method</label>
+          <select class="input" name="make_method">
+            <option value="MAKE" selected>MAKE</option>
+            <option value="BUY">BUY</option>
+            <option value="OUTSOURCE">OUTSOURCE</option>
+          </select>
+        </div>
+
+        <div style="min-width: 120px;">
+          <label class="label">Line #</label>
+          <input class="input" name="line_no" type="number" step="1" value="{{ (lines|length) + 1 }}" />
+        </div>
+
+        <div style="min-width: 220px; flex: 1;">
+          <label class="label">Notes</label>
+          <input class="input" name="notes" placeholder="Optional" />
+        </div>
+
+        
+      </div>
+      {# updated 1/11/26 #}
+
+        <div class="card" style="margin-top:10px;">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>Create New Part (optional)</strong>
+              <div class="muted">If you don’t select an existing part above, you can create one here and it will be added to the BOM.</div>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <div style="min-width:180px;">
+                <label class="label">Category</label>
+                <select class="input" name="new_category_key">
+                  <option value="component" selected>component</option>
+                  <option value="hardware">hardware</option>
+                  <option value="sub_assembly">sub_assembly</option>
+                  <option value="assembly">assembly</option>
+                </select>
+              </div>
+              <div style="min-width:220px;">
+                <label class="label">Part Type</label>
+                <select class="input" name="new_part_type_id">
+                  <option value="" selected>Auto (from part number)</option>
+                  {% for pt in part_types %}
+                    <option value="{{ pt.id }}">
+                      {{ pt.name }}{% if pt.code %} ({{ pt.code }}){% endif %}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div style="min-width:220px;">
+                <label class="label">Part Number</label>
+                <input class="input" name="new_part_number" placeholder="Optional but recommended">
+              </div>
+
+              <div style="min-width:260px; flex:1;">
+                <label class="label">Name</label>
+                <input class="input" name="new_name" placeholder="Required if no Part Number">
+              </div>
+
+              <div style="min-width:140px;">
+                <label class="label">Unit</label>
+                <input class="input" name="new_unit" value="ea">
+              </div>
+
+              <div style="min-width:320px; flex:1;">
+                <label class="label">Description</label>
+                <input class="input" name="new_description" placeholder="Optional">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <button class="btn primary" type="submit">Add</button>
+        </div>
+    </form>
+  </div>
+
+  <div class="card" style="overflow:auto; margin-top: 14px;">
+    <h2 style="margin:0 0 10px 0;">BOM Lines</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Line</th>
+          <th>Component</th>
+          <th>Qty/Assy</th>
+          <th>Make</th>
+          <th>Routing</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in lines %}
+        <tr>
+          <td>{{ l.line_no }}</td>
+          <td>
+            <div><strong>{{ l.component_part.part_number }}</strong></div>
+            <div class="muted">{{ l.component_part.name }}</div>
+          </td>
+          <td>{{ "%.4f"|format(l.qty_per) }}</td>
+          <td>
+            {% if (l.make_method or "MAKE") == "MAKE" %}
+              <span class="badge success">MAKE</span>
+            {% elif l.make_method == "BUY" %}
+              <span class="badge">BUY</span>
+            {% else %}
+              <span class="badge warning">OUTSOURCE</span>
+            {% endif %}
+          </td>
+
+          <td class="muted">
+            {% if (l.make_method or "MAKE") != "MAKE" %}
+              <span class="muted">—</span>
+            {% else %}
+              {% set rid = routing_map.get(l.component_part_id) %}
+              {% if rid %}
+                <div class="muted">Steps: {{ routing_steps_count.get(rid, 0) }}</div>
+                <div class="muted">{{ routing_summary.get(rid, "") }}</div>
+                <a class="btn"
+                    href="{{ url_for('inventory_bp.routing_detail',
+                                            routing_id=rid,
+                                            bom_id=bom.id) }}">
+                    Edit
+                </a>
+
+              {% else %}
+                <span class="muted">No routing</span>
+                <a class="btn"
+                    href="{{ url_for('inventory_bp.routing_create_for_part',
+                                        part_id=l.component_part_id,
+                                        bom_id=bom.id) }}">
+                    + Create
+                </a>
+
+              {% endif %}
+            {% endif %}
+          </td>
+
+          <td class="muted">{{ l.notes or "" }}</td>
+          <td style="text-align:right;">
+            <form method="POST" action="{{ url_for('inventory_bp.bom_delete_line', line_id=l.id) }}"
+                  onsubmit="return confirm('Delete this BOM line?');">
+              <button class="btn danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="muted">No lines yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,9 +1,34 @@
+<!-- File path: templates/manufacturing/index.html -->
+<!-- V1 - Base index module with card to manufacturing/queue -->
+<!-- V2 - Add card(s) for CNC Machines / Setup Sheets -->
+<!-- V3 - Add card(s) for Manufacturing Analytics -->
 {% extends "base.html" %}
 
 {% block title %}Manufacturing{% endblock %}
-{% block topbar %}🏭Manufacturing{% endblock %}
+{% block topbar %}🏭 Manufacturing{% endblock %}
 
 {% block content %}
-<h2>Manufacturing Dashboard (Coming Soon)</h2>
-<p>This is a placeholder for the Manufacturing Module.</p>
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">🏭 Manufacturing</h1>
+      <p class="page-subtitle">
+        CNC profiling operations and manufacturing workflow.
+      </p>
+    </div>
+    
+  </div>
+
+  <div class="row" style="gap: 12px; flex-wrap: wrap;">
+    <a class="card" href="{{ url_for('mfg_bp.mfg_queue') }}"
+       style="min-width: 320px; text-decoration: none;">
+      <h2 style="margin: 0 0 6px 0;">CNC Profile Queue</h2>
+      <p class="muted" style="margin: 0;">
+        View and process released CNC profiling operations generated from BOM routing.
+      </p>
+    </a>
+  </div>
+
+</div>
 {% endblock %}

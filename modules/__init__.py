@@ -15,6 +15,8 @@ from .user.routes import admin_users_bp
 #from .operations.routes import operations_bp
 from .raw_materials.routes import raw_mats_bp
 from .raw_materials.waterjet.routes import raw_mats_waterjet_bp
+from .heat_treat.routes import heat_treat_bp
+from .work_orders.routes import work_orders_bp
 
 module_blueprints = [
     ("inventory_bp", inventory_bp, "/inventory"),
@@ -31,6 +33,8 @@ module_blueprints = [
 	#("operations_bp", operations_bp, "/ops"),
 	("raw_materials_bp", raw_mats_bp, "/raw_mats"),
 	("raw_mats_waterjet_bp", raw_mats_waterjet_bp, "/raw_mats/waterjet"),
+	("heat_treat_bp", heat_treat_bp, "/heat_treat"),
+	("work_orders_bp", work_orders_bp, "/work_orders"),
 ]	
 
 # Optional: export list so app.py can loop through them

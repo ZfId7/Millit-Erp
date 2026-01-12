@@ -1,0 +1,61 @@
+<!-- File path: templates/work_orders/work_orders/index.html -->
+{% extends "base.html" %}
+
+{% block title %}Work Orders{% endblock %}
+{% block topbar %}🧾 Work Orders — Work Orders{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Work Orders</h1>
+      <p class="page-subtitle">Demand lines used by Planning.</p>
+    </div>
+    <div class="row" style="gap: 10px;">
+      <a class="btn" href="{{ url_for('work_orders_bp.work_orders_index') }}">← Home</a>
+      <a class="btn primary" href="{{ url_for('work_orders_bp.wo_new') }}">+ New Work Order</a>
+      <a class="btn" href="{{ url_for('work_orders_bp.planning_json') }}">Planning JSON</a>
+    </div>
+  </div>
+
+  <div class="card" style="overflow:auto;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>WO #</th>
+          <th>Title</th>
+          
+          <th>Status</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for wo in work_orders %}
+        
+        <tr>
+          <td><strong>{{ wo.wo_number }}</strong></td>
+          <td>{{ wo.title or "" }}</td>
+          
+          <td><span class="badge">{{ wo.status }}</span></td>
+          <td class="muted">{{ wo.created_at.strftime("%Y-%m-%d %H:%M") if wo.created_at else "" }}</td>
+          <td style="text-align:right;">
+            <a class="btn" href="{{ url_for('work_orders_bp.wo_detail', wo_id=wo.id) }}">Open</a>
+          
+              <form method="post"
+                    action="{{ url_for('work_orders_bp.wo_delete', wo_id=wo.id) }}"
+                    style="display:inline;"
+                    onsubmit="return confirm('Delete this work order? This cannot be undone.');">
+                <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+              </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="muted">No work orders yet.</td></tr>
+        {% endfor %}
+        
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

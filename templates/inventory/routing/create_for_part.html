@@ -1,0 +1,31 @@
+{# File path: templates/inventory/routing/create_for_part.html #}
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+  <div class="card-header">
+    <h2>Create Routing</h2>
+    <p class="muted">
+      This will create a routing (Rev A) for:
+      <strong>{{ part.part_number }}</strong> — {{ part.name }}
+    </p>
+  </div>
+
+  <div class="card-body">
+    <div class="muted" style="margin-bottom: 12px;">
+      Unit: {{ part.unit or "ea" }}<br>
+      {% if part.description %}Description: {{ part.description }}{% endif %}
+    </div>
+
+    <form method="post" action="{{ url_for('inventory_bp.routing_create_for_part', part_id=part.id) }}">
+      <button class="btn btn-primary" type="submit">✅ Create Routing</button>
+      <a class="btn" href="{{ url_for('inventory_bp.bom_details', bom_id=request.args.get('bom_id') or 0) }}">Cancel</a>
+    </form>
+
+    <div class="muted" style="margin-top: 12px;">
+      After creation, you’ll add routing steps (Waterjet → Grind → Heat Treat, etc.).
+    </div>
+  </div>
+</div>
+
+{% endblock %}

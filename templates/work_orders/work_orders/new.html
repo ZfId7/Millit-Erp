@@ -1,0 +1,69 @@
+<!-- File path: templates/work_orders/work_orders/new.html -->
+{% extends "base.html" %}
+
+{% block title %}New Work Order{% endblock %}
+{% block topbar %}🧾 Work Orders — New Work Order{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">+ New Work Order</h1>
+      <p class="page-subtitle">Create a WO header, then add demand lines.</p>
+    </div>
+    <div class="row" style="gap: 10px; flex-wrap: wrap;">
+      <a class="btn" href="{{ url_for('work_orders_bp.wo_index') }}">← Back</a>
+      <a class="btn" href="{{ url_for('work_orders_bp.customers_new') }}" target="_blank" rel="noopener">
+        + New Customer
+      </a>
+    </div>
+  </div>
+
+  <form class="card" method="POST" action="{{ url_for('work_orders_bp.wo_create') }}" style="max-width: 720px;">
+    <div class="row" style="gap: 12px; flex-wrap: wrap;">
+
+      <div style="min-width: 260px; flex: 1;">
+        <label class="label">Customer *</label>
+        <select class="input" name="customer_id" required>
+          <option value="" selected disabled>— Select customer —</option>
+          {% for c in customers %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+        <div class="muted" style="margin-top:6px;">
+          If you don’t see it, click “+ New Customer”.
+        </div>
+      </div>
+
+      <div style="min-width: 180px;">
+        <label class="label">WO Number *</label>
+        <input class="input" name="wo_number" value="{{ default_wo_number }}" required />
+      </div>
+
+      <div style="min-width: 320px; flex: 1;">
+        <label class="label">Title</label>
+        <input class="input" name="title" placeholder="Optional" />
+      </div>
+
+      <div style="min-width: 180px;">
+        <label class="label">Status</label>
+        <select class="input" name="status">
+          <option value="open" selected>open</option>
+          <option value="in_progress">in_progress</option>
+          <option value="complete">complete</option>
+          <option value="cancelled">cancelled</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <label class="label">Notes</label>
+      <textarea class="input" name="notes" rows="3" placeholder="Optional"></textarea>
+    </div>
+
+    <div class="row" style="margin-top: 14px;">
+      <button class="btn primary" type="submit">Create</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

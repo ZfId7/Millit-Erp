@@ -3,7 +3,7 @@
 # V2 Module_key update
 # V3 Refactor | moved inside of raw_materials/waterjet/ | changed blueprint to raw_mats_waterjet_bp
 from flask import render_template, request
-from sqlalchemy import case
+from sqlalchemy import case, asc
 
 from modules.user.decorators import login_required
 from modules.raw_materials.waterjet import raw_mats_waterjet_bp
@@ -34,8 +34,15 @@ def waterjet_queue():
         .filter(Job.is_archived == False)
         .filter(BuildOperation.module_key == "raw_materials")
         .filter(BuildOperation.op_key.in_(["waterjet_cut"]))
-        .filter(BuildOperation.status.in_(["queue", "in_progress", "blocked", "cancelled"]))
-        .order_by(Job.created_at.desc(), status_sort.asc(), BuildOperation.sequence.asc(), BuildOperation.id.asc())
+        .filter(BuildOperation.is_released.is_(True))
+        .filter(BuildOperation.status.in_(["queue", "in_progress", "blocked"]))
+        .order_by(
+			Job.created_at.desc(),
+			asc(status_sort),
+			BuildOperation.sequence.asc(),
+			BuildOperation.id.asc()
+		)
+
     )
 
 

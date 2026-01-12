@@ -1,10 +1,11 @@
-import os
-from flask import Blueprint, render_template
+# File path: modules/manufacturing/routes/__init__.py
+# V1 Base Build
 
 
-mfg_bp = Blueprint("mfg_bp", __name__)
+from .index import * #noqa
+from .queue import * # noqa
+from .ops import * # noqa
+from .details import * # noqa
+#from .manager import * # noqa 
 
-@mfg_bp.route("/")
-def mfg_index():
-    print("🏭Manufacturing route HIT")
-    return render_template("manufacturing/index.html")
+

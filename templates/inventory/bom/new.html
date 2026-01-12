@@ -1,0 +1,52 @@
+<!-- File path: templates/inventory/bom/new.html -->
+{% extends "base.html" %}
+
+{% block title %}New BOM{% endblock %}
+{% block topbar %}📦 Inventory — New BOM{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">+ New BOM</h1>
+      <p class="page-subtitle">Create a BOM header for an assembly or sub-assembly.</p>
+    </div>
+    <div class="row">
+      <a class="btn" href="{{ url_for('inventory_bp.bom_index') }}">← Back</a>
+    </div>
+  </div>
+
+  <form class="card" method="POST" action="{{ url_for('inventory_bp.bom_create') }}" style="max-width: 720px;">
+    <div class="row" style="gap: 12px; align-items: end; flex-wrap: wrap;">
+      <div style="min-width: 360px; flex: 1;">
+        <label class="label">Assembly</label>
+        <select class="input" name="assembly_part_id" required>
+          <option value="">Select...</option>
+          {% for p in assemblies %}
+            <option value="{{ p.id }}">{{ p.part_number }} — {{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="min-width: 120px;">
+        <label class="label">Rev</label>
+        <input class="input" name="rev" value="A" />
+      </div>
+
+      <div style="min-width: 160px;">
+        <label class="label">Active?</label>
+        <label style="display:flex; gap:8px; align-items:center;">
+          <input type="checkbox" name="is_active" checked />
+          <span class="muted">Set active</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top: 14px;">
+      <button class="btn primary" type="submit">Create BOM</button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

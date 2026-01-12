@@ -1,0 +1,57 @@
+{# File path: templates/inventory/part_types/edit.html #}
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header">
+  <h2 style="margin:0;">Edit Part Type Code</h2>
+  <div class="muted" style="margin-top:6px;">
+    Update code/name/category. Code should match your part number scheme.
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+  <div class="card-body">
+    <form method="post" action="{{ url_for('inventory_bp.part_types_edit', type_id=pt.id) }}">
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+
+        <div style="min-width:120px;">
+          <label class="label">Code</label>
+          <input class="input" name="code" maxlength="12" value="{{ pt.code or '' }}" placeholder="BL">
+        </div>
+
+        <div style="min-width:260px; flex:1;">
+          <label class="label">Name</label>
+          <input class="input" name="name" value="{{ pt.name }}" required>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="label">Category</label>
+          <select class="input" name="category_key" required>
+            {% for opt in category_options %}
+              <option value="{{ opt }}" {% if pt.category_key == opt %}selected{% endif %}>
+                {{ opt }}
+              </option>
+            {% endfor %}
+
+          </select>
+        </div>
+
+        <div style="min-width:220px;">
+          <label class="label">Key (legacy)</label>
+          <input class="input" name="key" value="{{ pt.key }}" required>
+          <div class="muted" style="margin-top:6px;">
+            Internal identifier. Changing this can break old references.
+          </div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn" href="{{ url_for('inventory_bp.part_types_index') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

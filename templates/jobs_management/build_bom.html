@@ -30,7 +30,7 @@
       </span>
     </div>
   </div>
-
+{# Hide
   <div class="card">
     <h2>Add BOM Item</h2>
     <p class="muted">Select a catalog part OR enter a free-text line (until CSV import / full catalog exists).</p>
@@ -54,9 +54,9 @@
           <div class="help">Build qty ordered: {{ build.qty_ordered }}</div>
         </div>
 
-        <form method="post" action="{{ url_for('jobs_bp.build_bom_add', build_id=build.id) }}" class="stack">
-            <button class="btn btn-primary" type="submit">➕ Add</button>
-        </form>
+        
+        <button class="btn btn-primary" type="submit">➕ Add</button>
+        
 
       </div>
 
@@ -85,7 +85,7 @@
       </div>
     </form>
   </div>
-
+#}
   <div class="card">
     <h2>Current BOM</h2>
 
@@ -109,7 +109,7 @@
             <td style="font-weight: 900;">{{ item.part_number or "" }}</td>
             <td>{{ item.name }}</td>
             <td class="muted">{{ item.qty }}</td>
-            <td class="muted">{{ (item.qty or 0) * (build.qty_ordered or 0) }}</td>
+            <td class="muted">{{ item.qty_planned or item.qty or 0 }}</td>
             <td class="muted">{{ item.unit }}</td>
             <td class="muted">{{ item.source }}</td>
             <td>

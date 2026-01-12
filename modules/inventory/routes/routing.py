@@ -1,10 +1,146 @@
 # File path: modules/inventory/routes/routing.py
 from flask import render_template, request, redirect, url_for, flash
-from database.models import db, PartType, RoutingTemplate
+from database.models import db, PartType, RoutingTemplate, Part, RoutingHeader, RoutingStep
+from modules.user.decorators import login_required, admin_required
 from . import inventory_bp
 
+ALLOWED_MODULE_KEYS = [
+    "raw_materials",
+    "surface_grinding",
+    "bevel_grinding",
+    "manufacturing",
+    "heat_treat",
+]
 
+#New 
+@inventory_bp.route("/routing/part/<int:part_id>/create", methods=["GET", "POST"])
+@login_required
+def routing_create_for_part(part_id):
+    part = Part.query.get_or_404(part_id)
+    bom_id = request.args.get("bom_id", type=int)
+     # Prevent duplicate active routing (or any routing) for this part
+    existing = (
+        RoutingHeader.query
+        .filter_by(part_id=part.id, is_active=True)
+        .order_by(RoutingHeader.rev.desc())
+        .first()
+    )
+    if existing:
+        flash("Routing already exists for this part.", "info")
+        return redirect(url_for(
+            "inventory_bp.routing_detail",
+            routing_id=existing.id,
+            bom_id=bom_id
+        ))
+        
+    if request.method == "POST":
+        
+        # Create routing header rev A
+        rh = RoutingHeader(
+            part_id=part.id,
+            rev="A",
+            is_active=True,
+        )
+        db.session.add(rh)
+        db.session.commit()
+
+        flash("Routing created.", "success")
+        return redirect(url_for(
+            "inventory_bp.routing_detail",
+            routing_id=rh.id,
+            bom_id=bom_id
+        ))
+
+    return render_template(
+        "inventory/routing/create_for_part.html",
+        part=part,
+        bom_id=bom_id,
+    )
+    
+
+
+
+@inventory_bp.route("/routing/<int:routing_id>")
+@login_required
+def routing_detail(routing_id):
+    routing = RoutingHeader.query.get_or_404(routing_id)
+    part = routing.part
+    bom_id = request.args.get("bom_id", type=int)
+    
+    steps = (
+        RoutingStep.query
+        .filter_by(routing_id=routing.id)
+        .order_by(RoutingStep.sequence.asc(), RoutingStep.id.asc())
+        .all()
+    )
+
+    return render_template(
+        "inventory/routing/detail.html",
+        routing=routing,
+        part=part,
+        steps=steps,
+        allowed_module_keys=ALLOWED_MODULE_KEYS,
+        bom_id=bom_id,
+    )
+
+
+@inventory_bp.route("/routing/<int:routing_id>/steps/add", methods=["POST"])
+@login_required
+def routing_step_add(routing_id):
+    routing = RoutingHeader.query.get_or_404(routing_id)
+
+    op_key = (request.form.get("op_key") or "").strip().lower()
+    op_name = (request.form.get("op_name") or "").strip()
+    module_key = (request.form.get("module_key") or "").strip()
+    sequence = request.form.get("sequence", type=int) or 10
+    is_outsourced = True if request.form.get("is_outsourced") == "on" else False
+    notes = (request.form.get("notes") or "").strip() or None
+
+    if not op_key or not op_name or not module_key:
+        flash("op_key, op_name, and module are required.", "error")
+        return redirect(url_for("inventory_bp.routing_detail", routing_id=routing.id))
+
+    if module_key not in ALLOWED_MODULE_KEYS:
+        flash("Invalid module selected.", "error")
+        return redirect(url_for("inventory_bp.routing_detail", routing_id=routing.id))
+
+    exists = RoutingStep.query.filter_by(routing_id=routing.id, op_key=op_key).first()
+    if exists:
+        flash("That op_key already exists for this routing.", "error")
+        return redirect(url_for("inventory_bp.routing_detail", routing_id=routing.id))
+
+    db.session.add(RoutingStep(
+        routing_id=routing.id,
+        op_key=op_key,
+        op_name=op_name,
+        module_key=module_key,
+        sequence=sequence,
+        is_outsourced=is_outsourced,
+        notes=notes,
+    ))
+    db.session.commit()
+
+    flash("Routing step added.", "success")
+    return redirect(url_for("inventory_bp.routing_detail", routing_id=routing.id))
+
+
+@inventory_bp.route("/routing/steps/<int:step_id>/delete", methods=["POST"])
+@login_required
+def routing_step_delete(step_id):
+    step = RoutingStep.query.get_or_404(step_id)
+    routing_id = step.routing_id
+
+    db.session.delete(step)
+    db.session.commit()
+
+    flash("Routing step deleted.", "success")
+    return redirect(url_for("inventory_bp.routing_detail", routing_id=routing_id))
+
+
+#Legacy model
 @inventory_bp.route("/routing")
+@login_required
+@admin_required
 def routing_index():
     part_types = PartType.query.order_by(PartType.name.asc()).all()
     templates = RoutingTemplate.query.order_by(
@@ -26,6 +162,8 @@ def routing_index():
 
 
 @inventory_bp.route("/routing/new", methods=["GET", "POST"])
+@login_required
+@admin_required
 def routing_new():
     part_types = PartType.query.order_by(PartType.name.asc()).all()
 
@@ -35,7 +173,7 @@ def routing_new():
         "surface_grinding",
         "bevel_grinding",
         "manufacturing",
-        # "heat_treat",
+        "heat_treat",
         # "assembly",
     }
 
@@ -106,6 +244,8 @@ def routing_new():
 
 
 @inventory_bp.route("/routing/<int:step_id>/delete", methods=["POST"])
+@login_required
+@admin_required
 def routing_delete(step_id):
     step = RoutingTemplate.query.get_or_404(step_id)
     db.session.delete(step)
