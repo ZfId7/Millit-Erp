@@ -16,6 +16,7 @@ def inventory_index():
 from . import parts  # noqa: E402
 from . import routing #noqa: E402
 from . import bom #noqa: E402
+from . import part_drawings
 
 @inventory_bp.route("/raw_stock", methods=["GET"])
 def raw_stock_index():

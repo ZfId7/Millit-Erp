@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from sqlalchemy import func
 
-from database.models import db, Customer, Job, Build, JobWorkLog, BOMItem, Part, BuildOperation, BuildOperationProgress
+from database.models import db, Customer, Job, Build, JobWorkLog, BOMItem, Part, BuildOperation, BuildOperationProgress, BOMHeader
 from modules.jobs_management.services.routing import ensure_operations_for_bom_item, enforce_release_state_for_bom_item
 from modules.inventory.services.parts_inventory import apply_part_inventory_delta
 from modules.jobs_management.services.ops_flow import complete_operation
@@ -287,8 +287,25 @@ def job_detail(job_id):
     ops_by_build = {}
     for op in ops:
         ops_by_build.setdefault(op.build_id, []).append(op)
+    
+    # Map build_id -> active master BOMHeader id
+    master_bom_by_build = {}
 
-    return render_template("jobs_management/detail.html", job=job, ops_by_build=ops_by_build)
+    for b in job.builds:
+        bom = (
+            BOMHeader.query
+            .filter_by(assembly_part_id=b.assembly_part_id, is_active=True)
+            .first()
+        )
+        master_bom_by_build[b.id] = bom.id if bom else None
+
+
+    return render_template(
+        "jobs_management/detail.html", 
+        job=job, 
+        ops_by_build=ops_by_build,
+        master_bom_by_build=master_bom_by_build,
+        )
 
 
 @jobs_bp.route("/build/<int:build_id>/status", methods=["POST"])

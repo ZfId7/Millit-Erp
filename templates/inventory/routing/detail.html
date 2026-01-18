@@ -1,4 +1,4 @@
-{# File path: templates/inventory/routing/detail.html #}
+<!-- File path: templates/inventory/routing/detail.html -->
 {% extends "base.html" %}
 {% block content %}
 
@@ -11,21 +11,22 @@
   </div>
 
   <div style="display:flex; gap:8px;">
-      {% if bom_id %}
+      {% if bom_id and line_id %}
+        <a class="btn"
+          href="{{ url_for('inventory_bp.bom_line_details', bom_id=bom_id, line_id=line_id) }}">
+          ← Back to Details
+        </a>
+      {% elif bom_id %}  
         <a class="btn"
            href="{{ url_for('inventory_bp.bom_details', bom_id=bom_id) }}">
           ← Back to BOM
         </a>
-      {% else %}
-        <a class="btn"
-           href="{{ url_for('inventory_bp.parts_index') }}">
-          Back to Parts
-        </a>
+      
       {% endif %}
     </div>
 </div>
 
-<div class="card" style="margin-top:12px;">
+<div class="card" style="margin-top:12px;"> {# current steps #}
   <div class="card-header">
     <h3 style="margin:0;">Steps</h3>
     <div class="muted">These steps are used to generate component operations from BOM snapshot items.</div>
@@ -63,7 +64,7 @@
             <td class="muted">{{ s.notes or "" }}</td>
             <td style="text-align:right;">
               <form method="post"
-                    action="{{ url_for('inventory_bp.routing_step_delete', step_id=s.id) }}"
+                    action="{{ url_for('inventory_bp.routing_step_delete', step_id=s.id, bom_id=bom_id, line_id=line_id) }}"
                     style="display:inline;"
                     onsubmit="return confirm('Delete this routing step?');">
                 <button class="btn btn-danger btn-sm" type="submit">Delete</button>
@@ -81,32 +82,43 @@
   </div>
 </div>
 
-<div class="card" style="margin-top:12px;">
+<div class="card" style="margin-top:12px;"> {# add steps #}
   <div class="card-header">
     <h3 style="margin:0;">Add Step</h3>
   </div>
 
   <div class="card-body">
-    <form method="post" action="{{ url_for('inventory_bp.routing_step_add', routing_id=routing.id) }}">
+    <form method="post" action="{{ url_for('inventory_bp.routing_step_add', routing_id=routing.id, bom_id=bom_id, line_id=line_id) }}">
       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+        
+
+        <label>Op Preset</label>
+        <select name="op_key" id="preset_op_key">
+          <option value="">— Select preset —</option>
+          {% for key, p in step_presets.items() %}
+            <option value="{{ key }}">
+              {{ key }} — {{ p.op_name }}
+            </option>
+          {% endfor %}
+        </select>
+
+        
         <div style="min-width:160px;">
           <label class="label">Sequence</label>
-          <input class="input" type="number" name="sequence" value="10" step="10">
-        </div>
-
-        <div style="min-width:180px;">
-          <label class="label">op_key</label>
-          <input class="input" type="text" name="op_key" placeholder="waterjet" required>
+          <input class="input" type="number" name="sequence" id="field_sequence">
         </div>
 
         <div style="min-width:220px;">
           <label class="label">Operation Name</label>
-          <input class="input" type="text" name="op_name" placeholder="Waterjet Blanks" required>
+          <input class="input" type="text" name="op_name" id="field_op_name">
+          <div class ="muted" style="margin-top:4px; font-size:12px;">
+            Tip: Insert component type (e.g. "Blade", "Backspacer", "Front Handle" in the operation name
+          </div>
         </div>
 
         <div style="min-width:220px;">
           <label class="label">Module</label>
-          <select class="input" name="module_key" required>
+          <select class="input" name="module_key" id="field_module_key" required>
             {% for mk in allowed_module_keys %}
               <option value="{{ mk }}">{{ mk }}</option>
             {% endfor %}
@@ -116,14 +128,14 @@
         <div style="min-width:140px;">
           <label class="label">Outsourced</label>
           <div style="display:flex; align-items:center; gap:8px; height:42px;">
-            <input type="checkbox" name="is_outsourced">
+            <input type="checkbox" name="is_outsourced" id="field_is_outsourced">
             <span class="muted">Yes</span>
           </div>
         </div>
 
         <div style="flex:1; min-width:260px;">
           <label class="label">Notes</label>
-          <input class="input" type="text" name="notes" placeholder="Optional">
+          <input class="input" type="text" name="notes" id="field_notes">
         </div>
 
         <div>
@@ -133,12 +145,13 @@
     </form>
 
     <div class="muted" style="margin-top:10px;">
-      Tip: use sequence 10,20,30... so you can insert steps later (e.g. 15).
+      Tip: Preset fills defaults; edit Op Name to match the component.
     </div>
   </div>
 </div>
 
-<div class="card" style="margin-top:12px;">
+
+<div class="card" style="margin-top:12px;"> {#seq index #}
   <div class="card-header">
     <h3 style="margin:0;">Sequence Index</h3>
   </div>
@@ -251,4 +264,44 @@
   </div>
 </div>
 </div>
+<script>
+(function () {
+  const presets = {{ step_presets | tojson }};
+  const sel = document.getElementById("preset_op_key");
+
+  const seq = document.getElementById("field_sequence");
+  const opName = document.getElementById("field_op_name");
+  const moduleKey = document.getElementById("field_module_key");
+  const out = document.getElementById("field_is_outsourced");
+
+  if (!sel) return;
+
+  function applyPreset(key) {
+    const p = presets[key];
+    if (!p) return;
+
+     // Fill immediately so user can edit before submit
+    if (seq) seq.value = (p.sequence != null ? p.sequence : 10);
+    if (opName) opName.value = (p.op_name || "");
+    if (moduleKey) moduleKey.value = (p.module_key || "");
+    if (out) out.checked = (p.is_outsourced === true);
+    
+    // Put cursor at end of op name so quick edits are easy
+    if (opName) {
+      opName.focus();
+      opName.setSelectionRange(opName.value.length, opName.value.length);
+    }
+  }
+
+  sel.addEventListener("change", function () {
+    // If user chooses "Custom…" (blank), do nothing
+    if (!sel.value) return;
+    applyPreset(sel.value);
+  });
+
+  // Optional: if a preset is pre-selected on page load
+  if (sel.value) applyPreset(sel.value);
+})();
+</script>
 {% endblock %}
+

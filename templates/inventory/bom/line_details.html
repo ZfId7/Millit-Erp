@@ -1,0 +1,214 @@
+<!-- File path: templates/inventory/bom/line_details.html -->
+{% extends "base.html" %}
+
+{% block title %}BOM Line Detail{% endblock %}
+{% block topbar %}📦 Inventory — BOM{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        Line {{ line.line_no }} — {{ part.part_number }} — {{ part.name }}
+      </h1>
+      <p class="page-subtitle">
+        {{ bom.assembly_part.part_number }} — Rev <strong>{{ bom.rev }}</strong>
+      </p>
+    </div>
+
+    <div class="row" style="gap: 10px; flex-wrap: wrap;">
+      <a class="btn" href="{{ url_for('inventory_bp.bom_details', bom_id=bom.id) }}">← Back to BOM</a>
+    </div>
+  </div>
+
+  {% if not readiness.is_ready %}
+  <div class="card" style="max-width: 980px;">
+    <h2 style="margin:0 0 10px 0;">⚠️ Not WO-Eligible Yet</h2>
+    <p class="muted" style="margin:0 0 10px 0;">
+      This component cannot be used as a component-only Work Order line until all requirements are met.
+      (Assemblies are allowed via BOM explode.)
+    </p>
+    <ul style="margin:0; padding-left: 18px;">
+      {% for m in readiness.missing %}
+        <li class="muted">{{ m }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="card" style="max-width: 980px;"> {# BOM Line #}
+    <h2 style="margin:0 0 10px 0;">BOM Line</h2>
+    <table class="table">
+      <tbody>
+        <tr><td style="width:220px;" class="muted">Qty / Assembly</td><td>{{ "%.4f"|format(line.qty_per) }}</td></tr>
+        <tr><td class="muted">Make Method</td><td><strong>{{ (line.make_method or "MAKE") }}</strong></td></tr>
+        <tr><td class="muted">Notes</td><td>{{ line.notes or "-" }}</td></tr>
+      </tbody>
+    </table>
+
+    
+  </div>
+
+
+<div class="card" style="max-width: 980px;">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <h2 style="margin:0;">Routing Snapshot</h2>
+      {% if routing %}
+        <div class="muted">Active routing rev: {{ routing.rev }} — Steps: {{ steps|length }}</div>
+      {% else %}
+        <div class="muted">No active routing exists for this part.</div>
+      {% endif %}
+    </div>
+    <div class="row" style="gap: 10px; flex-wrap: wrap;">
+          {% if (line.make_method or "MAKE") == "MAKE" %}
+              {% if routing %}
+                <a class="btn btn-primary"
+                   href="{{ url_for('inventory_bp.routing_detail', routing_id=routing.id, bom_id=bom.id, line_id=line.id) }}">
+                  Edit Routing
+                </a>
+              {% else %}
+                <a class="btn btn-primary"
+                   href="{{ url_for('inventory_bp.routing_create_for_part', part_id=part.id, bom_id=bom.id, line_id=line.id) }}">
+                  + Create Routing
+                </a>
+              {% endif %}
+          {% endif %}
+    
+        <button type="button"
+                class="btn"
+                id="toggle-routing"
+                aria-expanded="true"
+                title="Collapse/Expand">
+          −
+        </button>
+    </div>    
+  </div>
+
+  <div id="routing-body" style="margin-top: 10px;">
+    {% if routing %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:90px;">Seq</th>
+            <th style="width:220px;">Op</th>
+            <th style="width:220px;">Module</th>
+            <th>Outsourced</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in steps %}
+          <tr>
+            <td>{{ s.sequence }}</td>
+            <td><strong>{{ s.op_key }}</strong><div class="muted">{{ s.op_name }}</div></td>
+            <td class="muted">{{ s.module_key }}</td>
+            <td class="muted">{{ "Yes" if s.is_outsourced else "No" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function () {
+  const btn = document.getElementById("toggle-routing");
+  const body = document.getElementById("routing-body");
+  if (!btn || !body) return;
+
+  const key = "bom_line_routing_collapsed_{{ line.id }}";
+  const isCollapsed = localStorage.getItem(key) === "1";
+
+  function setCollapsed(collapsed) {
+    body.style.display = collapsed ? "none" : "block";
+    btn.textContent = collapsed ? "+" : "−";
+    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    localStorage.setItem(key, collapsed ? "1" : "0");
+  }
+
+  setCollapsed(isCollapsed);
+
+  btn.addEventListener("click", function () {
+    const collapsedNow = body.style.display !== "none";
+    setCollapsed(collapsedNow);
+  });
+})();
+</script>
+
+{% if session.get("is_admin") %}
+<div class="card" style="max-width: 980px;"> {# Upload Drawing #}
+  <h2 style="margin:0 0 10px 0;">Upload Drawing (PDF)</h2>
+
+  <form method="post"
+        action="{{ url_for('inventory_bp.part_drawing_upload', part_id=part.id) }}"
+        enctype="multipart/form-data"
+        class="row"
+        style="gap: 10px; align-items: end; flex-wrap: wrap;">
+
+    <div class="field" style="min-width: 320px;">
+      <label>PDF File</label>
+      <input type="file" name="drawing_file" accept="application/pdf" required>
+    </div>
+
+    <div class="field" style="min-width: 160px;">
+      <label>Rev</label>
+      <input type="text" name="rev" value="A">
+    </div>
+
+    <div class="field" style="min-width: 200px;">
+      <label>Type</label>
+      <input type="text" name="drawing_type" value="cad_pdf">
+    </div>
+
+    <div class="field" style="min-width: 260px;">
+      <label>Notes</label>
+      <input type="text" name="notes" placeholder="Optional…">
+    </div>
+    
+    <div class="field" style="min-width: 60px;">
+      <label>&nbsp;</label>
+      <button class="btn btn-primary" type="submit">Upload</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+
+  <div class="card" style="max-width: 980px;">
+  <h2 style="margin:0 0 10px 0;">📐 Part Drawings</h2>
+
+  {% if drawings and drawings|length > 0 %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th style="width:120px;">Rev</th>
+          <th style="width:160px;">Type</th>
+          <th style="width:200px;">Uploaded</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in drawings %}
+        <tr>
+          <td>
+            <a href="{{ url_for('inventory_bp.view_part_drawing', drawing_id=d.id) }}"
+               target="_blank">
+              {{ d.filename }}
+            </a>
+          </td>
+          <td>{{ d.rev }}</td>
+          <td class="muted">{{ d.drawing_type or "-" }}</td>
+          <td class="muted">{{ d.uploaded_at.strftime("%Y-%m-%d") }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="muted">No drawings uploaded for this part.</div>
+  {% endif %}
+</div>
+
+</div>
+{% endblock %}

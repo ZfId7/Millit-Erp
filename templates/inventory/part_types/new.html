@@ -26,14 +26,16 @@
 
         <div style="min-width:220px;">
           <label class="label">Category</label>
-          <select class="input" name="category_key" required>
-            {% for opt in category_options %}
-              <option value="{{ opt }}" {% if opt == "component" %}selected{% endif %}>
-                {{ opt }}
-              </option>
-            {% endfor %}
-
+          <select name="category_key" required>
+              <option value="" disabled selected>— Select category —</option>
+              {% for key, label in category_options %}
+                <option value="{{ key }}"
+                  {% if form and form.get("category_key") == key %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
           </select>
+
         </div>
 
         <div style="min-width:220px;">

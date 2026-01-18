@@ -108,7 +108,7 @@
 
               <div style="min-width:220px;">
                 <label class="label">Part Number</label>
-                <input class="input" name="new_part_number" placeholder="Optional but recommended">
+                <input class="input" name="new_part_number" placeholder="Required">
               </div>
 
               <div style="min-width:260px; flex:1;">
@@ -145,7 +145,7 @@
           <th>Make</th>
           <th>Routing</th>
           <th>Notes</th>
-          <th></th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -153,7 +153,11 @@
         <tr>
           <td>{{ l.line_no }}</td>
           <td>
-            <div><strong>{{ l.component_part.part_number }}</strong></div>
+            <div>
+              <a href="{{ url_for('inventory_bp.bom_line_details', bom_id=bom.id, line_id=l.id) }}">
+                <strong>{{ l.component_part.part_number }}</strong>
+              </a>
+            </div>
             <div class="muted">{{ l.component_part.name }}</div>
           </td>
           <td>{{ "%.4f"|format(l.qty_per) }}</td>
@@ -168,32 +172,19 @@
           </td>
 
           <td class="muted">
-            {% if (l.make_method or "MAKE") != "MAKE" %}
-              <span class="muted">—</span>
-            {% else %}
-              {% set rid = routing_map.get(l.component_part_id) %}
-              {% if rid %}
-                <div class="muted">Steps: {{ routing_steps_count.get(rid, 0) }}</div>
-                <div class="muted">{{ routing_summary.get(rid, "") }}</div>
-                <a class="btn"
-                    href="{{ url_for('inventory_bp.routing_detail',
-                                            routing_id=rid,
-                                            bom_id=bom.id) }}">
-                    Edit
-                </a>
-
+              {% if (l.make_method or "MAKE") != "MAKE" %}
+                <span class="muted">—</span>
               {% else %}
-                <span class="muted">No routing</span>
-                <a class="btn"
-                    href="{{ url_for('inventory_bp.routing_create_for_part',
-                                        part_id=l.component_part_id,
-                                        bom_id=bom.id) }}">
-                    + Create
-                </a>
-
+                {% set rid = routing_map.get(l.component_part_id) %}
+                {% if rid %}
+                  <div class="muted">Steps: {{ routing_steps_count.get(rid, 0) }}</div>
+                  <div class="muted">{{ routing_summary.get(rid, "") }}</div>
+                {% else %}
+                  <span class="muted">No routing</span>
+                {% endif %}
               {% endif %}
-            {% endif %}
           </td>
+
 
           <td class="muted">{{ l.notes or "" }}</td>
           <td style="text-align:right;">

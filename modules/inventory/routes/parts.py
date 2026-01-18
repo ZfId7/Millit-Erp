@@ -5,6 +5,9 @@ from sqlalchemy import or_
 from database.models import db, Part, PartType
 from modules.user.decorators import login_required, admin_required
 from . import inventory_bp
+from modules.inventory.services.parts_service import part_is_ready, part_readiness_detail, sync_part_status
+
+
 
 
 # ---------------------------
@@ -17,6 +20,7 @@ CATEGORY_OPTIONS = [
     ("component", "Component"),
     ("hardware", "Hardware"),
     ("raw", "Raw"),
+    ("package", "Work Package"),
 ]
 
 ALLOWED_CATEGORY_KEYS = {k for k, _ in CATEGORY_OPTIONS}
@@ -26,10 +30,10 @@ ALLOWED_CATEGORY_KEYS = {k for k, _ in CATEGORY_OPTIONS}
 @admin_required
 def part_types_index():
     part_types = PartType.query.order_by(
-		PartType.code.asc().nullslast(),
-		PartType.name.asc()
-	).all()
-	
+        PartType.code.asc().nullslast(),
+        PartType.name.asc()
+    ).all()
+    
     return render_template(
     "inventory/part_types/index.html", 
     part_types=part_types,
@@ -183,7 +187,9 @@ def parts_index():
 @login_required
 def parts_new():
     types = PartType.query.order_by(PartType.name.asc()).all()
-
+    ready = part_is_ready(part_id)
+    detail = part_readiness_detail(part_id)
+    
     if request.method == "POST":
         part_number = (request.form.get("part_number") or "").strip()
         name = (request.form.get("name") or "").strip()
@@ -209,6 +215,10 @@ def parts_new():
         )
         db.session.add(p)
         db.session.commit()
+        
+        sync_part_status(part.id)
+        db.session.commit()
+        
         flash("Part created.", "success")
         return redirect(url_for("inventory_bp.parts_index"))
 
@@ -219,7 +229,8 @@ def parts_new():
 def parts_edit(part_id):
     part = Part.query.get_or_404(part_id)
     types = PartType.query.order_by(PartType.name.asc()).all()
-
+    ready = part_is_ready(part_id)
+    detail = part_readiness_detail(part_id)
     if request.method == "POST":
         part_number = (request.form.get("part_number") or "").strip()
         name = (request.form.get("name") or "").strip()
@@ -244,6 +255,10 @@ def parts_edit(part_id):
         part.part_type_id = int(part_type_id) if part_type_id else None
 
         db.session.commit()
+        
+        sync_part_status(part.id)
+        db.session.commit()
+        
         flash("Part updated.", "success")
         return redirect(url_for("inventory_bp.parts_index"))
 

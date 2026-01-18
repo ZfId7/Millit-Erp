@@ -28,6 +28,36 @@
       <div><strong>Status:</strong> <span class="badge">{{ wo.status }}</span></div>
     </div>
   </div>
+  
+    {% if blocking_count and blocking_count > 0 %}
+  <div class="card" style="max-width: 980px; margin-top: 14px;">
+    <h2 style="margin:0 0 10px 0;">⚠️ Blocking Issues</h2>
+    <p class="muted" style="margin:0 0 10px 0;">
+      These lines are not WO-eligible yet (missing Part Type and/or active routing). Apply will be blocked until fixed.
+    </p>
+
+    <table class="table" style="margin-top: 8px;">
+      <thead>
+        <tr>
+          <th style="width: 90px;">Line</th>
+          <th style="width: 240px;">Part</th>
+          <th>Issue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in line_checks %}
+          {% if not c.ok %}
+          <tr>
+            <td>{{ c.line_no }}</td>
+            <td><strong>{{ c.part_number }}</strong></td>
+            <td class="muted">{{ c.msg }}</td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
 
   <div class="card" style="overflow:auto; margin-top: 14px;">
     <h2 style="margin:0 0 10px 0;">WO Lines</h2>
@@ -61,7 +91,10 @@
   <div class="row" style="gap: 10px; margin-top: 14px;">
     <form method="POST" action="{{ url_for('work_orders_bp.wo_apply_execute', wo_id=wo.id) }}"
           onsubmit="return confirm('Create a new Build run and generate operations?');">
-      <button class="btn primary" type="submit">✅ Apply Work Order</button>
+      <button class="btn primary" type="submit"
+            {% if blocking_count and blocking_count > 0 %}disabled title="Fix blocking issues first"{% endif %}>
+        ✅ Apply Work Order
+      </button>
     </form>
     <a class="btn" href="{{ url_for('work_orders_bp.wo_detail', wo_id=wo.id) }}">Cancel</a>
   </div>

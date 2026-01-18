@@ -194,6 +194,32 @@ class BuildDrawing(db.Model):
     stored_path = db.Column(db.String(500), nullable=False)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+class PartDrawing(db.Model):
+    __tablename__ = "part_drawings"
+    __table_args__ = (
+        Index("ix_part_drawings_part_id", "part_id"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    part = db.relationship(
+        "Part",
+        backref=db.backref("drawings", lazy=True, cascade="all, delete-orphan"),
+    )
+
+    filename = db.Column(db.String(260), nullable=False)
+    stored_path = db.Column(db.String(500), nullable=False)
+
+    # Optional metadata (future-proof, zero cost now)
+    drawing_type = db.Column(db.String(32))  # cad_pdf | step | dwg | image
+    rev = db.Column(db.String(16), default="A")
+    notes = db.Column(db.Text)
+
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
 class JobWorkLog(db.Model):
     __tablename__ = "job_work_logs"
     id = db.Column(db.Integer, primary_key=True)
@@ -260,7 +286,7 @@ class RoutingTemplate(db.Model):
     __table_args__ = (
         UniqueConstraint("part_type_id", "op_key", name="uq_routing_parttype_op"),
     )
-# File path: database/models.py
+
 
 class RoutingHeader(db.Model):
     """

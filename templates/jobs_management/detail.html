@@ -34,7 +34,7 @@
 
   <div class="card">
     <h2>Builds</h2>
-    <p class="muted">Track each assembly’s status and quantities. (Next: inline updates + drawings + BOM per build.)</p>
+    <p class="muted">Track each assembly’s status and quantities.</p>
 
     <table class="table" style="margin-top: 12px;">
       <thead>
@@ -44,7 +44,7 @@
           <th style="width: 140px;">Qty Ordered</th>
           <th style="width: 140px;">Qty Completed</th>
           <th style="width: 120px;">Scrap</th>
-		  <th style="width: 160px;">BOM</th>
+          <th style="width: 160px;">BOM</th>
 
         </tr>
       </thead>
@@ -53,29 +53,40 @@
           <tr>
             <td style="font-weight: 800;">{{ b.name }}</td>
             <td>
-				<form method="post" action="{{ url_for('jobs_bp.build_update_status', build_id=b.id) }}">
-					<select name="status" onchange="this.form.submit()">
-						<option value="queue" {% if (b.status or '') == 'queue' %}selected{% endif %}>queue</option>
-						<option value="in_progress" {% if (b.status or '') == 'in_progress' %}selected{% endif %}>in progress</option>
-						<option value="complete" {% if (b.status or '') == 'complete' %}selected{% endif %}>complete</option>
-					</select>
+                <form method="post" action="{{ url_for('jobs_bp.build_update_status', build_id=b.id) }}">
+                    <select name="status" onchange="this.form.submit()">
+                        <option value="queue" {% if (b.status or '') == 'queue' %}selected{% endif %}>queue</option>
+                        <option value="in_progress" {% if (b.status or '') == 'in_progress' %}selected{% endif %}>in progress</option>
+                        <option value="complete" {% if (b.status or '') == 'complete' %}selected{% endif %}>complete</option>
+                    </select>
 
-					{# keep job_id so we can redirect back cleanly #}
-					<input type="hidden" name="job_id" value="{{ job.id }}">
-			    </form>
-			</td>
-			
+                    {# keep job_id so we can redirect back cleanly #}
+                    <input type="hidden" name="job_id" value="{{ job.id }}">
+                </form>
+            </td>
+            
 
             <td class="muted">{{ b.qty_ordered }}</td>
             <td class="muted">{{ b.qty_completed }}</td>
             <td class="muted">{{ b.qty_scrap }}</td>
-			<td>
-				<a class="btn" href="{{ url_for('jobs_bp.build_bom', build_id=b.id) }}">View BOM</a>
-			</td>
+            <td>
+                {% set master_bom_id = master_bom_by_build.get(b.id) %}
+                {% if master_bom_id %}
+                  <a class="btn btn-small"
+                     href="{{ url_for('inventory_bp.bom_details', bom_id=master_bom_id) }}">
+                    Master BOM
+                  </a>
+                {% else %}
+                  <span class="muted">No Master BOM</span>
+                {% endif %}
+
+
+
+            </td>
           </tr>
         {% else %}
           <tr>
-            <td colspan="5" class="muted">No builds found for this job.</td>
+            <td colspan="6" class="muted">No builds found for this job.</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -83,22 +94,30 @@
   </div>
     <div class="card" style="margin-top: 14px;">
         <h2>Operations Queue</h2>
-        <p class="muted">These are auto-generated from BOM routing. Next: modules will consume these queues.</p>
+        <p class="muted">These are auto-generated from BOM routing.</p>
 
         {% for b in job.builds %}
             <div style="margin-top: 14px;">
-                <div class="row" style="justify-content: space-between; align-items: center;">
-                    <div style="font-weight: 900;">{{ b.name }}</div>
-                    <a class="btn" href="{{ url_for('jobs_bp.build_bom', build_id=b.id) }}">View BOM</a>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="font-weight:900; font-size:14px;">
+                    {{ b.name }}
+                  </div>
+
+                  {% if b.master_bom_id %}
+                    <a class="btn btn-small" href="{{ url_for('inventory_bp.bom_details', bom_id=b.master_bom_id) }}">
+                      Master BOM
+                    </a>
+                  {% endif %}
                 </div>
+   
 
                 <table class="table" style="margin-top: 10px;">
                     <thead>
                         <tr>
                             <th style="width: 90px;">Seq</th>
-                            <th>Operation</th>
-                            <th style="width: 220px;">Module</th>
-                            <th style="width: 160px;">Status</th>
+                            <th style="width: 140px;">Operation</th>
+                            <th style="width: 140px;">Module</th>
+                            <th style="width: 100px;">Status</th>
                             <th style="width: 140px;">Planned</th>
                             <th style="width: 140px;">Done</th>
                             <th style="width: 140px;">Scrap</th>
@@ -106,33 +125,100 @@
                     </thead>
                     <tbody>
                         {% set ops = ops_by_build.get(b.id, []) %}
+
+                        {# Group ops by component part number (falls back to "UNLINKED") #}
+                        {% set grouped = {} %}
                         {% for op in ops %}
+                          {% if op.bom_item and op.bom_item.part %}
+                            {% set key = op.bom_item.part.part_number %}
+                          {% else %}
+                            {% set key = "UNLINKED" %}
+                          {% endif %}
+
+                          {% if key not in grouped %}
+                            {% set _ = grouped.update({key: []}) %}
+                          {% endif %}
+                          {% set _ = grouped[key].append(op) %}
+                        {% endfor %}
+
+                        {# Render groups in a stable order: part numbers first, UNLINKED last #}
+                        {% set keys = grouped.keys()|list %}
+                        {% set keys = keys|reject('equalto', 'UNLINKED')|list + (['UNLINKED'] if 'UNLINKED' in grouped else []) %}
+
+                        {% if ops|length == 0 %}
+                          <tr><td colspan="7" class="muted">No operations generated for this build yet.</td></tr>
+                        {% else %}
+                          {% for part_number in keys %}
+                            {# Group header row #}
+                            {% set gid = "grp_" ~ b.id ~ "_" ~ loop.index0 %}
                             <tr>
-                                <td class="muted">{{ op.sequence }}</td>
-                                <td style="font-weight: 900;">
-                                    {{ op.op_name }}
-                                    {% if op.is_outsourced %}
-                                        <span class="badge badge-queue" style="margin-left: 8px;">outsourced</span>
+                              <td colspan="7" style="padding-top:14px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                                  <div>
+                                    {% if part_number != "UNLINKED" %}
+                                      {% set first = grouped[part_number][0] %}
+                                      <div style="font-weight:900;">
+                                        {{ first.bom_item.part.part_number }} — {{ first.bom_item.part.name }}
+                                      </div>
+                                      <div class="muted" style="font-size:12px; margin-top:2px;">
+                                        Ops for this component (BOM line).
+                                      </div>
+                                    {% else %}
+                                      <div class="muted" style="font-weight:900;">Unlinked operations</div>
+                                      <div class="muted" style="font-size:12px; margin-top:2px;">
+                                        (No bom_item linked.)
+                                      </div>
                                     {% endif %}
+                                  </div>
+
+                                  <button type="button"
+                                          class="btn btn-small"
+                                          data-toggle-group="{{ gid }}"
+                                          aria-expanded="true">
+                                    −
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+
+
+                            {# Group rows #}
+                            {% for op in grouped[part_number] %}
+                              <tr data-group="{{ gid }}">
+                                <td class="muted">{{ op.sequence }}</td>
+
+                                <td style="font-weight: 900;">
+                                  {{ op.op_name }}
+                                  {% if op.is_outsourced %}
+                                    <span class="badge badge-queue" style="margin-left: 8px;">outsourced</span>
+                                  {% endif %}
+                                  {# small context line (optional) #}
+                                  <div class="muted" style="font-size:12px; font-weight:400; margin-top:2px;">
+                                    {{ op.op_key }} • {{ op.module_key }}
+                                  </div>
                                 </td>
+
                                 <td class="muted">{{ op.module_key }}</td>
+
                                 <td>
-                                    {% set s = (op.status or '') %}
-                                    <span class="badge
-                                        {% if s == 'queue' %}badge-queue
-                                        {% elif s == 'in_progress' %}badge-in-progress
-                                        {% elif s == 'complete' %}badge-complete
-                                        {% endif %}">
-                                        {{ s.replace('_',' ') }}
-                                    </span>
+                                  {% set s = (op.status or '') %}
+                                  <span class="badge
+                                    {% if s == 'queue' %}badge-queue
+                                    {% elif s == 'in_progress' %}badge-in-progress
+                                    {% elif s == 'complete' %}badge-complete
+                                    {% endif %}">
+                                    {{ s.replace('_',' ') }}
+                                  </span>
                                 </td>
+
                                 <td class="muted">{{ op.qty_planned }}</td>
                                 <td class="muted">{{ op.qty_done }}</td>
                                 <td class="muted">{{ op.qty_scrap }}</td>
-                            </tr>
-                        {% else %}
-                            <tr><td colspan="7" class="muted">No operations generated for this build yet.</td></tr>
-                        {% endfor %}
+                              </tr>
+                            {% endfor %}
+                          {% endfor %}
+                        {% endif %}
+
                     </tbody>
                 </table>
             </div>
@@ -140,4 +226,25 @@
     </div>
  
 </div>
+<script>
+(function () {
+  function setExpanded(btn, expanded) {
+    btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+    btn.textContent = expanded ? "−" : "+";
+  }
+
+  document.querySelectorAll("[data-toggle-group]").forEach((btn) => {
+    const gid = btn.getAttribute("data-toggle-group");
+    setExpanded(btn, true);
+
+    btn.addEventListener("click", () => {
+      const expanded = btn.getAttribute("aria-expanded") === "true";
+      const rows = document.querySelectorAll(`tr[data-group="${gid}"]`);
+      rows.forEach(r => r.style.display = expanded ? "none" : "");
+      setExpanded(btn, !expanded);
+    });
+  });
+})();
+</script>
+
 {% endblock %}

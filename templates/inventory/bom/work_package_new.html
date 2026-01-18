@@ -1,0 +1,76 @@
+<!-- File path: templates/inventory/bom/work_package_new.html -->
+{% extends "base.html" %}
+
+{% block title %}New Work Package BOM{% endblock %}
+{% block topbar %}📦 Inventory — Work Package BOM{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Create Work Package BOM</h1>
+      <p class="page-subtitle">
+        Use this for scoped work (partial responsibility). This creates a PK container Part and a BOMHeader Rev A.
+      </p>
+    </div>
+    <div class="row">
+      <a class="btn" href="{{ url_for('inventory_bp.bom_index') }}">← Back</a>
+    </div>
+  </div>
+
+  <form method="post" class="row" style="gap:16px; flex-direction:column;">
+
+    <!-- Work Package (new) -->
+    <div class="card" style="padding:16px;">
+        <div class="row" style="gap:20px; flex-wrap:wrap; align-items:flex-start;">
+          <div style="min-width:260px; flex:1; display:flex; flex-direction:column; gap:6px;">
+            <label class="label">Work Package Part #</label>
+            <input class="input" name="part_number" placeholder="PK-CUST-XYZ-001" required>
+            <div class="muted" style="font-size:12px; line-height:1.2;">
+              Tip: PK parts are planning containers. Components inside the BOM generate ops.
+            </div>
+          </div>
+          <div style="min-width:320px; flex:2; display:flex; flex-direction:column; gap:6px;">
+            <label class="label">Work Package Name</label>
+            <input class="input" name="name" placeholder="Customer XYZ — Blade + Liners + Clip" required>
+            <div class="muted" style="font-size:12px; line-height:1.2;">
+              Tip: Name should describe the scope of work.
+            </div>
+          </div>
+          <div style="min-width:300px; flex:2; display:flex; flex-direction:column; gap:6px;">
+            <label class="label">Description (optional)</label>
+            <input class="input" name="description" placeholder="Optional notes…">
+            <!-- spacer so this column lines up with the others that have tips -->
+            <div class="muted" style="font-size:12px; line-height:1.2; visibility:hidden;">
+              spacer
+            </div>
+          </div>
+        </div>
+
+    </div>
+
+    <!-- Rev + Active (mirrors bom/new) -->
+    <div class="card" style="padding:16px;">
+      <div class="row" style="gap:20px; flex-wrap:wrap; align-items:flex-start;">
+        <div style="min-width:120px; flex1; display:flex; flex-direction:column; gap:6px;">
+          <label class="label">Rev</label>
+          <input class="input" name="rev" value="A">
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding-top:22px;">
+          <input type="checkbox" name="is_active" checked>
+          <label>Set active</label>
+        </div>
+
+        <div class="muted" style="padding-top:22px;">
+          Tip: You can change active revision later. Work Packages rarely need multiple revs in V1.
+        </div>
+
+        
+      </div>
+    </div>
+    <div class="row" style="margin-top: 14px;">
+        <button class="btn btn-primary" type="submit">Create Work Package BOM</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

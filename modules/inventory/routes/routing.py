@@ -2,6 +2,8 @@
 from flask import render_template, request, redirect, url_for, flash
 from database.models import db, PartType, RoutingTemplate, Part, RoutingHeader, RoutingStep
 from modules.user.decorators import login_required, admin_required
+from modules.inventory.services.parts_service import sync_part_status
+from modules.inventory.config.routing_presets import ROUTING_STEP_PRESETS
 from . import inventory_bp
 
 ALLOWED_MODULE_KEYS = [
@@ -12,12 +14,16 @@ ALLOWED_MODULE_KEYS = [
     "heat_treat",
 ]
 
+
+
 #New 
 @inventory_bp.route("/routing/part/<int:part_id>/create", methods=["GET", "POST"])
 @login_required
 def routing_create_for_part(part_id):
     part = Part.query.get_or_404(part_id)
     bom_id = request.args.get("bom_id", type=int)
+    line_id = request.args.get("line_id", type=int)
+    
      # Prevent duplicate active routing (or any routing) for this part
     existing = (
         RoutingHeader.query
@@ -30,7 +36,8 @@ def routing_create_for_part(part_id):
         return redirect(url_for(
             "inventory_bp.routing_detail",
             routing_id=existing.id,
-            bom_id=bom_id
+            bom_id=bom_id,
+            line_id=line_id,
         ))
         
     if request.method == "POST":
@@ -48,13 +55,15 @@ def routing_create_for_part(part_id):
         return redirect(url_for(
             "inventory_bp.routing_detail",
             routing_id=rh.id,
-            bom_id=bom_id
+            bom_id=bom_id,
+            line_id=line_id,
         ))
 
     return render_template(
         "inventory/routing/create_for_part.html",
         part=part,
         bom_id=bom_id,
+        line_id=line_id,
     )
     
 
@@ -66,6 +75,7 @@ def routing_detail(routing_id):
     routing = RoutingHeader.query.get_or_404(routing_id)
     part = routing.part
     bom_id = request.args.get("bom_id", type=int)
+    line_id = request.args.get("line_id", type=int)
     
     steps = (
         RoutingStep.query
@@ -81,6 +91,8 @@ def routing_detail(routing_id):
         steps=steps,
         allowed_module_keys=ALLOWED_MODULE_KEYS,
         bom_id=bom_id,
+        line_id=line_id,
+        step_presets=ROUTING_STEP_PRESETS,
     )
 
 
@@ -88,13 +100,28 @@ def routing_detail(routing_id):
 @login_required
 def routing_step_add(routing_id):
     routing = RoutingHeader.query.get_or_404(routing_id)
-
+    bom_id = request.args.get("bom_id", type=int)
+    line_id = request.args.get("line_id", type=int)
+     
     op_key = (request.form.get("op_key") or "").strip().lower()
+    preset = ROUTING_STEP_PRESETS.get(op_key)
+    
     op_name = (request.form.get("op_name") or "").strip()
     module_key = (request.form.get("module_key") or "").strip()
     sequence = request.form.get("sequence", type=int) or 10
     is_outsourced = True if request.form.get("is_outsourced") == "on" else False
     notes = (request.form.get("notes") or "").strip() or None
+
+	# apply preset defaults if user didn't fill fields
+    if preset:
+        if not op_name:
+            op_name = preset["op_name"]
+        if not module_key:
+            module_key = preset["module_key"]
+        if request.form.get("sequence") in (None, "", "0"):
+            sequence = preset["sequence"]
+        if request.form.get("is_outsourced") is None:
+            is_outsourced = preset.get("is_outsourced", False)
 
     if not op_key or not op_name or not module_key:
         flash("op_key, op_name, and module are required.", "error")
@@ -120,8 +147,12 @@ def routing_step_add(routing_id):
     ))
     db.session.commit()
 
+    # After creating/activating routing for a part:
+    sync_part_status(routing.part_id)
+    db.session.commit()
+
     flash("Routing step added.", "success")
-    return redirect(url_for("inventory_bp.routing_detail", routing_id=routing.id))
+    return redirect(url_for("inventory_bp.routing_detail", routing_id=routing.id, bom_id=bom_id, line_id=line_id))
 
 
 @inventory_bp.route("/routing/steps/<int:step_id>/delete", methods=["POST"])
@@ -129,12 +160,19 @@ def routing_step_add(routing_id):
 def routing_step_delete(step_id):
     step = RoutingStep.query.get_or_404(step_id)
     routing_id = step.routing_id
-
+    bom_id = request.args.get("bom_id", type=int)
+    line_id = request.args.get("line_id", type=int)
+    
     db.session.delete(step)
     db.session.commit()
 
+    # After creating/activating routing for a part:
+    routing = RoutingHeader.query.get_or_404(routing_id)
+    sync_part_status(routing.part_id)
+    db.session.commit()
+
     flash("Routing step deleted.", "success")
-    return redirect(url_for("inventory_bp.routing_detail", routing_id=routing_id))
+    return redirect(url_for("inventory_bp.routing_detail", routing_id=routing_id, bom_id=bom_id, line_id=line_id))
 
 
 #Legacy model

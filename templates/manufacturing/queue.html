@@ -58,7 +58,7 @@
       <thead>
         <tr>
           <th style="width: 180px;">Job</th>
-          <th>Build</th>
+          <th style="width: 200px;">Build</th>
           <th style="width: 220px;">Operation</th>
           <th style="width: 160px;">Status</th>
           <th style="width: 120px;">Planned</th>
@@ -80,7 +80,19 @@
               </a>
             </td>
 
-            <td style="font-weight: 900;">{{ op.build.name }}</td>
+            <td>
+              {% if op.bom_item and op.bom_item.part %}
+                <div><strong>{{ op.bom_item.part.part_number }}</strong></div>
+                <div class="muted">{{ op.bom_item.part.name }}</div>
+                <div class="muted" style="font-size:12px;">
+                  {{ op.build.display_name }}
+                </div>
+              {% else %}
+                <div class="muted">{{ op.build.display_name }}</div>
+                <div class="muted" style="font-size:12px;">(no BOM item linked)</div>
+              {% endif %}
+            </td>
+
             <td>{{ op.op_name }}</td>
 
             <td>
