@@ -4,7 +4,8 @@ from database.models import db, PartType, RoutingTemplate, Part, RoutingHeader, 
 from modules.user.decorators import login_required, admin_required
 from modules.inventory.services.parts_service import sync_part_status
 from modules.inventory.config.routing_presets import ROUTING_STEP_PRESETS
-from . import inventory_bp
+from modules.inventory import inventory_bp
+
 
 ALLOWED_MODULE_KEYS = [
     "raw_materials",

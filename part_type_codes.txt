@@ -1,0 +1,41 @@
+PartType Codes:
+
+BL = Blade 4
+
+LN = Liner
+
+BS = Backspacer 4
+
+FH = Front handle
+
+BH = Back handle
+
+OL = Overlay
+
+IL = Inlay
+
+CL = Clip 4
+
+PB = Pivot Barrel
+
+SP = Stop Pin
+
+LOI = Lock insert
+
+DT = Detent Ball
+
+WR = Washer
+
+BRG = Bearing
+
+ST = Standoff
+
+SC = Screw
+
+TBS = Thumbstud
+
+ASY = Assembly 4
+
+SUB = Sub-assembly
+
+HW = Hardware

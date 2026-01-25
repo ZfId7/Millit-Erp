@@ -13,7 +13,8 @@ from werkzeug.utils import secure_filename
 
 from database.models import db, Part, PartDrawing
 from modules.user.decorators import login_required
-from . import inventory_bp
+from modules.inventory import inventory_bp
+
 
 
 def _part_drawing_storage_dir(part_id: int) -> str:

@@ -46,6 +46,18 @@
         <div class="help">Pick a job first to filter builds.</div>
       </div>
 
+      <select name="machine_id" onchange="this.form.submit()">
+          <option value="">All Machines</option>
+          {% for m in machines %}
+            <option value="{{ m.id }}" {{ 'selected' if machine_id == m.id }}>
+              {{ m.name }}
+            </option>
+          {% endfor %}
+      </select>
+
+      {% if job_id %}<input type="hidden" name="job_id" value="{{ job_id }}">{% endif %}
+      {% if build_id %}<input type="hidden" name="build_id" value="{{ build_id }}">{% endif %}
+  
       <div class="field" style="min-width: 140px;">
         <label>&nbsp;</label>
         <a class="btn" href="{{ url_for('mfg_bp.mfg_queue') }}">Reset</a>
@@ -106,6 +118,20 @@
                 {% endif %}">
                 {{ s.replace('_',' ') }}
               </span>
+            </td>
+            <td>
+              <form method="POST"
+                    action="{{ url_for('mfg_bp.mfg_assign_machine', op_id=op.id) }}">
+                <select name="machine_id" onchange="this.form.submit()">
+                  <option value="">—</option>
+                  {% for m in machines %}
+                    <option value="{{ m.id }}"
+                      {{ 'selected' if op.assigned_machine_id == m.id }}>
+                      {{ m.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </form>
             </td>
 
             <td class="muted">{{ op.qty_planned }}</td>

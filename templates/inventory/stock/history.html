@@ -1,0 +1,68 @@
+<!-- File path: templates/inventory/stock/history.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Stock History</h1>
+      <p class="muted" style="margin: 0;">
+        {{ entity_label }} — {{ entity_type }} #{{ entity_id }}
+      </p>
+    </div>
+    <div class="row">
+      <a class="btn" href="{{ url_for('inventory_bp.inventory_catalog') }}">← Back to Catalog</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stack">
+      <div class="row" style="gap: 10px; align-items: center;">
+        <div class="muted">Showing latest {{ limit }} entries</div>
+        <a class="btn" href="{{ url_for('inventory_bp.stock_history', entity_type=entity_type, entity_id=entity_id, limit=1000) }}">Show 1000</a>
+      </div>
+
+      <div style="overflow:auto;">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>When</th>
+              <th>Delta</th>
+              <th>UOM</th>
+              <th>Reason</th>
+              <th>Source</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in entries %}
+            <tr>
+              <td class="muted">
+                {{ e.created_at | dt | default("_") }}
+              </td>
+              <td style="font-weight: 800;">
+                {{ e.qty_delta }}
+              </td>
+              <td class="muted">{{ e.uom }}</td>
+              <td>{{ e.reason }}</td>
+              <td class="muted">
+                {% if e.source_type or e.source_ref %}
+                  {{ e.source_type or "" }} {{ e.source_ref or "" }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td class="muted">{{ e.note or "—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if not entries %}
+        <p class="muted" style="margin: 0;">No history found.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

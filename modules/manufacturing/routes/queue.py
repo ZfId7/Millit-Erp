@@ -3,7 +3,7 @@
 from flask import render_template, request
 from modules.manufacturing import mfg_bp
 from modules.user.decorators import login_required
-from database.models import BuildOperation, Job, Build
+from database.models import BuildOperation, Job, Build, Machine
 
 MFG_OP_KEYS = ["cnc_profile"]
 
@@ -12,7 +12,8 @@ MFG_OP_KEYS = ["cnc_profile"]
 def mfg_queue():
     job_id = request.args.get("job_id", type=int)
     build_id = request.args.get("build_id", type=int)
-
+    machine_id = request.args.get("machine_id", type=int)
+    
     q = (
         BuildOperation.query
         .join(Build, Build.id == BuildOperation.build_id)
@@ -29,6 +30,8 @@ def mfg_queue():
         q = q.filter(Build.job_id == job_id)
     if build_id:
         q = q.filter(BuildOperation.build_id == build_id)
+    if machine_id:
+        q = q.filter(BuildOperation.assigned_machine_id == machine_id)
 
     ops = q.all()
 
@@ -38,6 +41,14 @@ def mfg_queue():
     builds = []
     if job_id:
         builds = Build.query.filter(Build.job_id == job_id).order_by(Build.created_at.asc()).all()
+    
+    machines = (
+        Machine.query
+        .filter(Machine.is_active.is_(True))
+        .order_by(Machine.machine_group.asc(), Machine.name.asc())
+        .all()
+    )
+
 
     return render_template(
         "manufacturing/queue.html",
@@ -46,4 +57,6 @@ def mfg_queue():
         builds=builds,
         job_id=job_id,
         build_id=build_id,
+        machines=machines,
+        machine_id=machine_id,
     )

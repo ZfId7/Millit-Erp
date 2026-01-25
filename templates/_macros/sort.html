@@ -1,0 +1,24 @@
+<!-- File path: templates/_macros/sort.html -->
+
+{% macro sort_th(label, key, endpoint) %}
+  {% set current_sort = request.args.get('sort', 'code') %}
+  {% set current_dir  = request.args.get('dir', 'desc') %}
+  {% set is_active = (current_sort == key) %}
+  {% set next_dir = 'asc' if (is_active and current_dir == 'desc') else 'desc' %}
+
+  <a href="{{ url_for(endpoint,
+                      sort=key,
+                      dir=next_dir,
+                      q=request.args.get('q'),
+                      show_inactive=request.args.get('show_inactive')) }}"
+     style="display:inline-flex; gap:6px; align-items:center; text-decoration:none; color:inherit;">
+    <span>{{ label }}</span>
+    <span class="muted">
+      {% if is_active %}
+        {{ '▲' if current_dir == 'asc' else '▼' }}
+      {% else %}
+        ▾
+      {% endif %}
+    </span>
+  </a>
+{% endmacro %}

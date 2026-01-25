@@ -203,7 +203,7 @@ class PartDrawing(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False)
     part = db.relationship(
         "Part",
         backref=db.backref("drawings", lazy=True, cascade="all, delete-orphan"),
@@ -301,7 +301,7 @@ class RoutingHeader(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False)
     part = db.relationship("Part", foreign_keys=[part_id])
 
     rev = db.Column(db.String(16), nullable=False, default="A", index=True)
@@ -326,7 +326,7 @@ class RoutingStep(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    routing_id = db.Column(db.Integer, db.ForeignKey("routing_headers.id"), nullable=False, index=True)
+    routing_id = db.Column(db.Integer, db.ForeignKey("routing_headers.id"), nullable=False)
     routing = db.relationship(
         "RoutingHeader",
         backref=db.backref("steps", lazy=True, cascade="all, delete-orphan", order_by="RoutingStep.sequence.asc()"),
@@ -366,6 +366,9 @@ class BuildOperation(db.Model):
     op_key = db.Column(db.String(50), nullable=False)
     op_name = db.Column(db.String(120), nullable=False)
     module_key = db.Column(db.String(50), nullable=False)
+
+    assigned_machine_id = db.Column(db.Integer, db.ForeignKey("machines.id"), nullable=True, index=True)
+    assigned_machine = db.relationship("Machine")
 
     sequence = db.Column(db.Integer, nullable=False)
     status = db.Column(db.String(20), nullable=False, default="queue")  # queue/in_progress/complete/blocked/cancelled
@@ -446,7 +449,55 @@ class RawStock(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-# -V5 update here
+class BulkHardware(db.Model):
+    __tablename__ = "bulk_hardware"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Internal MERP item code (BH-000001)
+    item_code = db.Column(db.String(16), unique=True, nullable=False, index=True)
+
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+
+    vendor = db.Column(db.String(120))
+    vendor_sku = db.Column(db.String(120))
+
+    uom = db.Column(db.String(12), nullable=False, default="ea")
+    qty_on_hand = db.Column(db.Float, nullable=False, default=0.0)
+
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class BulkConversionEvent(db.Model):
+    __tablename__ = "bulk_conversion_events"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    bulk_hardware_id = db.Column(db.Integer, db.ForeignKey("bulk_hardware.id"), nullable=False, index=True)
+    bulk_hardware = db.relationship("BulkHardware", foreign_keys=[bulk_hardware_id])
+
+    part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    part = db.relationship("Part", foreign_keys=[part_id])
+
+    produced_qty = db.Column(db.Float, nullable=False, default=0.0)
+    produced_uom = db.Column(db.String(12), nullable=False, default="ea")
+
+    consumed_qty = db.Column(db.Float, nullable=False, default=0.0)
+    consumed_uom = db.Column(db.String(12), nullable=False, default="ea")
+
+    stage_key = db.Column(db.String(64), nullable=False, default="mfg_wip")
+
+    # Optional traceability
+    source_type = db.Column(db.String(32), nullable=True, index=True)   # work_order / job / build / assembly / other
+    source_ref = db.Column(db.String(64), nullable=True, index=True)    # WO-123, JOB-55, etc.
+    note = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
 class PartInventory(db.Model):
     __tablename__ = "part_inventory"
     __table_args__ = (
@@ -463,7 +514,7 @@ class PartInventory(db.Model):
     stage_key = db.Column(db.String(32), nullable=False, default="mfg_wip", index=True)
 
     # Revision tracking (latest preferred in planning)
-    rev = db.Column(db.String(16), nullable=False, default="A", index=True)
+    rev = db.Column(db.String(16), nullable=False, default="1", index=True)
 
     # Variant/config tracking (NULL for most; used for finished components/finished goods)
     config_key = db.Column(db.String(64), nullable=True, index=True)
@@ -478,6 +529,32 @@ class PartInventory(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class StockLedgerEntry(db.Model):
+    __tablename__ = "stock_ledger"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # What kind of thing moved?
+    # 'raw_stock' | 'bulk_hardware' | 'part_inventory'
+    entity_type = db.Column(db.String(32), nullable=False, index=True)
+    entity_id = db.Column(db.Integer, nullable=False, index=True)
+
+    qty_delta = db.Column(db.Float, nullable=False)
+    uom = db.Column(db.String(16), nullable=False, default="ea")
+
+    # Why it moved
+    reason = db.Column(db.String(32), nullable=False, default="adjust")  # adjust/receive/issue/consume/convert/etc.
+    note = db.Column(db.Text, nullable=True)
+
+    # Optional traceability
+    source_type = db.Column(db.String(32), nullable=True, index=True)  # work_order/job/build/assembly/other
+    source_ref = db.Column(db.String(64), nullable=True, index=True)
+
+    # Who did it (optional for now if you don't have user_id in session)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
 class WaterjetOperationDetail(db.Model):
@@ -632,7 +709,7 @@ class WorkOrderLine(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    work_order_id = db.Column(db.Integer, db.ForeignKey("work_orders.id"), nullable=False, index=True)
+    work_order_id = db.Column(db.Integer, db.ForeignKey("work_orders.id"), nullable=False)
     work_order = db.relationship("WorkOrder", backref=db.backref("lines", lazy=True))
     
     #Part reference
@@ -670,7 +747,7 @@ class BOMHeader(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    assembly_part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False, index=True)
+    assembly_part_id = db.Column(db.Integer, db.ForeignKey("parts.id"), nullable=False)
     assembly_part = db.relationship("Part", foreign_keys=[assembly_part_id])
     
     # BOM revision label (e.g., "A", "B", "2026-01-01", etc.)
@@ -695,7 +772,7 @@ class BOMLine(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    bom_id = db.Column(db.Integer, db.ForeignKey("bom_headers.id"), nullable=False, index=True)
+    bom_id = db.Column(db.Integer, db.ForeignKey("bom_headers.id"), nullable=False)
     bom = db.relationship(
         "BOMHeader",
         backref=db.backref("lines", lazy=True, cascade="all, delete-orphan")
@@ -716,6 +793,27 @@ class BOMLine(db.Model):
     # ✅ NEW: rare override (if this assembly requires a special process plan)
     routing_override_id = db.Column(db.Integer, db.ForeignKey("routing_headers.id"), nullable=True, index=True)
     
+    notes = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class Machine(db.Model):
+    __tablename__ = "machines"
+    __table_args__ = (
+        UniqueConstraint("key", name="uq_machine_key"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # stable identifier for URLs + code (e.g. "cnc_haas", "manual_lathe")
+    key = db.Column(db.String(64), nullable=False)
+
+    name = db.Column(db.String(120), nullable=False)           # "Haas VF-2SS"
+    machine_group = db.Column(db.String(32), nullable=False)   # "cnc" | "manual"
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+
     notes = db.Column(db.Text, nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

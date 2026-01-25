@@ -2,7 +2,7 @@
 # File path: /modules/__init__.py
 
 # Import each module's blueprint
-from .inventory.routes import inventory_bp
+from .inventory import inventory_bp
 from .surface_grinding.routes import surface_bp
 from .bevel_grinding.routes import bevel_bp
 from .jobs_management.routes import jobs_bp

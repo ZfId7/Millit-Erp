@@ -1,67 +1,79 @@
-{# File path: templates/inventory/part_types/index.html #}
+<!-- File path: templates/inventory/part_types/index.html -->
+
 {% extends "base.html" %}
+
+{% block topbar %}
+📦 Inventory
+{% endblock %}
+
+{% block toplinks %}
+  <span class="page-links">
+    <a class="btn btn-secondary" href="{{ url_for('inventory_bp.inventory_index') }}">← Inventory</a>
+    <a class="btn btn-primary" href="{{ url_for('inventory_bp.bom_index') }}">← Master BOM</a>    
+
+    
+  </span>
+  {{ super() }}
+{% endblock %}
+
 {% block content %}
-
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-  <div>
-    <h2 style="margin:0;">Part Type Code Manager</h2>
-    <div class="muted" style="margin-top:6px;">
-      Admin-only registry used for part-number parsing (e.g. <strong>OV-BL001-…</strong> → code <strong>BL</strong>) and classification.
+<div class="page">
+    <div class="page-header">
+        <div>
+          <h1 class="page-title">📦 Part Type Code Manager</h1>
+          <p class="page-subtitle"> Admin-only registry used for part-number parsing (e.g. <strong>OV-BL001-…</strong> → code <strong>BL</strong>) and classification.</p>
+        </div>
     </div>
-  </div>
-
-  <div style="display:flex; gap:8px;">
-    <a class="btn btn-primary" href="{{ url_for('inventory_bp.part_types_new') }}">+ New Code</a>
-  </div>
-</div>
-
-<div class="card" style="margin-top:12px;">
-  <div class="card-body">
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width:120px;">Code</th>
-          <th>Name</th>
-          <th style="width:200px;">Category</th>
-          <th style="width:220px;">Key (legacy)</th>
-          <th style="width:160px;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for pt in part_types %}
-        <tr>
-          <td>
-            {% if pt.code %}
-              <span class="badge">{{ pt.code }}</span>
+    
+    <div class="card" style="margin-top:12px;">
+      <div class="card-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width:120px;">Code</th>
+              <th>Name</th>
+              <th style="width:200px;">Category</th>
+              <th style="width:220px;">Key (legacy)</th>
+              <th style="width:160px;"><a href="{{ url_for('inventory_bp.part_types_new') }}" class="btn btn-secondary" style="align:center;">
+                   ✚
+                  </a></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pt in part_types %}
+            <tr>
+              <td>
+                {% if pt.code %}
+                  <span class="badge">{{ pt.code }}</span>
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
+              <td><strong>{{ pt.name }}</strong></td>
+              <td class="muted">{{ pt.category_key }}</td>
+              <td class="muted">{{ pt.key }}</td>
+              <td style="text-align:right;">
+                <a class="btn" href="{{ url_for('inventory_bp.part_types_edit', type_id=pt.id) }}">Edit</a>
+                <form method="post"
+                      action="{{ url_for('inventory_bp.part_types_delete', type_id=pt.id) }}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Delete this Part Type Code? This may affect parsing/defaults.');">
+                  <button class="btn btn-danger" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
             {% else %}
-              <span class="muted">—</span>
-            {% endif %}
-          </td>
-          <td><strong>{{ pt.name }}</strong></td>
-          <td class="muted">{{ pt.category_key }}</td>
-          <td class="muted">{{ pt.key }}</td>
-          <td style="text-align:right;">
-            <a class="btn" href="{{ url_for('inventory_bp.part_types_edit', type_id=pt.id) }}">Edit</a>
-            <form method="post"
-                  action="{{ url_for('inventory_bp.part_types_delete', type_id=pt.id) }}"
-                  style="display:inline;"
-                  onsubmit="return confirm('Delete this Part Type Code? This may affect parsing/defaults.');">
-              <button class="btn btn-danger" type="submit">Delete</button>
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="5" class="muted">No part type codes yet.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            <tr>
+              <td colspan="5" class="muted">No part type codes yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
 
-    <div class="muted" style="margin-top:10px;">
-      Tip: codes should match your part number scheme (e.g. <strong>BL</strong>, <strong>BS</strong>, <strong>LN</strong>, <strong>PB</strong>).
+        <div class="muted" style="margin-top:10px;">
+          Tip: codes should match your part number scheme (e.g. <strong>BL</strong>, <strong>BS</strong>, <strong>LN</strong>, <strong>PB</strong>).
+        </div>
+      </div>
     </div>
-  </div>
 </div>
-
 {% endblock %}

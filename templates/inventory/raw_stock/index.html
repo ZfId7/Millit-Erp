@@ -1,9 +1,44 @@
 <!-- File path: templates/inventory/raw_stock/index.html -->
-<!-- V1 Base Raw Stock Catalog Build-->
 {% extends "base.html" %}
 
+{% set current_sort = request.args.get('sort', 'code') %}
+{% set current_dir  = request.args.get('dir', 'desc') %}
+
+{% macro sort_th(label, key) %}
+  {% set is_active = (current_sort == key) %}
+  {% set next_dir = 'asc' if (is_active and current_dir == 'desc') else 'desc' %}
+
+  <a href="{{ url_for('inventory_bp.raw_stock_index',
+                      sort=key,
+                      dir=next_dir,
+                      q=request.args.get('q'),
+                      show_inactive=request.args.get('show_inactive')) }}"
+     style="display:inline-flex; gap:6px; align-items:center; text-decoration:none; color:inherit;">
+    <span>{{ label }}</span>
+    <span class="muted">
+      {% if is_active %}
+        {{ '▲' if current_dir == 'asc' else '▼' }}
+      {% else %}
+        ▾
+      {% endif %}
+    </span>
+  </a>
+{% endmacro %}
+
+
 {% block title %}Raw Stock{% endblock %}
-{% block topbar %}🧱 Inventory — Raw Stock{% endblock %}
+{% block topbar %}🧱 Inventory{% endblock %}
+
+{% block toplinks %}
+  <span class="page-links">
+    <a class="btn btn-secondary" href="{{ url_for('inventory_bp.inventory_index') }}">← Inventory</a>
+    <a class="btn btn-primary" href="{{ url_for('inventory_bp.inventory_catalog') }}">← Catalog</a>    
+
+    
+  </span>
+  {{ super() }}
+{% endblock %}
+
 
 {% block content %}
 <div class="page">
@@ -13,35 +48,50 @@
       <p class="page-subtitle">Sheet goods, bar stock, handle materials</p>
     </div>
 
-    <div style="display:flex; gap:10px;">
-      <a href="{{ url_for('inventory_bp.raw_stock_new') }}" class="btn btn-primary">➕ Add Raw Stock</a>
-      <a href="{{ url_for('inventory_bp.raw_stock_index', show_inactive='1' if not show_inactive else None) }}"
-         class="btn btn-secondary">
-        {% if show_inactive %}Hide Inactive{% else %}Show Inactive{% endif %}
-      </a>
-    </div>
+   
   </div>
+    <form method="get" class="mb-3">
+      <input type="text" name="q" value="{{ search }}" placeholder="Search…" />
+      <label>
+        <input type="checkbox" name="show" value="all" {% if include_inactive %}checked{% endif %}>
+        Show inactive
+      </label>
+      <button type="submit">Filter</button>
+    </form>
 
   <div class="card">
     <table class="table">
       <thead>
         <tr>
-          <th>Type</th>
-          <th>Name</th>
-          <th style="width:120px;">Form</th>
+          <th>{{ sort_th('Code', 'code') }}</th>
+          <th>{{ sort_th('Material', 'material') }}</th>
+          <th>{{ sort_th('Name', 'name') }}</th> 
+          <th>{{ sort_th('Grade', 'grade') }}</th>
+          <th style="width:120px;">{{ sort_th('Form', 'form') }}</th>
           <th style="width:160px;">Thickness</th>
           <th style="width:200px;">Size</th>
-          <th style="width:160px;">On Hand</th>
+          <th style="width:160px;">Quantity</th>
           <th style="width:180px;">Location</th>
+          <th><a href="{{ url_for('inventory_bp.raw_stock_new') }}" class="btn btn-secondary" style="align:center;">
+               ✚
+              </a>
+          </th>
         </tr>
       </thead>
       <tbody>
         {% for r in items %}
           <tr class="{% if not r.is_active %}muted{% endif %}">
-            <td>{{ r.material_type }}</td>
+            <td>
+              <a href="{{ url_for('inventory_bp.raw_stock_details', item_id=r.id) }}"
+                 style="font-weight:600;">
+                RS-{{ "%05d"|format(r.id) }}
+              </a>
+            </td>
+            <td>{{ r.material_type|title }}</td>
             <td>
               <strong>{{ r.name }}</strong>
-              {% if r.grade %}<span class="muted"> — {{ r.grade }}</span>{% endif %}
+            </td>
+            <td>{{r.grade}}
             </td>
             <td class="muted">{{ r.form }}</td>
             <td class="muted">
@@ -52,12 +102,25 @@
                 {{ "%.2f"|format(r.width_in) }}" × {{ "%.2f"|format(r.length_in) }}"
               {% endif %}
             </td>
-            <td>{{ r.qty_on_hand }} {{ r.uom }}</td>
+            <td>
+              {{ qty_map.get(r.id, 0) }} {{ r.uom }}
+            </td>
+
             <td class="muted">{{ r.location or "" }}</td>
+            <td class="muted">
+                <form method="POST"
+                      action="{{ url_for('inventory_bp.raw_stock_adjust', item_id=r.id) }}"
+                      style="display:inline-flex; gap:6px; align-items:center;">
+                  <input type="number" name="qty_delta" step="0.0001" placeholder="+/-" style="width:90px;">
+                  
+                  <button class="btn btn-sm" type="submit">Adjust</button>
+                </form>
+            </td>
+
           </tr>
         {% else %}
           <tr>
-            <td colspan="7" class="muted">No raw stock items yet.</td>
+            <td colspan="8" class="muted">No raw stock items yet.</td>
           </tr>
         {% endfor %}
       </tbody>

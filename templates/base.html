@@ -6,6 +6,15 @@
 
     <meta charset="UTF-8">
     <title>{% block title %}Millit Knives{% endblock %}</title>
+  <!-- Global / app-wide CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">    
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/layout_helpers.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/side_bar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/badges.css') }}">
+  
+  
 <style>
 	:root {
 		--bg: #121212;
@@ -60,7 +69,7 @@
 
 	a { color: inherit; }
 
-
+  {# hide
 	.sidebar {
 		width: 240px;
 		background-color: var(--panel);
@@ -131,11 +140,17 @@
 	}
 
 
-	.topbar .topbar-links {
-		display: flex;
-		gap: 10px;
-	}
+    .topbar .topbar-links {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
 
+    .topbar-links .page-links {
+        display: flex;
+        gap: 10px;
+        margin: 0 0 0 0;
+    }
 
 	.topbar .topbar-links a {
 		font-size: 14px;
@@ -156,62 +171,9 @@
 	.content {
 		padding: var(--pad);
 	}
-
-
-	/* ---------- Layout helpers ---------- */
-	.page {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		max-width: 1200px;
-	}
-
-
-	.page-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-	}
-
-
-	.page-title {
-		font-size: 22px;
-		font-weight: 900;
-		margin: 0;
-	}
-
-	.page-subtitle {
-		margin: 4px 0 0 0;
-		color: var(--muted);
-		font-size: 13px;
-	}
-
-
-	.stack { display: flex; flex-direction: column; gap: 10px; }
-	.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-
-	/* ---------- Cards ---------- */
-	.card {
-		background: linear-gradient(180deg, var(--panel-3), var(--panel));
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		box-shadow: var(--shadow);
-		padding: 16px;
-	}
-
-	.card h2 {
-		margin: 0 0 10px 0;
-		font-size: 16px;
-		font-weight: 800;
-		color: var(--text);
-	}
-
-
-	.card .muted { color: var(--muted); font-size: 13px; }
-
-
-	/* ---------- Buttons ---------- */
+  #}
+  {# Hide
+    	/* ---------- Buttons ---------- */
 	.btn {
 		display: inline-flex;
 		align-items: center;
@@ -245,7 +207,60 @@
 		color: #ff7b70;
 	}
 	.btn-danger:hover { background: rgba(231,76,60,.22); border-color: rgba(231,76,60,.55); }
+  #}
+  {# Hide  
+	/* ---------- Layout helpers ---------- */
+	.page {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		max-width: 1200px;
+	}
 
+
+	.page-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+
+	.page-title {
+		font-size: 22px;
+		font-weight: 900;
+		margin: 0;
+	}
+
+	.page-subtitle {
+		margin: 4px 0 0 0;
+		color: var(--muted);
+		font-size: 13px;
+	}
+
+
+	.stack { display: flex; flex-direction: column; gap: 10px; }
+	.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    #}
+  {# hide
+	/* ---------- Cards ---------- */
+	.card {
+		background: linear-gradient(180deg, var(--panel-3), var(--panel));
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		box-shadow: var(--shadow);
+		padding: 16px;
+	}
+
+	.card h2 {
+		margin: 0 0 10px 0;
+		font-size: 16px;
+		font-weight: 800;
+		color: var(--text);
+	}
+
+
+	.card .muted { color: var(--muted); font-size: 13px; }
 
 	/* ---------- Forms ---------- */
 	label { font-size: 13px; color: var(--muted); }
@@ -325,7 +340,7 @@
 		border-radius: 999px;
 		font-weight: 800;
 	}
-
+  #}
 
 	/* ---------- Badges ---------- */
 	.badge {

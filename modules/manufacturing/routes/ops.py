@@ -4,7 +4,7 @@
 from flask import flash, redirect, url_for
 from modules.manufacturing import mfg_bp
 from modules.user.decorators import login_required
-from database.models import db, BuildOperation
+from database.models import db, BuildOperation, Machine
 from modules.jobs_management.services.ops_flow import complete_operation  # adjust if different
 
 @mfg_bp.route("/op/<int:op_id>/start", methods=["POST"])
@@ -51,3 +51,25 @@ def mfg_complete(op_id):
 
     flash("Operation completed. Next operation released.", "success")
     return redirect(url_for("mfg_bp.mfg_queue"))
+
+
+@mfg_bp.route("/op/<int:op_id>/assign_machine", methods=["POST"])
+@login_required
+def mfg_assign_machine(op_id):
+    op = BuildOperation.query.get_or_404(op_id)
+
+    if op.module_key != "manufacturing":
+        flash("Invalid operation for Manufacturing.", "error")
+        return redirect(url_for("mfg_bp.mfg_queue"))
+
+    machine_id = request.form.get("machine_id", type=int)
+
+    if machine_id:
+        op.assigned_machine_id = machine_id
+        flash("Machine assigned.", "success")
+    else:
+        op.assigned_machine_id = None
+        flash("Machine unassigned.", "info")
+
+    db.session.commit()
+    return redirect(request.referrer or url_for("mfg_bp.mfg_queue"))

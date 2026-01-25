@@ -6,7 +6,10 @@ from database.models import db, Part, PartType, BOMHeader, BOMLine, RoutingHeade
 from modules.user.decorators import login_required, admin_required
 from modules.inventory.services.parts_service import part_readiness_detail
 from modules.inventory.config.routing_presets import ROUTING_STEP_PRESETS
-from . import inventory_bp
+from modules.inventory.services.bom_revision_service import clone_bom_revision, BOMRevisionError
+
+from modules.inventory import inventory_bp
+
 
 
 import re
@@ -57,7 +60,7 @@ def bom_create():
     new_name = (request.form.get("new_name") or "").strip()
     new_description = (request.form.get("new_description") or "").strip() or None
 
-    rev = (request.form.get("rev") or "A").strip()
+    rev = (request.form.get("rev") or "1").strip()
     is_active = (request.form.get("is_active") == "on")
 
     # If no assembly selected, require new assembly fields
@@ -271,6 +274,30 @@ def bom_set_active(bom_id):
     flash("BOM marked active for this assembly.", "success")
     return redirect(url_for("inventory_bp.bom_details", bom_id=bom.id))
 
+@inventory_bp.route("/bom/<int:bom_id>/clone", methods=["POST"])
+@login_required
+@admin_required
+def bom_clone_revision(bom_id):
+    bom = BOMHeader.query.get_or_404(bom_id)
+
+    # Guard: only allow cloning active BOMs (service also enforces)
+    if not bom.is_active:
+        flash("Only active BOM revisions can be cloned.", "warning")
+        return redirect(url_for("inventory_bp.bom_details", bom_id=bom.id))
+
+    try:
+        result = clone_bom_revision(bom.id)  # auto bumps numeric dotted rev
+        flash(
+            f"New revision created: rev {result.new_rev} (copied {result.copied_lines} line(s)).",
+            "success",
+        )
+        return redirect(url_for("inventory_bp.bom_details", bom_id=result.new_bom.id))
+
+    except BOMRevisionError as e:
+        flash(str(e), "danger")
+        return redirect(url_for("inventory_bp.bom_details", bom_id=bom.id))
+
+
 @inventory_bp.route("/bom/<int:bom_id>/lines/add", methods=["POST"])
 @login_required
 def bom_add_line(bom_id):
@@ -432,7 +459,7 @@ def work_package_new():
     pkg_name = (request.form.get("name") or "").strip()
     description = (request.form.get("description") or "").strip() or None
     
-    rev = (request.form.get("rev") or "A").strip()
+    rev = (request.form.get("rev") or "1").strip()
     is_active = (request.form.get("is_active") =="on")
     
     if not pkg_part_number or not pkg_name:

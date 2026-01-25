@@ -4,7 +4,8 @@ from sqlalchemy import or_
 
 from database.models import db, Part, PartType
 from modules.user.decorators import login_required, admin_required
-from . import inventory_bp
+from modules.inventory import inventory_bp
+
 from modules.inventory.services.parts_service import part_is_ready, part_readiness_detail, sync_part_status
 
 
@@ -187,8 +188,10 @@ def parts_index():
 @login_required
 def parts_new():
     types = PartType.query.order_by(PartType.name.asc()).all()
-    ready = part_is_ready(part_id)
-    detail = part_readiness_detail(part_id)
+    
+    # New part has no readiness yet
+    ready = False
+    detail = None
     
     if request.method == "POST":
         part_number = (request.form.get("part_number") or "").strip()
@@ -216,7 +219,7 @@ def parts_new():
         db.session.add(p)
         db.session.commit()
         
-        sync_part_status(part.id)
+        sync_part_status(p.id)
         db.session.commit()
         
         flash("Part created.", "success")

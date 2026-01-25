@@ -2,7 +2,16 @@
 {% extends "base.html" %}
 
 {% block title %}Master BOM{% endblock %}
-{% block topbar %}📦 Inventory — Master BOM{% endblock %}
+{% block topbar %}📦 Inventory{% endblock %}
+
+{% block toplinks %}
+  <span class="page-links">
+    <a class="btn btn-secondary" href="{{ url_for('inventory_bp.inventory_index') }}">← Inventory</a>
+    <a class="btn btn-primary" href="{{ url_for('inventory_bp.parts_index') }}">Parts Catalog</a>
+    <a class="btn btn-primary" href="{{ url_for('inventory_bp.part_types_index') }}">Part Type Manager</a>
+  </span>
+  {{ super() }}
+{% endblock %}
 
 {% block content %}
 <div class="page">
@@ -13,7 +22,7 @@
       <p class="page-subtitle">Assembly BOM revisions and component structure.</p>
     </div>
     <div class="row" style="gap: 10px;">
-      <a class="btn" href="{{ url_for('inventory_bp.inventory_index') }}">← Inventory</a>
+
       <a class="btn btn-primary" href="{{ url_for('inventory_bp.bom_new') }}">+ New BOM</a>
       {% if session.get("is_admin") %}
           <a class="btn btn-primary" href="{{ url_for('inventory_bp.work_package_new') }}">
@@ -22,6 +31,15 @@
         {% endif %}
     </div>
   </div>
+
+    <form method="get" class="mb-3">
+      <input type="text" name="q" value="{{ search }}" placeholder="Search…" />
+      <label>
+        <input type="checkbox" name="show" value="all" {% if include_inactive %}checked{% endif %}>
+        Show inactive
+      </label>
+      <button class="btn btn-ghost" type="submit">Filter</button>
+    </form>
 
   <div class="card" style="overflow:auto;">
     <table class="table">
@@ -75,3 +93,15 @@
 
 </div>
 {% endblock %}
+<style>
+    .topbar-links {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .topbar-links .page-links {
+      display: flex;
+      gap: 10px;
+    }
+</style>

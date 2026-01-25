@@ -1,0 +1,148 @@
+<!-- File path: templates/inventory/bulk/convert.html -->
+{% extends "base.html" %}
+{% block title %}Convert Bulk → Part{% endblock %}
+{% block topbar %}🔁 Bulk → Part{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Convert Bulk → Part</h1>
+      <p class="page-subtitle">
+        Bulk stays bulk. This creates a new Part + PartInventory entry.
+      </p>
+    </div>
+    <div class="row">
+      <a class="btn" href="{{ url_for('inventory_bp.bulk_index') }}">← Back</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stack">
+      <div class="row">
+        <div style="min-width: 280px;">
+          <div class="muted">Bulk Item</div>
+          <div style="font-weight: 900;">{{ item.item_code }}</div>
+          <div class="muted">{{ item.name }}</div>
+        </div>
+        <div style="min-width: 220px;">
+          <div class="muted">On Hand</div>
+          <div style="font-weight: 900;">{{ item.qty_on_hand }} {{ item.uom }}</div>
+        </div>
+        <div style="min-width: 260px;">
+          <div class="muted">Vendor</div>
+          <div>{{ item.vendor or "—" }}</div>
+          <div class="muted">{{ item.vendor_sku or "" }}</div>
+        </div>
+      </div>
+
+      <hr class="hr">
+
+      <form method="post" class="stack" style="gap: 14px;">
+        <div class="row">
+          <div class="field" style="min-width: 260px; flex: 1;">
+            <label>New Part #</label>
+            <input name="part_number"
+                   value="{{ (form.part_number if form else defaults.suggested_part_number) }}"
+                   placeholder="e.g. HW-000123" required>
+          </div>
+          <div class="field" style="min-width: 220px;">
+            <label>Unit</label>
+            <select name="unit">
+              {% for u in ["ea","lb","oz","in","ft"] %}
+                {% set sel = (form.unit if form else defaults.unit_default) %}
+                <option value="{{ u }}" {% if sel == u %}selected{% endif %}>{{ u }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field" style="min-width: 220px;">
+            <label>Stage Key</label>
+            {% set st = (form.stage_key if form else defaults.stage_default) %}
+            <input name="stage_key" value="{{ st }}" placeholder="mfg_wip">
+            <div class="muted" style="font-size: 12px; margin-top: 6px;">
+              examples: mfg_wip, mfg_complete, finish_wip…
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field" style="min-width: 360px; flex: 1;">
+            <label>Name</label>
+            <input name="name"
+                   value="{{ (form.name if form else item.name) }}"
+                   placeholder="Processed hardware part name" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Description</label>
+          <textarea name="description" rows="3"
+                    placeholder="Optional notes about the processed part">{{ (form.description if form else item.description or "") }}</textarea>
+        </div>
+
+        <div class="row">
+          <div class="field" style="min-width: 220px;">
+            <label>Produced Qty (Parts)</label>
+            <input type="number" step="any" name="produced_qty"
+                   value="{{ (form.produced_qty if form else defaults.produced_default) }}" required>
+          </div>
+          <div class="field" style="min-width: 220px;">
+            <label>Consumed Qty (Bulk)</label>
+            <input type="number" step="any" name="consumed_qty"
+                   value="{{ (form.consumed_qty if form else defaults.consumed_default) }}" required>
+            <div class="muted" style="font-size: 12px; margin-top: 6px;">
+              This subtracts from {{ item.item_code }} on hand.
+            </div>
+          </div>
+          
+        <div class="row">
+          <div class="field" style="min-width: 220px;">
+            <label>Source Type (optional)</label>
+            <select name="source_type">
+              {% set st = (form.source_type if form else "") %}
+              <option value="" {% if st == "" %}selected{% endif %}>—</option>
+              <option value="work_order" {% if st == "work_order" %}selected{% endif %}>Work Order</option>
+              <option value="job" {% if st == "job" %}selected{% endif %}>Job</option>
+              <option value="build" {% if st == "build" %}selected{% endif %}>Build</option>
+              <option value="assembly" {% if st == "assembly" %}selected{% endif %}>Assembly / BOM shortage</option>
+              <option value="other" {% if st == "other" %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+
+          <div class="field" style="min-width: 260px; flex: 1;">
+            <label>Source Ref (optional)</label>
+            <input name="source_ref" value="{{ (form.source_ref if form else '') }}"
+                   placeholder="e.g. WO-123, JOB-55, BUILD-902">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Note (optional)</label>
+          <textarea name="note" rows="2"
+                    placeholder="Why was this conversion done?">{{ (form.note if form else '') }}</textarea>
+        </div>
+  
+          
+          <div class="field" style="min-width: 220px;">
+            <label>&nbsp;</label>
+            <label style="display:flex; gap:10px; align-items:center;">
+              {% set act = (form.set_active if form else None) %}
+              <input type="checkbox" name="set_active" {% if act == "on" %}checked{% endif %}>
+              Set Part to Active
+            </label>
+            <div class="muted" style="font-size: 12px; margin-top: 6px;">
+              Leave unchecked to create as Draft (recommended).
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn btn-primary" type="submit">Convert → Create Part</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+ 

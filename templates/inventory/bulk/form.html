@@ -1,0 +1,54 @@
+<!-- File path: templates/inventory/bulk/form.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ "New Bulk Hardware" if not item else "Edit Bulk Hardware" }}</h2>
+
+<form method="post">
+  {% if next_code %}
+    <p><strong>Code:</strong> {{ next_code }}</p>
+  {% else %}
+    <p><strong>Code:</strong> {{ item.item_code }}</p>
+  {% endif %}
+
+  <label>Name</label>
+  <input name="name" value="{{ item.name if item else '' }}" required>
+
+  <label>Description</label>
+  <textarea name="description">{{ item.description if item else '' }}</textarea>
+
+  <label>Vendor</label>
+  <input name="vendor" value="{{ item.vendor if item else '' }}">
+
+  <label>Vendor SKU</label>
+  <input name="vendor_sku" value="{{ item.vendor_sku if item else '' }}">
+
+  <label>UOM</label>
+  <select name="uom">
+    {% for u in ["ea","lb","oz","in","ft"] %}
+      <option value="{{ u }}" {% if item and item.uom == u %}selected{% endif %}>
+        {{ u }}
+      </option>
+    {% endfor %}
+  </select>
+
+  {% if item %}
+    <label>
+      <input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %}>
+      Active
+    </label>
+  {% endif %}
+
+  {% if item %}
+    <h4>Adjust Quantity</h4>
+    <input name="delta" type="number" step="any" placeholder="+ / -">
+    <button formaction="{{ url_for('inventory_bp.bulk_adjust_qty', item_id=item.id) }}"
+            formmethod="post">
+      Apply
+    </button>
+  {% endif %}
+
+  <br><br>
+  <button type="submit">Save</button>
+</form>
+{% endblock %}

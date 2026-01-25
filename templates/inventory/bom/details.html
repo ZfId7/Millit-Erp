@@ -29,6 +29,18 @@
         <button class="btn" type="submit">Set Active</button>
       </form>
       {% endif %}
+      {% if session.get("is_admin") %}
+          <form method="POST"
+                action="{{ url_for('inventory_bp.bom_clone_revision', bom_id=bom.id) }}"
+                class="d-inline">
+            <button class="btn btn-sm btn-outline-primary"
+                    {% if not bom.is_active %}disabled{% endif %}>
+              New Revision (Copy)
+            </button>
+          </form>
+      {% endif %}
+
+
     </div>
   </div>
 
