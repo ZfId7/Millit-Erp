@@ -1,0 +1,65 @@
+<!-- File path: templates/user/add_user.html -->
+{% extends "base.html" %}
+
+{% block title %}Add User{% endblock %}
+{% block topbar %}👤 Admin · Add User{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Add User</h1>
+      <p class="page-subtitle">Create a new employee login.</p>
+    </div>
+    <div class="row">
+      <a class="btn btn-secondary" href="{{ url_for('admin_users_bp.user_index') }}">← Back</a>
+    </div>
+  </div>
+
+  <div class="card" style="max-width: 720px;">
+    <form method="POST" action="">
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label class="muted">Username</label>
+          <input class="input" name="username" autocomplete="off" required>
+        </div>
+
+        <div>
+          <label class="muted">Role</label>
+          <select class="input" name="role" required>
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+          </select>
+        </div>
+
+        <div style="grid-column: 1 / -1;">
+          <label class="muted">Display Name</label>
+          <input class="input" name="display_name" placeholder="Optional">
+        </div>
+
+        <div>
+          <label class="muted">Password</label>
+          <input class="input" type="password" name="password" required>
+        </div>
+
+        <div>
+          <label class="muted">Confirm Password</label>
+          <input class="input" type="password" name="password2" required>
+        </div>
+
+        <div style="grid-column: 1 / -1;">
+          <label class="muted" style="display:flex; gap:8px; align-items:center;">
+            <input type="checkbox" name="is_active" checked>
+            Active
+          </label>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 14px; gap: 10px;">
+        <button class="btn btn-primary" type="submit">Create User</button>
+        <a class="btn" href="{{ url_for('admin_users_bp.user_index') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

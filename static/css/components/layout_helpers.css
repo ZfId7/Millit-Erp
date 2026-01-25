@@ -1,0 +1,32 @@
+/* ---------- Layout helpers ---------- */
+	.page {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		max-width: 1200px;
+	}
+
+
+	.page-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+
+	.page-title {
+		font-size: 22px;
+		font-weight: 900;
+		margin: 0;
+	}
+
+	.page-subtitle {
+		margin: 4px 0 0 0;
+		color: var(--muted);
+		font-size: 13px;
+	}
+
+
+	.stack { display: flex; flex-direction: column; gap: 10px; }
+	.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }

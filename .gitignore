@@ -11,7 +11,8 @@ instance/
 # Uploaded CAD + JSON data
 /static/uploads/cad/*
 !/static/uploads/cad/.gitkeep
-
+three-cad-viewer/
+modules/inventory/uploads/
 # Environment variables
 .env
 
@@ -21,6 +22,8 @@ instance/
 # Logs and backups
 *.log
 *.bak
+
+notepad++_workspace_1
 
 # System files
 .DS_Store

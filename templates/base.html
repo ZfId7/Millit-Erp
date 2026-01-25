@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <title>{% block title %}Millit Knives{% endblock %}</title>
   <!-- Global / app-wide CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">    
+  {# <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">    #}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/layout_helpers.css') }}">
@@ -341,7 +341,7 @@
 		font-weight: 800;
 	}
   #}
-
+  {# Hide
 	/* ---------- Badges ---------- */
 	.badge {
 		display: inline-flex;
@@ -375,7 +375,7 @@
 		color: #6dffb0;
 		background: rgba(46,204,113,.10);
 	}
-
+    #}
 
 	/* ---------- Flash messages ---------- */
 	.flash-wrap { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
