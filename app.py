@@ -45,12 +45,20 @@ def create_app():
     app.jinja_env.filters["mt"] = utc_to_mountain
     app.jinja_env.filters["dt"] = fmt_dt
     
-    # ✅ Use correct relative path from project root
+    # ✅ Database path (env override for worktrees)
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    db_path = os.path.join(BASE_DIR, "instance", "database.db")
-    print("✅ DB:", db_path)
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
+    db_path = os.getenv("MERP_DB_PATH") or os.path.join(
+        BASE_DIR, "instance", "database.db"
+    )
+    db_path = os.path.abspath(db_path)
+
+    # Ensure DB directory exists (safe for both cases)
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+
+    print("✅ DB:", db_path)
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
