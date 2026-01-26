@@ -16,6 +16,9 @@ modules/inventory/uploads/
 # Environment variables
 .env
 
+MAIN_WORKTREE_README.txt
+CODEX_WORKTREE_README.txt
+
 # VS Code settings (optional)
 .vscode/
 
