@@ -9,6 +9,7 @@ from database.models import db, Customer, Job, Build, JobWorkLog, BOMItem, Part,
 from modules.jobs_management.services.routing import ensure_operations_for_bom_item, enforce_release_state_for_bom_item
 from modules.inventory.services.parts_inventory import apply_part_inventory_delta
 from modules.jobs_management.services.ops_flow import complete_operation
+from modules.jobs_management.services.job_delete_service import delete_job_with_children
 
 from functools import wraps
 from flask import abort
@@ -520,21 +521,8 @@ def delete_job(job_id):
         )
         return redirect(url_for("jobs_bp.job_detail", job_id=job_id))
 
-    # ✅ HARD CLEANUP: delete ops + bom items + builds for this job (prevents orphan queue rows)
-    build_ids = [b.id for b in Build.query.filter_by(job_id=job_id).all()]
-    if build_ids:
-        # Delete ops first (children)
-        BuildOperation.query.filter(BuildOperation.build_id.in_(build_ids)).delete(synchronize_session=False)
-        # Delete snapshot BOM items
-        BOMItem.query.filter(BOMItem.build_id.in_(build_ids)).delete(synchronize_session=False)
-        # Delete builds
-        Build.query.filter(Build.id.in_(build_ids)).delete(synchronize_session=False)
-
-    # Delete root job
-    db.session.delete(job)
-    db.session.commit()
-
-    flash("Job deleted (including BOM + ops).", "success")
+    result = delete_job_with_children(job_id)
+    flash(result["message"], "success")
     return redirect(url_for("jobs_bp.jobs_index"))
 
 

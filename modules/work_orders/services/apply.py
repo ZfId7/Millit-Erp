@@ -84,6 +84,12 @@ def apply_work_order_to_new_build(wo_id: int) -> Build:
     db.session.add(job)
     db.session.flush()
 
+        # Choose an assembly_part_id for this build (first valid WO line part)
+    first_part_id = next((l.part_id for l in wo.lines if l.part_id), None)
+    assembly_part = Part.query.get(first_part_id) if first_part_id else None
+    if not assembly_part:
+        raise RuntimeError("Work Order has no line part_id to use for build.assembly_part_id")
+
     # Create Build (required fields per your schema)
     build = Build(
         job_id=job.id,
