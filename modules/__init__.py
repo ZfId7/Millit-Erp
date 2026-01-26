@@ -5,7 +5,7 @@
 from .inventory import inventory_bp
 from .surface_grinding.routes import surface_bp
 from .bevel_grinding.routes import bevel_bp
-from .jobs_management.routes import jobs_bp
+from .jobs_management import jobs_bp
 from .manufacturing.routes import mfg_bp
 #from .waterjet.routes import waterjet_bp
 # from .assembly.routes import assembly_bp, cad_upload_bp
