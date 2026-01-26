@@ -10,6 +10,7 @@ from modules.jobs_management.services.routing import ensure_operations_for_bom_i
 from modules.inventory.services.parts_inventory import apply_part_inventory_delta
 from modules.jobs_management.services.ops_flow import complete_operation
 from modules.jobs_management.services.job_delete_service import delete_job_with_children
+from modules.jobs_management.services.job_archive_service import archive_job
 
 from functools import wraps
 from flask import abort
@@ -183,8 +184,6 @@ def job_archive_confirm(job_id):
 @jobs_bp.route("/<int:job_id>/archive", methods=["POST"])
 @admin_required
 def job_archive_post(job_id):
-    job = Job.query.get_or_404(job_id)
-
     if request.form.get("confirm_archive") != "yes":
         flash("Archive not confirmed.", "warning")
         return redirect(url_for("jobs_bp.job_archive_confirm", job_id=job_id))
@@ -193,44 +192,13 @@ def job_archive_post(job_id):
         flash("Type ARCHIVE to confirm.", "warning")
         return redirect(url_for("jobs_bp.job_archive_confirm", job_id=job_id))
 
-    in_progress_ops_q = (
-        BuildOperation.query
-        .join(Build, BuildOperation.build_id == Build.id)
-        .filter(Build.job_id == job_id, BuildOperation.status == "in_progress")
-    )
-    in_progress_count = in_progress_ops_q.count()
-
-    # Option 2: allow, but require explicit override if in-progress exists
     force_cancel = request.form.get("force_cancel_in_progress") == "yes"
-    if in_progress_count > 0 and not force_cancel:
-        flash(
-            f"This job has {in_progress_count} operation(s) in progress. "
-            "Check the override box to cancel them and archive the job.",
-            "danger",
-        )
+    result = archive_job(job_id, force_cancel_in_progress=force_cancel)
+    if not result["ok"]:
+        flash(result["message"], result["flash_level"])
         return redirect(url_for("jobs_bp.job_archive_confirm", job_id=job_id))
 
-    # Cancel any in-progress ops so queues can't pull them anymore
-    if in_progress_count > 0:
-        now = datetime.utcnow()
-        for op in in_progress_ops_q.all():
-            op.status = "cancelled"
-            # Optional columns:
-            if hasattr(op, "cancelled_at"):
-                op.cancelled_at = now
-            if hasattr(op, "cancelled_reason"):
-                op.cancelled_reason = "Job archived by admin; in-progress op cancelled."
-
-    # Archive the job
-    job.is_archived = True
-    job.archived_at = datetime.utcnow()
-
-    # If you store session user id, set it (adjust to match your session keys)
-    # job.archived_by = session.get("user_id")
-
-    db.session.commit()
-
-    flash("Job archived. In-progress operations were cancelled.", "success")
+    flash(result["message"], result["flash_level"])
     return redirect(url_for("jobs_bp.jobs_index"))
     
 @jobs_bp.route("/<int:job_id>/unarchive", methods=["GET"])
