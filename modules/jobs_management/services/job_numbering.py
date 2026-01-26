@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import func
 from database.models import Job, db
-from modules.jobs_management import jobs_bp
+
 
 def _next_job_number():
     # JOB-YYYY-000001 style using max(id). Good enough for now.

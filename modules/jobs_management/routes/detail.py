@@ -1,9 +1,7 @@
 # File path: modules/jobs_management/routes/detail.py
 
-from datetime import datetime
-from flask import flash, redirect, render_template, request, url_for
-from sqlalchemy import func
-from database.models import BOMHeader, Build, BuildOperation, Customer, Job, db
+from flask import flash, redirect, render_template, url_for
+from database.models import BOMHeader, Build, BuildOperation, Customer, Job
 from modules.user.decorators import login_required
 from modules.jobs_management import jobs_bp
 
