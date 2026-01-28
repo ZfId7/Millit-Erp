@@ -20,15 +20,32 @@
     
   </div>
 
-  <div class="row" style="gap: 12px; flex-wrap: wrap;">
-    <a class="card" href="{{ url_for('mfg_bp.mfg_queue') }}"
-       style="min-width: 320px; text-decoration: none;">
-      <h2 style="margin: 0 0 6px 0;">CNC Profile Queue</h2>
-      <p class="muted" style="margin: 0;">
-        View and process released CNC profiling operations generated from BOM routing.
-      </p>
-    </a>
-  </div>
+    <div class="row" style="gap: 12px; flex-wrap: wrap;">
+        <a class="card" href="{{ url_for('mfg_bp.mfg_queue') }}"
+            style="min-width: 320px; text-decoration: none; border-left: 4px solid #0666e3;">
+            <h2 style="margin: 0 0 6px 0;">CNC Profile Queue</h2>
+            <p class="muted" style="margin: 0;">
+            View and process released CNC profiling operations generated from BOM routing.
+            </p>
+        </a>
+
+        <a class="card" href="{{ url_for('mfg_bp.mfg_dispatch') }}"
+            style="min-width: 320px; text-decoration: none; border-left: 4px solid #3fb984;">
+            <h2 style="margin: 0 0 6px 0;">Dispatch Center</h2>
+            <p class="muted" style="margin: 0;">
+            Assign queued, released CNC ops to Haas / Mori / Fanuc (V0-B).
+            </p>
+        </a>
+
+        <a class="card" href="{{ url_for('mfg_bp.mfg_machines_index') }}"
+            style="min-width: 320px; text-decoration: none; border-left: 4px solid #f39c12;">
+            <h2 style="margin: 0 0 6px 0;">Machines</h2>
+            <p class="muted" style="margin: 0;">
+            View each machine’s assigned queue and claim unassigned work.
+            </p>
+        </a>
+    </div>
+
 
 </div>
 {% endblock %}

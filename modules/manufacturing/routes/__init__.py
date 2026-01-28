@@ -7,6 +7,8 @@ from .queue import * # noqa
 from .ops import * # noqa
 from .details import * # noqa
 from .progress import *
-#from .manager import * # noqa 
+
+from .dispatch import *
+from .machines import *
 
 

@@ -1,7 +1,7 @@
 # File path: modules/manufacturing/routes/ops.py
 # -V1 Base Build
 
-from flask import flash, redirect, url_for
+from flask import flash, redirect, request, url_for
 from modules.manufacturing import mfg_bp
 from modules.user.decorators import login_required
 from database.models import db, BuildOperation, Machine
