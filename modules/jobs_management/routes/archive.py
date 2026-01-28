@@ -2,7 +2,7 @@
 
 from flask import flash, redirect, render_template, request, url_for
 from database.models import Build, BuildOperation, Job, db 
-from jobs_management import jobs_bp
+from modules.jobs_management import jobs_bp
 from modules.jobs_management.services.job_archive_service import archive_job
 from modules.user.decorators import admin_required
 

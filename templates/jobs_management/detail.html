@@ -1,6 +1,11 @@
 <!-- File path: templates/jobs_management/detail.html -->
 {% extends "base.html" %}
 
+{% block toplinks %}
+<a class="btn btn-secondary" href="/jobs/">← Back to Jobs</a>
+{{ super() }}
+{% endblock %}
+
 {% block title %}Job {{ job.job_number }}{% endblock %}
 {% block topbar %}📋 Job {{ job.job_number }}{% endblock %}
 
@@ -18,7 +23,13 @@
     </div>
 
     <div class="row">
-      <a class="btn" href="/jobs/">← Back to Jobs</a>
+      {% for b in job.builds %}
+        <a class="btn btn-ghost"
+            href="{{ url_for('jobs_bp.build_bom', build_id=b.id) }}">
+           Build BOM
+        </a>
+      {% endfor %}    
+    </div>
 
       {# status badge for job #}
       {% set js = (job.status or '') %}
@@ -45,7 +56,7 @@
           <th style="width: 140px;">Qty Completed</th>
           <th style="width: 120px;">Scrap</th>
           <th style="width: 160px;">BOM</th>
-
+          
         </tr>
       </thead>
       <tbody>
@@ -72,15 +83,15 @@
             <td>
                 {% set master_bom_id = master_bom_by_build.get(b.id) %}
                 {% if master_bom_id %}
-                  <a class="btn btn-small"
+                  <a class="btn btn-ghost"
                      href="{{ url_for('inventory_bp.bom_details', bom_id=master_bom_id) }}">
                     Master BOM
                   </a>
                 {% else %}
                   <span class="muted">No Master BOM</span>
                 {% endif %}
-
-
+                
+                
 
             </td>
           </tr>

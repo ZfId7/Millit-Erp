@@ -2,7 +2,7 @@
 
 from flask import flash, redirect, request, url_for
 from database.models import BuildOperation, BuildOperationProgress, db
-from jobs_management import jobs_bp
+from modules.jobs_management import jobs_bp
 from modules.inventory.services.parts_inventory import apply_part_inventory_delta
 from modules.jobs_management.services.ops_flow import complete_operation
 from modules.user.decorators import login_required

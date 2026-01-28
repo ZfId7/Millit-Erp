@@ -91,9 +91,29 @@ def ensure_operations_for_bom_item(bom_item):
 
     enforce_release_state_for_bom_item(build_id=bom_item.build_id, bom_item_id=bom_item.id)
 
-def delete_operations_for_bom_item(bom_item_id: int):
-    """Call this when a BOM line is deleted."""
-    BuildOperation.query.filter_by(bom_item_id=bom_item_id).delete()
+def delete_queued_operations_for_bom_item(bom_item_id: int) -> int:
+    """
+    SAFE delete: only queued operations may be deleted.
+    Returns count deleted.
+    """
+    deleted = (
+        BuildOperation.query
+        .filter(
+            BuildOperation.bom_item_id == bom_item_id,
+            BuildOperation.status == "queue",
+        )
+        .delete(synchronize_session=False)
+    )
+    db.session.flush()
+    return int(deleted or 0)
+
+
+def delete_operations_for_bom_item(bom_item_id: int) -> int:
+    """
+    Backward-compatible wrapper.
+    NOTE: This no longer deletes non-queued operations.
+    """
+    return delete_queued_operations_for_bom_item(bom_item_id)
 
 def enforce_release_state_for_bom_item(build_id: int, bom_item_id: int):
     ops = (

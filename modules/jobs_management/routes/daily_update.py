@@ -2,7 +2,7 @@
 
 from flask import render_template
 from database.models import Build, BuildOperation, BuildOperationProgress, Job
-from jobs_management import jobs_bp
+from modules.jobs_management import jobs_bp
 from modules.user.decorators import login_required
 
 @jobs_bp.route("/<int:job_id>/daily_update", methods=["GET"])

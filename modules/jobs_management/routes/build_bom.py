@@ -2,9 +2,14 @@
 
 from flask import flash, redirect, render_template, request, url_for
 from sqlalchemy import func
-from database.models import BOMItem, Build, Part, db
-from jobs_management import jobs_bp
+from database.models import BOMItem, Build, BuildOperation, Part, db
+from modules.jobs_management import jobs_bp
 from modules.jobs_management.services.routing import enforce_release_state_for_bom_item, ensure_operations_for_bom_item
+from modules.jobs_management.services.build_bom_service import (
+    add_bom_item_to_build,
+    delete_bom_item_from_build,
+)
+
 
 @jobs_bp.route("/build/<int:build_id>/bom")
 def build_bom(build_id):
@@ -24,99 +29,45 @@ def build_bom(build_id):
 
 @jobs_bp.route("/build/<int:build_id>/bom/add", methods=["POST"])
 def build_bom_add(build_id):
-    build = Build.query.get_or_404(build_id)
-
-    part_id_raw = (request.form.get("part_id") or "").strip()
-    name = (request.form.get("name") or "").strip()
-    part_number = (request.form.get("part_number") or "").strip()
-    description = (request.form.get("description") or "").strip()
-    unit = (request.form.get("unit") or "ea").strip()
-    qty_raw = (request.form.get("qty") or "1").strip()
-
-    # Parse qty as float (supports things like 0.5 for material lengths later)
     try:
-        qty_per = float(qty_raw)
-    except ValueError:
-        qty_per = 1.0
-    if qty_per <= 0:
-        qty_per = 1.0
-
-    assemblies = float(getattr(build, "qty_ordered", 0) or 0)
-    qty_planned = qty_per * assemblies  # ✅ snapshot truth
-
-    # Next line number
-    last_line = db.session.query(func.max(BOMItem.line_no)).filter_by(build_id=build.id).scalar() or 0
-    next_line = last_line + 1
-
-    # If a catalog part was selected, snapshot its fields
-    selected_part = None
-    if part_id_raw:
-        try:
-            selected_part = Part.query.get(int(part_id_raw))
-        except ValueError:
-            selected_part = None
-
-        if not selected_part:
-            flash("Selected part not found.", "error")
-            return redirect(url_for("jobs_bp.build_bom", build_id=build.id))
-
-        bom = BOMItem(
-            build=build,
-            part=selected_part,
-            line_no=next_line,
-            part_number=selected_part.part_number,
-            name=selected_part.name,
-            description=selected_part.description,
-            # Legacy qty kept for compatibility during refactor
-            qty=qty_per,
-            qty_per=qty_per,
-            qty_planned=qty_planned,
-            unit=selected_part.unit or unit,
-            source="manual",
-        )
-        db.session.add(bom)
-        db.session.flush()
-        ensure_operations_for_bom_item(bom)  # will set op.qty_planned = bom.qty_planned
+        build_id_out, msg = add_bom_item_to_build(build_id=build_id, form=request.form)
         db.session.commit()
+        flash(msg, "success")
+        return redirect(url_for("jobs_bp.build_bom", build_id=build_id_out))
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), "error")
+        return redirect(url_for("jobs_bp.build_bom", build_id=build_id))
+    except Exception:
+        db.session.rollback()
+        flash("Failed to add BOM item.", "error")
+        return redirect(url_for("jobs_bp.build_bom", build_id=build_id))
 
-        flash("BOM item added from catalog part.", "success")
-        return redirect(url_for("jobs_bp.build_bom", build_id=build.id))
-
-    # Free-text BOM line requires at least a name
-    if not name:
-        flash("Enter a name or select a catalog part.", "error")
-        return redirect(url_for("jobs_bp.build_bom", build_id=build.id))
-
-    bom = BOMItem(
-        build=build,
-        line_no=next_line,
-        part_number=part_number or None,
-        name=name,
-        description=description or None,
-        qty=qty_per,              # legacy mirror
-        qty_per=qty_per,
-        qty_planned=qty_planned,
-        unit=unit or "ea",
-        source="manual",
-    )
-    db.session.add(bom)
-    db.session.flush()
-    ensure_operations_for_bom_item(bom)      # ✅ generate ops too (you were missing this)
-    db.session.commit()
-
-    flash("BOM item added.", "success")
-    return redirect(url_for("jobs_bp.build_bom", build_id=build.id))
 
 @jobs_bp.route("/bom/<int:bom_item_id>/delete", methods=["POST"])
 def build_bom_delete(bom_item_id):
-    bom = BOMItem.query.get_or_404(bom_item_id)
-    build_id = bom.build_id
+    try:
+        result = delete_bom_item_from_build(bom_item_id=bom_item_id)
+        db.session.commit()
 
-    db.session.delete(bom)
-    db.session.commit()
+        if result["non_queued_count"] > 0:
+            flash(
+                f"BOM item deleted. {result['deleted_count']} queued ops removed. "
+                f"WARNING: {result['non_queued_count']} non-queued ops were left intact.",
+                "warning",
+            )
+        else:
+            flash(f"BOM item deleted. {result['deleted_count']} queued ops removed.", "success")
 
-    flash("BOM item deleted.", "success")
-    return redirect(url_for("jobs_bp.build_bom", build_id=build_id))
+        return redirect(url_for("jobs_bp.build_bom", build_id=result["build_id"]))
+    except Exception:
+        db.session.rollback()
+        flash("Failed to delete BOM item.", "error")
+        # fall back safely: route to build_bom requires build_id; re-query is acceptable here
+        bom = BOMItem.query.get_or_404(bom_item_id)
+        return redirect(url_for("jobs_bp.build_bom", build_id=bom.build_id))
+
+
 
 @jobs_bp.route("/build/<int:build_id>/ops/regenerate", methods=["POST"])
 def build_ops_regenerate(build_id):
