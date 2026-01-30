@@ -399,6 +399,8 @@ class BuildOperationProgress(db.Model):
     __table_args__ = {"sqlite_autoincrement": True}
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
+    user = db.relationship("User")
 
     build_operation_id = db.Column(
         db.Integer,

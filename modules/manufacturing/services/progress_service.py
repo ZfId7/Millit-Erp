@@ -31,15 +31,19 @@ def get_op_totals(op_id: int) -> OpProgressTotals:
     return OpProgressTotals(qty_done=float(done or 0.0), qty_scrap=float(scrap or 0.0))
 
 
+TERMINAL_STATUSES = ("cancelled", "complete", "completed")  # compatibility until we normalize
+
+
 def add_op_progress(
     op_id: int,
     qty_done_delta: float,
     qty_scrap_delta: float,
     note: Optional[str] = None,
+    user_id: Optional[int] = None,
 ) -> Tuple[BuildOperation, OpProgressTotals]:
     op = BuildOperation.query.get_or_404(op_id)
 
-    if op.status in ("cancelled", "complete"):
+    if op.status in TERMINAL_STATUSES:
         raise OpProgressError("Cannot add progress to a cancelled/completed operation.")
 
     qty_done_delta = float(qty_done_delta or 0.0)
@@ -52,15 +56,18 @@ def add_op_progress(
     if qty_done_delta < 0 or qty_scrap_delta < 0:
         raise OpProgressError("Deltas must be >= 0.")
 
-    # Ledger entry (authoritative)
     entry = BuildOperationProgress(
         build_operation_id=op.id,
         qty_done_delta=qty_done_delta,
         qty_scrap_delta=qty_scrap_delta,
         note=note,
+        user_id=user_id,  # <-- IMPORTANT
     )
     db.session.add(entry)
-    db.session.commit()
 
-    totals = get_op_totals(op.id)
+    # Maintain cached totals on op (so UI can read op.qty_done/op.qty_scrap consistently)
+    op.qty_done = float(op.qty_done or 0.0) + qty_done_delta
+    op.qty_scrap = float(op.qty_scrap or 0.0) + qty_scrap_delta
+
+    totals = OpProgressTotals(qty_done=float(op.qty_done or 0.0), qty_scrap=float(op.qty_scrap or 0.0))
     return op, totals

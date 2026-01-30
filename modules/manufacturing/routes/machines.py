@@ -15,6 +15,7 @@ from modules.manufacturing.services.dispatch_service import (
 from modules.manufacturing.services.machine_service import (
     get_machine_by_id,
     get_machine_queue,
+    get_machine_by_key,
 )
 
 
@@ -64,3 +65,11 @@ def mfg_machine_release(machine_id, op_id):
         flash(str(e), "error")
 
     return redirect(request.referrer or url_for("mfg_bp.mfg_machine_detail", machine_id=machine_id))
+
+@mfg_bp.route("/machines/by_key/<string:machine_key>", methods=["GET"])
+@login_required
+def mfg_machine_detail_by_key(machine_key):
+    machine = get_machine_by_key(machine_key)
+
+    # Option 1 (cleanest): redirect to canonical ID URL
+    return redirect(url_for("mfg_bp.mfg_machine_detail", machine_id=machine.id))

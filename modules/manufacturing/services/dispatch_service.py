@@ -55,7 +55,7 @@ def assign_op_to_machine(op: BuildOperation, machine: Machine) -> None:
     """
     if op.module_key != "manufacturing":
         raise DispatchError("Invalid operation for Manufacturing.")
-
+    
     if op.status != "queue":
         raise DispatchError("Only queued operations can be assigned.")
 
@@ -64,6 +64,10 @@ def assign_op_to_machine(op: BuildOperation, machine: Machine) -> None:
 
     if not machine.is_active:
         raise DispatchError("Cannot assign to an inactive machine.")
+    
+    # Eligibility guard (V0): cnc_profile must be assigned to CNC machines only
+    if op.op_key == "cnc_profile" and machine.machine_group != "cnc":
+        raise DispatchError("cnc_profile operations can only be assigned to CNC machines.")
 
     op.assigned_machine_id = machine.id
 

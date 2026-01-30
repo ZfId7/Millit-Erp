@@ -160,6 +160,12 @@
           </form>
         {% endif %}
 
+        {% if op.status == 'blocked' %}
+          <form method="post" action="{{ url_for('mfg_bp.mfg_unblock', op_id=op.id) }}">
+            <button class="btn" type="submit">Unblock</button>
+          </form>
+        {% endif %}
+
         {% if op.status in ['in_progress', 'blocked'] %}
           <form method="post" action="{{ url_for('mfg_bp.mfg_complete', op_id=op.id) }}">
             <button class="btn btn-primary" type="submit">Complete</button>

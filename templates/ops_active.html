@@ -1,0 +1,80 @@
+<!-- File path: templates/ops_active.html-->
+
+{% extends "base.html" %}
+{% block content %}
+<h1>My Active Ops</h1>
+<p class="muted">Ops you’ve updated recently (last 7 days).</p>
+
+{% if ops|length == 0 %}
+  <div class="card">
+    <p class="muted">No active ops yet. Add progress on an op to make it appear here.</p>
+  </div>
+{% else %}
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Module</th>
+        <th>Op</th>
+        <th>Status</th>
+        <th>Planned</th>
+        <th>Done</th>
+        <th>Scrap</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for op in ops %}
+        <tr id="op-{{ op.id }}">
+          <td class="muted">{{ op.id }}</td>
+          <td class="muted">{{ op.module_key }}</td>
+          <td style="font-weight:900;">{{ op.op_name }}</td>
+          <td><span class="badge">{{ op.status }}</span></td>
+          <td class="muted">{{ op.qty_planned }}</td>
+          <td class="muted">{{ op.qty_done }}</td>
+          <td class="muted">{{ op.qty_scrap }}</td>
+        </tr>
+
+        <tr>
+          <td colspan="7">
+            <form method="post"
+                  action="{{ url_for('jobs_bp.op_progress_add', op_id=op.id) }}"
+                  class="row"
+                  style="gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-top: 6px;">
+              <input type="hidden" name="job_id" value="{{ op.build.job_id if op.build else '' }}">
+
+              <div class="field" style="min-width: 140px;">
+                <label>+Done</label>
+                <input type="number" step="1" min="0" name="qty_done_delta" placeholder="0">
+              </div>
+
+              <div class="field" style="min-width: 140px;">
+                <label>+Scrap</label>
+                <input type="number" step="1" min="0" name="qty_scrap_delta" placeholder="0">
+              </div>
+
+              <div class="field" style="min-width: 320px; flex: 1;">
+                <label>Note</label>
+                <input type="text" name="note" placeholder="optional">
+              </div>
+
+              <button class="btn btn-primary" type="submit">Add</button>
+            </form>
+
+            {% set recent = (progress_by_op_id.get(op.id, [])[:3]) %}
+            {% if recent|length > 0 %}
+              <div class="muted" style="margin-top: 6px;">
+                {% for p in recent %}
+                  <div>
+                    {{ p.created_at }} — +{{ p.qty_done_delta }} / +{{ p.qty_scrap_delta }}
+                    {% if p.note %} — {{ p.note }}{% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock %}

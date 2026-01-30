@@ -124,7 +124,7 @@ def wo_delete(wo_id):
     db.session.commit()
 
     flash("Work order deleted.", "success")
-    return redirect(url_for("work_orders_bp.work_orders_index"))
+    return redirect(url_for("work_orders_bp.wo_index"))
 
 @work_orders_bp.route("/work_orders/<int:wo_id>/status", methods=["POST"])
 @login_required

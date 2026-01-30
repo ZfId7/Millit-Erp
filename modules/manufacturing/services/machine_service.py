@@ -16,6 +16,9 @@ class MachineQueue:
 def get_machine_by_id(machine_id: int) -> Machine:
     return Machine.query.get_or_404(machine_id)
 
+def get_machine_by_key(machine_key: str) -> Machine:
+    return Machine.query.filter(Machine.key == machine_key, Machine.is_active.is_(True)).first_or_404()
+
 
 def get_machine_queue(machine: Machine) -> MachineQueue:
     """
