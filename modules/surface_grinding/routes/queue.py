@@ -8,6 +8,24 @@ from modules.user.decorators import login_required
 from modules.surface_grinding import surface_bp
 from database.models import BuildOperation, Build, Job
 
+# Terminal guard (canonical + legacy)
+STATUS_COMPLETED = "completed"   # canonical terminal
+STATUS_CANCELLED = "cancelled"   # canonical terminal
+
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_QUEUE = "queue"
+STATUS_BLOCKED = "blocked"
+
+#Legacy/compat
+LEGACY_COMPLETE = "complete"
+
+
+TERMINAL_STATUSES = (
+    STATUS_COMPLETED,
+    STATUS_CANCELLED,
+    LEGACY_COMPLETE,
+)
+
 @surface_bp.route("/queue", methods=["GET"])
 @login_required
 def surface_queue():
@@ -25,11 +43,12 @@ def surface_queue():
 
     # Optional: custom status ordering for cleaner UX
     status_sort = case(
-        (BuildOperation.status == "in_progress", 0),
-        (BuildOperation.status == "queue", 1),
-        (BuildOperation.status == "blocked", 2),
-        (BuildOperation.status == "cancelled", 3),
-        (BuildOperation.status == "complete", 4),
+        (BuildOperation.status == STATUS_IN_PROGRESS, 0),
+        (BuildOperation.status == STATUS_QUEUE, 1),
+        (BuildOperation.status == STATUS_BLOCKED, 2),
+        (BuildOperation.status == STATUS_CANCELLED, 3),
+        (BuildOperation.status == STATUS_COMPLETED, 4),
+        (BuildOperation.status == LEGACY_COMPLETE, 5),
         else_=9,
     )
 
@@ -40,7 +59,7 @@ def surface_queue():
         .filter(Job.is_archived == False)  # ✅ critical
         .filter(BuildOperation.module_key == "surface_grinding")
         .filter(BuildOperation.is_released.is_(True))
-        .filter(BuildOperation.status.in_(["queue", "in_progress", "blocked"]))
+        .filter(BuildOperation.status.in_(list(TERMINAL_STATUSES) + [STATUS_QUEUE, STATUS_IN_PROGRESS, STATUS_BLOCKED]))
         .order_by(
             Job.created_at.desc(),
             status_sort.asc(),

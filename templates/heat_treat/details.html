@@ -1,0 +1,246 @@
+<!-- File path: templates/heat_treat/details.html -->
+<!-- V0 Heat Treat Operation Details -->
+
+{% extends "base.html" %}
+
+{% block title %}Heat Treat Details{% endblock %}
+{% block topbar %}🔥 Heat Treat • Op #{{ op.id }}{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Heat Treat Details</h1>
+      <p class="page-subtitle">
+        Operation: <strong>{{ op.op_name }}</strong>
+      </p>
+    </div>
+
+    <div class="row" style="gap: 8px;">
+      <a class="btn" href="{{ url_for('heat_treat_bp.heat_treat_queue') }}">← Back to Queue</a>
+      <a class="btn btn-secondary"
+         href="{{ url_for('jobs_bp.job_daily_update', job_id=op.build.job.id, _anchor='op-' ~ op.id) }}">
+        View in Job
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <div class="muted" style="font-size: 12px;">Status</div>
+        {% set s = (op.status or '') %}
+        <div style="margin-top: 6px;">
+          <span class="badge
+            {% if s == 'queue' %}badge-queue
+            {% elif s == 'in_progress' %}badge-in-progress
+            {% elif s == 'blocked' %}badge-blocked
+            {% elif s in ['completed','complete'] %}badge-complete
+            {% elif s == 'cancelled' %}badge-cancelled
+            {% endif %}">
+            {{ s.replace('_',' ') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="row" style="gap: 14px; align-items: flex-end; flex-wrap: wrap;">
+        <div>
+          <div class="muted" style="font-size: 12px;">Planned</div>
+          <div style="font-size: 18px; margin-top: 4px;"><strong>{{ op.qty_planned }}</strong></div>
+        </div>
+        <div>
+          <div class="muted" style="font-size: 12px;">Done</div>
+          <div style="font-size: 18px; margin-top: 4px;"><strong>{{ op.qty_done }}</strong></div>
+        </div>
+        <div>
+          <div class="muted" style="font-size: 12px;">Scrap</div>
+          <div style="font-size: 18px; margin-top: 4px;"><strong>{{ op.qty_scrap }}</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top: 0;">Operation Context</h2>
+
+    <div class="row" style="gap: 18px; flex-wrap: wrap;">
+      <div style="min-width: 260px; flex: 1;">
+        <div class="muted" style="font-size: 12px;">Job</div>
+        <div style="margin-top: 4px;">
+          <strong>{{ op.build.job.job_number }}</strong>
+          <span class="muted">— {{ op.build.job.title }}</span>
+        </div>
+      </div>
+
+      <div style="min-width: 260px; flex: 1;">
+        <div class="muted" style="font-size: 12px;">Build</div>
+        <div style="margin-top: 4px;">
+          <strong>{{ op.build.display_name }}</strong>
+        </div>
+      </div>
+
+      <div style="min-width: 260px; flex: 1;">
+        <div class="muted" style="font-size: 12px;">Module / Op Key</div>
+        <div style="margin-top: 4px;">
+          <code>{{ op.module_key }}</code>
+          <span class="muted">/</span>
+          <code>{{ op.op_key }}</code>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <div class="muted" style="font-size: 12px;">BOM Item</div>
+      {% if op.bom_item and op.bom_item.part %}
+        <div style="margin-top: 4px;">
+          <strong>{{ op.bom_item.part.part_number }}</strong>
+          <span class="muted">— {{ op.bom_item.part.name }}</span>
+        </div>
+      {% else %}
+        <div class="muted" style="margin-top: 4px;">(no BOM item linked)</div>
+      {% endif %}
+    </div>
+  </div>
+
+    <!-- Quantities + Notes -->
+  <div class="card">
+    <h2>Quantities</h2>
+
+    <div class="row" style="gap:18px;">
+      <div class="stack" style="min-width: 180px;">
+        <div class="muted">Planned</div>
+        <div style="font-weight:900;">{{ op.qty_planned }}</div>
+      </div>
+
+      <div class="stack" style="min-width: 180px;">
+        <div class="muted">Done</div>
+        <div style="font-weight:900;">{{ totals.qty_done }}</div>
+      </div>
+
+      <div class="stack" style="min-width: 180px;">
+        <div class="muted">Scrap</div>
+        <div style="font-weight:900;">{{ totals.qty_scrap }}</div>
+      </div>
+
+      <div class="stack" style="min-width: 220px;">
+        <div class="muted">Outsourced</div>
+        <div style="font-weight:900;">{{ 'Yes' if op.is_outsourced else 'No' }}</div>
+        {% if op.vendor %}
+          <div class="muted">Vendor: {{ op.vendor }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <div class="muted" style="margin-bottom:6px;">Notes</div>
+      <div class="card" style="background: rgba(255,255,255,.02); border-radius: 10px;">
+        {% if op.notes %}
+          <div style="white-space: pre-wrap;">{{ op.notes }}</div>
+        {% else %}
+          <div class="muted">No notes.</div>
+        {% endif %}
+      </div>
+
+      <div class="muted" style="margin-top:8px;">
+        (V1: notes are read-only here. We can add “edit notes” + “add progress log” next.)
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+      <h2>Progress Updates</h2>
+
+      <form method="POST" action="{{ url_for('heat_treat_bp.heat_treat_progress_add', op_id=op.id) }}"
+            style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+
+        <div style="min-width:160px;">
+          <div class="muted">Qty Done (delta)</div>
+          <input class="input" type="number" step="0.0001" min="0" name="qty_done_delta" value="0">
+        </div>
+
+        <div style="min-width:160px;">
+          <div class="muted">Qty Scrap (delta)</div>
+          <input class="input" type="number" step="0.0001" min="0" name="qty_scrap_delta" value="0">
+        </div>
+
+        <div style="flex:1; min-width:260px;">
+          <div class="muted">Note</div>
+          <input class="input" type="text" name="note" placeholder="Optional note…">
+        </div>
+
+        <button class="btn btn-primary" type="submit">Add Update</button>
+      </form>
+
+      <div style="margin-top:14px;">
+        <div class="muted" style="margin-bottom:6px;">
+          Ledger totals: <strong>{{ totals.qty_done }}</strong> done,
+          <strong>{{ totals.qty_scrap }}</strong> scrap
+          {% if op.qty_planned is not none %}
+            · Planned: <strong>{{ op.qty_planned }}</strong>
+            · Remaining: <strong>{{ (op.qty_planned - totals.qty_done - totals.qty_scrap) }}</strong>
+          {% endif %}
+        </div>
+
+        {% if progress_updates %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Done Δ</th>
+                <th>Scrap Δ</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in progress_updates %}
+                <tr>
+                  <td class="muted">{{ u.created_at }}</td>
+                  <td>{{ u.qty_done_delta }}</td>
+                  <td>{{ u.qty_scrap_delta }}</td>
+                  <td>{{ u.note or '' }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="muted">No progress updates yet.</div>
+        {% endif %}
+      </div>
+  </div>
+  
+  <div class="card">
+    <h2 style="margin-top: 0;">Actions</h2>
+
+    {% set terminal = (op.status in ['completed','complete','cancelled']) %}
+
+    <div class="row" style="gap: 10px; flex-wrap: wrap; align-items: center;">
+      {% if terminal %}
+        <span class="muted">Terminal op — no actions available.</span>
+      {% else %}
+
+        {% if op.status == 'queue' %}
+          <form method="post" action="{{ url_for('heat_treat_bp.heat_treat_start', op_id=op.id) }}">
+            <button class="btn btn-primary" type="submit">Start</button>
+          </form>
+          <form method="post" action="{{ url_for('heat_treat_bp.heat_treat_block', op_id=op.id) }}">
+            <button class="btn btn-secondary" type="submit">Block</button>
+          </form>
+        {% endif %}
+
+        {% if op.status in ['in_progress','blocked'] %}
+          <form method="post" action="{{ url_for('heat_treat_bp.heat_treat_complete', op_id=op.id) }}">
+            <button class="btn btn-primary" type="submit">Complete</button>
+          </form>
+        {% endif %}
+
+        <span class="muted" style="font-size: 12px;">
+          (V0: start/complete only — metadata + batching later)
+        </span>
+
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

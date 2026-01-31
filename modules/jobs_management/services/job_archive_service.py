@@ -2,36 +2,54 @@ from datetime import datetime
 
 from database.models import db, Job, Build, BuildOperation
 
+# Canonical op statuses
+STATUS_QUEUE = "queue"
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_BLOCKED = "blocked"
+STATUS_COMPLETED = "completed"
+STATUS_CANCELLED = "cancelled"
+
+# Legacy
+LEGACY_COMPLETE = "complete"
+
+TERMINAL_STATUSES = (
+    STATUS_COMPLETED,
+    STATUS_CANCELLED,
+    LEGACY_COMPLETE,
+)
 
 def archive_job(job_id, force_cancel_in_progress=False):
     job = Job.query.get_or_404(job_id)
 
-    in_progress_ops_q = (
+    active_ops_q = (
         BuildOperation.query
         .join(Build, BuildOperation.build_id == Build.id)
-        .filter(Build.job_id == job_id, BuildOperation.status == "in_progress")
+        .filter(
+            Build.job_id == job_id,
+            BuildOperation.status.notin_(TERMINAL_STATUSES),
+        )
     )
-    in_progress_count = in_progress_ops_q.count()
+    active_count = active_ops_q.count()
 
-    if in_progress_count > 0 and not force_cancel_in_progress:
+    if active_count > 0 and not force_cancel_in_progress:
         return {
             "ok": False,
             "message": (
-                f"This job has {in_progress_count} operation(s) in progress. "
+                f"This job has {active_count} active operation(s). "
                 "Check the override box to cancel them and archive the job."
             ),
             "flash_level": "danger",
         }
 
     try:
-        if in_progress_count > 0:
+        if active_count > 0:
             now = datetime.utcnow()
-            for op in in_progress_ops_q.all():
-                op.status = "cancelled"
+            for op in active_ops_q.all():
+                op.status = STATUS_CANCELLED
                 if hasattr(op, "cancelled_at"):
                     op.cancelled_at = now
                 if hasattr(op, "cancelled_reason"):
-                    op.cancelled_reason = "Job archived by admin; in-progress op cancelled."
+                    op.cancelled_reason = "Job archived by admin; active op cancelled."
 
         job.is_archived = True
         job.archived_at = datetime.utcnow()
@@ -40,10 +58,11 @@ def archive_job(job_id, force_cancel_in_progress=False):
 
         return {
             "ok": True,
-            "message": "Job archived. In-progress operations were cancelled.",
+            "message": "Job archived. Active operations were cancelled.",
             "flash_level": "success",
         }
 
     except Exception:
         db.session.rollback()
         raise
+

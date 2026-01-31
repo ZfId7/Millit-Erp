@@ -14,6 +14,20 @@ from modules.manufacturing.services.manufacturing_op_service import (
     unblock_operation,
 )
 
+# Terminal guard (canonical + legacy)
+STATUS_QUEUE = "queue"
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_BLOCKED = "blocked"
+
+STATUS_COMPLETED = "completed"   # canonical terminal
+STATUS_CANCELLED = "cancelled"   # canonical terminal
+LEGACY_COMPLETE = "complete"
+
+TERMINAL_STATUSES = (
+    STATUS_COMPLETED, 
+    STATUS_CANCELLED, 
+    LEGACY_COMPLETE,
+)
 
 @mfg_bp.route("/op/<int:op_id>/start", methods=["POST"])
 @login_required
@@ -68,8 +82,8 @@ def mfg_unblock(op_id):
 def mfg_complete(op_id):
     op = BuildOperation.query.get_or_404(op_id)
 
-    if op.status == "cancelled":
-        flash("Cannot complete: operation is cancelled.", "error")
+    if op.status in TERMINAL_STATUSES:
+        flash(f"Cannot complete: operation is {op.status}.", "error")
         return redirect(url_for("mfg_bp.mfg_queue"))
 
     complete_operation(op)  # ✅ bounce-safe completion
@@ -89,7 +103,7 @@ def mfg_assign_machine(op_id):
         return redirect(url_for("mfg_bp.mfg_queue"))
 
     # Safety: only queued ops are safe to assign/unassign
-    if op.status != "queue":
+    if op.status != STATUS_QUEUE:
         flash("Only queued operations can be assigned/unassigned.", "error")
         return redirect(request.referrer or url_for("mfg_bp.mfg_queue"))
 

@@ -5,9 +5,26 @@ from typing import Dict, Set
 
 from database.models import Build, db
 
+# Canonical status strings (v0 normalization)
+STATUS_QUEUE = "queue"
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_COMPLETED = "completed"   # canonical terminal
 
-ALLOWED_BUILD_STATUSES: Set[str] = {"queue", "in_progress", "complete"}
+# Legacy/compat
+LEGACY_COMPLETE = "complete"
 
+# Build/job allowed statuses
+ALLOWED_BUILD_STATUSES: Set[str] = {
+    STATUS_QUEUE, 
+    STATUS_IN_PROGRESS, 
+    STATUS_COMPLETED,
+    LEGACY_COMPLETE,
+    }
+
+TERMINAL_STATUSES = (
+    STATUS_COMPLETED,
+    LEGACY_COMPLETE,
+)
 
 def update_build_status(build_id: int, new_status: str) -> Dict[str, object]:
     """
@@ -32,8 +49,8 @@ def update_build_status(build_id: int, new_status: str) -> Dict[str, object]:
             "build_name": None,
         }
 
-    status = (new_status or "").strip()
-    if status not in ALLOWED_BUILD_STATUSES:
+    status_in = (new_status or "").strip()
+    if status_in not in ALLOWED_BUILD_STATUSES:
         return {
             "ok": False,
             "message": "Invalid status.",
@@ -42,6 +59,9 @@ def update_build_status(build_id: int, new_status: str) -> Dict[str, object]:
             "build_name": build.name,
         }
 
+    # Normalize legacy input into canonical output
+    status = STATUS_COMPLETED if status_in == LEGACY_COMPLETE else status_in
+
     # Mutations
     build.status = status
 
@@ -49,14 +69,12 @@ def update_build_status(build_id: int, new_status: str) -> Dict[str, object]:
     job = build.job
     statuses = {b.status for b in job.builds}
 
-    if statuses == {"complete"}:
-        job.status = "complete"
-    elif "in_progress" in statuses:
-        job.status = "in_progress"
+    if statuses.issubset(set(TERMINAL_STATUSES)):
+        job.status = STATUS_COMPLETED
+    elif STATUS_IN_PROGRESS in statuses:
+        job.status = STATUS_IN_PROGRESS
     else:
-        job.status = "queue"
-
-    db.session.commit()
+        job.status = STATUS_QUEUE
 
     return {
         "ok": True,

@@ -1,17 +1,14 @@
-# File path: modules/manufacturing/routes/progress.py
+# File path: modules/heat_treat/routes/progress.py
 
 from flask import request, redirect, url_for, flash, session
-
 from database.models import BuildOperation, db, User
-
-from modules.manufacturing import mfg_bp
+from modules.heat_treat import heat_treat_bp
 from modules.user.decorators import login_required
 from modules.manufacturing.services.progress_service import add_op_progress, OpProgressError
 
-
-@mfg_bp.route("/op/<int:op_id>/progress", methods=["POST"])
+@heat_treat_bp.route("/op/<int:op_id>/progress", methods=["POST"])
 @login_required
-def mfg_progress_add(op_id):
+def heat_treat_progress_add(op_id):
     qty_done_delta = request.form.get("qty_done_delta") or 0
     qty_scrap_delta = request.form.get("qty_scrap_delta") or 0
     note = request.form.get("note") or None
@@ -35,4 +32,4 @@ def mfg_progress_add(op_id):
         db.session.rollback()
         flash(str(e), "error")
 
-    return redirect(url_for("mfg_bp.mfg_details", op_id=op_id))
+    return redirect(url_for("heat_treat_bp.heat_treat_details", op_id=op_id))

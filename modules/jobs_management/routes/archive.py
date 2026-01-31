@@ -6,30 +6,51 @@ from modules.jobs_management import jobs_bp
 from modules.jobs_management.services.job_archive_service import archive_job
 from modules.user.decorators import admin_required
 
+# Canonical status strings (v0 normalization)
+STATUS_QUEUE = "queue"
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_BLOCKED = "blocked"
+STATUS_COMPLETED = "completed"   # canonical terminal
+STATUS_CANCELLED = "cancelled"   # canonical terminal
+
+#Legacy/compat
+LEGACY_COMPLETE = "complete"
+
+TERMINAL_STATUSES = (
+    STATUS_COMPLETED, 
+    STATUS_CANCELLED, 
+    LEGACY_COMPLETE
+)
 
 @jobs_bp.route("/<int:job_id>/archive", methods=["GET"])
 @admin_required
 def job_archive_confirm(job_id):
     job = Job.query.get_or_404(job_id)
 
-    in_progress_count = (
+    active_count = (
         db.session.query(BuildOperation)
         .join(Build, BuildOperation.build_id == Build.id)
-        .filter(Build.job_id == job_id, BuildOperation.status == "in_progress")
+        .filter(
+            Build.job_id == job_id, 
+            BuildOperation.status.notin_(TERMINAL_STATUSES),
+        )
         .count()
     )
 
     completed_count = (
         db.session.query(BuildOperation)
         .join(Build, BuildOperation.build_id == Build.id)
-        .filter(Build.job_id == job_id, BuildOperation.status == "completed")
+        .filter(
+            Build.job_id == job_id,
+            BuildOperation.status.in_((STATUS_COMPLETED, LEGACY_COMPLETE)),
+        )
         .count()
     )
 
     return render_template(
         "jobs_management/archive_confirm.html",
         job=job,
-        in_progress_count=in_progress_count,
+        in_progress_count=active_count,
         completed_count=completed_count,
     )
 

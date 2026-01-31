@@ -50,7 +50,7 @@ def wo_apply_execute(wo_id):
         flash("Cannot apply: Work Order is cancelled/complete.", "error")
         return redirect(url_for("work_orders_bp.wo_detail", wo_id=wo.id))
         
-        # 🔒 WO Gate (apply): validate every line before doing ANY apply work
+    # 🔒 WO Gate (apply): validate every line before doing ANY apply work
     failures = []
     for line in wo.lines:
         ok, msg = validate_part_for_work_order(line.part_id)

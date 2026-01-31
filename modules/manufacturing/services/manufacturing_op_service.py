@@ -6,8 +6,16 @@ from database.models import BuildOperation
 class MfgOpError(Exception):
     pass
 
+STATUS_QUEUE = "queue"
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_BLOCKED = "blocked"
 
-TERMINAL_STATUSES = {"cancelled", "complete", "completed"}  # compatibility; normalize later
+STATUS_COMPLETED = "completed"
+STATUS_CANCELLED = "cancelled"
+
+LEGACY_COMPLETE = "complete"
+
+TERMINAL_STATUSES = {STATUS_COMPLETED, STATUS_CANCELLED, LEGACY_COMPLETE}
 
 
 def require_manufacturing_op(op: BuildOperation) -> None:
@@ -32,13 +40,13 @@ def start_operation(op: BuildOperation) -> None:
     if not op.is_released:
         raise MfgOpError("Cannot start: operation is not released.")
 
-    if op.status not in {"queue", "blocked"}:
+    if op.status not in {STATUS_QUEUE, STATUS_BLOCKED}:
         raise MfgOpError("Cannot start: operation is not queued/blocked.")
 
     if op.op_key == "cnc_profile" and not op.assigned_machine_id:
         raise MfgOpError("Assign a CNC machine before starting this operation.")
 
-    op.status = "in_progress"
+    op.status = STATUS_IN_PROGRESS
 
 
 def block_operation(op: BuildOperation) -> None:
@@ -53,10 +61,10 @@ def block_operation(op: BuildOperation) -> None:
     if op.status in TERMINAL_STATUSES:
         raise MfgOpError("Cannot block: operation is not active.")
 
-    if op.status not in {"queue", "in_progress"}:
+    if op.status not in {STATUS_QUEUE, STATUS_IN_PROGRESS}:
         raise MfgOpError("Cannot block: operation is not queued/in progress.")
 
-    op.status = "blocked"
+    op.status = STATUS_BLOCKED
 
 
 def unblock_operation(op: BuildOperation) -> None:
@@ -65,7 +73,7 @@ def unblock_operation(op: BuildOperation) -> None:
     """
     require_manufacturing_op(op)
 
-    if op.status != "blocked":
+    if op.status != STATUS_BLOCKED:
         raise MfgOpError("Operation is not blocked.")
 
-    op.status = "queue"
+    op.status = STATUS_QUEUE

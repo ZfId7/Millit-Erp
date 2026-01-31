@@ -7,6 +7,25 @@ from database.models import db, BuildOperation
 from modules.user.decorators import login_required
 from modules.surface_grinding import surface_bp
 from modules.jobs_management.services.ops_flow import complete_operation
+
+# Terminal guard (canonical + legacy)
+STATUS_COMPLETED = "completed"   # canonical terminal
+STATUS_CANCELLED = "cancelled"   # canonical terminal
+
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_QUEUE = "queue"
+STATUS_BLOCKED = "blocked"
+
+#Legacy/compat
+LEGACY_COMPLETE = "complete"
+
+
+TERMINAL_STATUSES = (
+    STATUS_COMPLETED,
+    STATUS_CANCELLED,
+    LEGACY_COMPLETE,
+)
+
 def _redirect_queue(*args, **kwargs):
     return redirect(url_for("surface_grinding_bp.surface_queue"))
     
@@ -24,11 +43,11 @@ def surface_start(op_id):
         return _redirect_queue()
 
     # Only allow starting from queue
-    if op.status in ("complete", "cancelled"):
-        flash("Cannot start: operation is already complete.", "error")
+    if op.status in TERMINAL_STATUSES:
+        flash(f"Cannot start: operation is {op.status}.", "error")
         return _redirect_queue()
 
-    op.status = "in_progress"
+    op.status = STATUS_IN_PROGRESS
     db.session.commit()
     flash("Operation started.", "success")
     return _redirect_queue()
@@ -53,11 +72,11 @@ def surface_cancel(op_id):
     if not _ensure_surface_grinding(op):
         return _redirect_queue()
 
-    if op.status == "complete":
+    if op.status == STATUS_COMPLETED:
         flash("Cannot cancel: operation is completed.", "error")
         return _redirect_queue()
 
-    op.status = "cancelled"
+    op.status = STATUS_CANCELLED
     db.session.commit()
     flash("Operation cancelled.", "success")
     return _redirect_queue()
@@ -70,11 +89,11 @@ def surface_block(op_id):
     if not _ensure_surface_grinding(op):
         return _redirect_queue()
 
-    if op.status == "complete":
-        flash("Cannot block: operation is completed.", "error")
+    if op.status in TERMINAL_STATUSES:
+        flash(f"Cannot block: operation is {op.status}.", "error")
         return _redirect_queue()
 
-    op.status = "blocked"
+    op.status = STATUS_BLOCKED
     db.session.commit()
     flash("Operation blocked.", "success")
     return _redirect_queue()
@@ -88,11 +107,11 @@ def surface_reopen(op_id):
     if not _ensure_surface_grinding(op):
         return _redirect_queue()
 
-    if op.status not in ("blocked", "cancelled"):
+    if op.status not in (STATUS_BLOCKED, STATUS_CANCELLED):
         flash("Only blocked/cancelled operations can be reopened.", "error")
         return _redirect_queue()
 
-    op.status = "queue"
+    op.status = STATUS_QUEUE
     db.session.commit()
     flash("Operation reopened and returned to queue.", "success")
     return _redirect_queue()

@@ -104,7 +104,7 @@ def wo_detail(wo_id):
 @login_required
 def wo_delete(wo_id):
     wo = WorkOrder.query.get_or_404(wo_id)
-
+    # Potential bug here 
     # 🔒 Safety rule (recommended)
     # Only allow delete if WO has not been applied to builds
     if wo.status not in ("draft", "open"):

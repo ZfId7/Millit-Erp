@@ -6,8 +6,7 @@ from modules.user.decorators import login_required
 from modules.heat_treat import heat_treat_bp
 from database.models import BuildOperation, Job, Build
 
-HT_OP_KEYS = ["heat_treat"]
-
+HT_OP_KEYS = ["heat_treat", "in_house_ht"]
 @heat_treat_bp.route("/queue", methods=["GET"])
 @login_required
 def heat_treat_queue():

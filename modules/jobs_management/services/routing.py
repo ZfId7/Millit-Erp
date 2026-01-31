@@ -4,7 +4,29 @@
 
 from database.models import db, RoutingTemplate, BuildOperation, RoutingHeader, RoutingStep, BOMLine
 
-ALLOWED_OP_STATUSES = {"queue", "in_progress", "complete"}
+STATUS_QUEUE = "queue"
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_BLOCKED = "blocked"
+STATUS_COMPLETED = "completed"
+STATUS_CANCELLED = "cancelled"
+
+LEGACY_COMPLETE = "complete"
+
+TERMINAL_STATUSES = (
+    STATUS_COMPLETED,
+    STATUS_CANCELLED,
+    LEGACY_COMPLETE,
+)
+
+ALLOWED_OP_STATUSES = {
+    STATUS_QUEUE,
+    STATUS_IN_PROGRESS,
+    STATUS_BLOCKED,
+    STATUS_COMPLETED,
+    STATUS_CANCELLED,
+    LEGACY_COMPLETE,  # tolerate legacy reads
+}
+
 
 def get_active_routing_header_for_part(part_id: int):
     return (RoutingHeader.query
@@ -129,7 +151,7 @@ def enforce_release_state_for_bom_item(build_id: int, bom_item_id: int):
 
     # Find first non-complete/non-cancelled op
     first = next(
-        (o for o in ops if o.status not in ("complete", "cancelled")),
+        (o for o in ops if o.status not in TERMINAL_STATUSES),
         None
     )
 
@@ -138,7 +160,7 @@ def enforce_release_state_for_bom_item(build_id: int, bom_item_id: int):
 
     # Ensure completed ops are never "released"
     for op in ops:
-        if op.status == "complete":
+        if op.status in (STATUS_COMPLETED, LEGACY_COMPLETE):
             op.is_released = False
 
 

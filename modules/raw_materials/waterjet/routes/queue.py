@@ -9,6 +9,22 @@ from modules.user.decorators import login_required
 from modules.raw_materials.waterjet import raw_mats_waterjet_bp
 from database.models import BuildOperation, Build, Job, WaterjetOperationDetail
 
+# Canonical status strings (v0 normalization)
+STATUS_QUEUE = "queue"
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_BLOCKED = "blocked"
+STATUS_COMPLETED = "completed"   # canonical terminal
+STATUS_CANCELLED = "cancelled"   # canonical terminal
+
+#Legacy/compat
+LEGACY_COMPLETE = "complete"
+
+TERMINAL_STATUSES = (
+    STATUS_COMPLETED,
+    STATUS_CANCELLED, 
+    LEGACY_COMPLETE,
+)
+
 @raw_mats_waterjet_bp.route("/queue", methods=["GET"])
 @login_required
 def waterjet_queue():
@@ -17,11 +33,11 @@ def waterjet_queue():
 
 
     status_sort = case(
-        (BuildOperation.status == "in_progress", 0),
-        (BuildOperation.status == "queue", 1),
-        (BuildOperation.status == "blocked", 2),
-        (BuildOperation.status == "cancelled", 3),
-        (BuildOperation.status == "complete", 4),
+        (BuildOperation.status == STATUS_IN_PROGRESS, 0),
+        (BuildOperation.status == STATUS_QUEUE, 1),
+        (BuildOperation.status == STATUS_BLOCKED, 2),
+        (BuildOperation.status == STATUS_CANCELLED, 3),
+        (BuildOperation.status == STATUS_COMPLETED, 4),
         else_=9,
     )
 
@@ -35,7 +51,7 @@ def waterjet_queue():
         .filter(BuildOperation.module_key == "raw_materials")
         .filter(BuildOperation.op_key.in_(["waterjet_cut"]))
         .filter(BuildOperation.is_released.is_(True))
-        .filter(BuildOperation.status.in_(["queue", "in_progress", "blocked"]))
+        .filter(BuildOperation.status.in_([STATUS_QUEUE, STATUS_IN_PROGRESS, STATUS_BLOCKED]))
         .order_by(
 			Job.created_at.desc(),
 			asc(status_sort),

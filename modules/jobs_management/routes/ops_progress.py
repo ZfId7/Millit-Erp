@@ -12,6 +12,22 @@ from modules.inventory.services.parts_inventory import apply_part_inventory_delt
 from modules.jobs_management.services.ops_flow import complete_operation
 from modules.manufacturing.services.progress_service import add_op_progress, OpProgressError
 
+# Canonical status strings (v0 normalization)
+STATUS_QUEUE = "queue"
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_BLOCKED = "blocked"
+STATUS_COMPLETED = "completed"   # canonical terminal
+STATUS_CANCELLED = "cancelled"   # canonical terminal
+
+#Legacy/compat
+LEGACY_COMPLETE = "complete"
+
+TERMINAL_STATUSES = (
+    STATUS_COMPLETED, 
+    STATUS_CANCELLED, 
+    LEGACY_COMPLETE
+)
+
 @jobs_bp.route("/ops/<int:op_id>/progress/add", methods=["POST"])
 @login_required
 def op_progress_add(op_id):
@@ -104,7 +120,7 @@ def release_next_for_bom_item(current_op: BuildOperation):
             BuildOperation.build_id == current_op.build_id,
             BuildOperation.bom_item_id == current_op.bom_item_id,
             BuildOperation.sequence > current_op.sequence,
-            BuildOperation.status.notin_(["complete", "completed", "cancelled"]),
+            BuildOperation.status.notin_(list(TERMINAL_STATUSES)), # terminal statuses-update   
         )
         .order_by(BuildOperation.sequence.asc(), BuildOperation.id.asc())
         .first()
@@ -112,8 +128,8 @@ def release_next_for_bom_item(current_op: BuildOperation):
 
     if next_op:
         next_op.is_released = True
-        if next_op.status not in ("blocked", "in_progress"):
-            next_op.status = "queue"
+        if next_op.status not in (STATUS_BLOCKED, STATUS_IN_PROGRESS):
+            next_op.status = STATUS_QUEUE
 
 @jobs_bp.route("/ops/<int:op_id>/complete", methods=["POST"])
 @login_required
@@ -152,7 +168,7 @@ def ops_active():
         ops = (
             BuildOperation.query
             .filter(BuildOperation.id.in_(op_ids))
-            .filter(BuildOperation.status.in_(["queue", "in_progress", "blocked"]))
+            .filter(BuildOperation.status.in_([STATUS_QUEUE, STATUS_IN_PROGRESS, STATUS_BLOCKED]))
             .order_by(BuildOperation.id.desc())
             .all()
         )
