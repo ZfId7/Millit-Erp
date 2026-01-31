@@ -24,7 +24,7 @@
       <span class="badge 
 		{% if build.status=='queue' %}badge-queue
 		{% elif build.status=='in_progress' %}badge-in-progress
-		{% elif build.status=='complete' %}badge-complete
+		{% elif build.status in ['completed', 'complete'] %}badge-complete
 		{% endif %}">
         {{ (build.status or '').replace('_',' ') }}
       </span>

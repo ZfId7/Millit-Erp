@@ -97,13 +97,18 @@
 
             <td>
               {% set s = (op.status or '') %}
+              {% set s_disp = 'completed' if s == 'complete' else s %}
+
               <span class="badge
-                {% if s == 'queue' %}badge-queue
-                {% elif s == 'in_progress' %}badge-in-progress
-                {% elif s == 'complete' %}badge-complete
+                {% if s_disp == 'queue' %}badge-queue
+                {% elif s_disp == 'in_progress' %}badge-in-progress
+                {% elif s_disp == 'blocked' %}badge-blocked
+                {% elif s_disp == 'cancelled' %}badge-cancelled
+                {% elif s_disp == 'completed' %}badge-complete
                 {% endif %}">
-                {{ s.replace('_',' ') }}
+                {{ s_disp.replace('_',' ') }}
               </span>
+
             </td>
 
             <td class="muted">{{ op.qty_planned }}</td>
@@ -113,7 +118,7 @@
             <td>
               <div class="row" style="gap: 8px; align-items: center; flex-wrap: wrap;">
 
-                {% if op.status != 'complete' %}
+                {% if op.status not in ['completed', 'complete', 'cancelled'] %}
 
                   {% if op.status == 'queue' %}
                     <form method="post" action="{{ url_for('surface_grinding_bp.surface_start', op_id=op.id) }}">

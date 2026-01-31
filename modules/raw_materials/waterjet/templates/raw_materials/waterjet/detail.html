@@ -23,15 +23,19 @@
         Edit Details
       </a>
 
+      {% set s = (op.status or '') %}
+      {% set s_disp = 'completed' if s == 'complete' else s %}
+
       <span class="badge
-        {% if op.status == 'queue' %}badge-queue
-        {% elif op.status == 'in_progress' %}badge-in-progress
-        {% elif op.status == 'blocked' %}badge-warning
-        {% elif op.status == 'complete' %}badge-complete
-        {% elif op.status == 'cancelled' %}badge-danger
+        {% if s_disp == 'queue' %}badge-queue
+        {% elif s_disp == 'in_progress' %}badge-in-progress
+        {% elif s_disp == 'blocked' %}badge-blocked
+        {% elif s_disp == 'cancelled' %}badge-cancelled
+        {% elif s_disp == 'completed' %}badge-complete
         {% endif %}">
-        {{ op.status.replace('_', ' ') }}
+        {{ s_disp.replace('_', ' ') }}
       </span>
+
     </div>
   </div>
 
