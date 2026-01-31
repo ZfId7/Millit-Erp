@@ -3,30 +3,12 @@
 # -V2 Add enforce_release_state_for_bom_item
 
 from database.models import db, RoutingTemplate, BuildOperation, RoutingHeader, RoutingStep, BOMLine
-
-STATUS_QUEUE = "queue"
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_BLOCKED = "blocked"
-STATUS_COMPLETED = "completed"
-STATUS_CANCELLED = "cancelled"
-
-LEGACY_COMPLETE = "complete"
-
-TERMINAL_STATUSES = (
+from modules.shared.status import (
     STATUS_COMPLETED,
     STATUS_CANCELLED,
     LEGACY_COMPLETE,
+    TERMINAL_STATUSES,
 )
-
-ALLOWED_OP_STATUSES = {
-    STATUS_QUEUE,
-    STATUS_IN_PROGRESS,
-    STATUS_BLOCKED,
-    STATUS_COMPLETED,
-    STATUS_CANCELLED,
-    LEGACY_COMPLETE,  # tolerate legacy reads
-}
-
 
 def get_active_routing_header_for_part(part_id: int):
     return (RoutingHeader.query

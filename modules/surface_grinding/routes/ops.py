@@ -8,23 +8,17 @@ from modules.user.decorators import login_required
 from modules.surface_grinding import surface_bp
 from modules.jobs_management.services.ops_flow import complete_operation
 
-# Terminal guard (canonical + legacy)
-STATUS_COMPLETED = "completed"   # canonical terminal
-STATUS_CANCELLED = "cancelled"   # canonical terminal
-
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_QUEUE = "queue"
-STATUS_BLOCKED = "blocked"
-
-#Legacy/compat
-LEGACY_COMPLETE = "complete"
-
-
-TERMINAL_STATUSES = (
+from modules.shared.status import (
+    STATUS_BLOCKED,
     STATUS_COMPLETED,
     STATUS_CANCELLED,
     LEGACY_COMPLETE,
+    STATUS_IN_PROGRESS,
+    STATUS_QUEUE,
+    TERMINAL_STATUSES,
 )
+
+
 
 def _redirect_queue(*args, **kwargs):
     return redirect(url_for("surface_grinding_bp.surface_queue"))

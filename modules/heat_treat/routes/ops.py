@@ -8,22 +8,15 @@ from modules.heat_treat import heat_treat_bp
 from modules.user.decorators import login_required
 from database.models import db, BuildOperation
 from modules.jobs_management.services.ops_flow import complete_operation  # adjust if different
-
-# Canonical status strings (v0 normalization)
-STATUS_QUEUE = "queue"
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_BLOCKED = "blocked"
-STATUS_COMPLETED = "completed"   # canonical terminal
-STATUS_CANCELLED = "cancelled"   # canonical terminal
-
-#Legacy/compat
-LEGACY_COMPLETE = "complete"
-
-TERMINAL_STATUSES = (
+from modules.shared.status import (
+    STATUS_BLOCKED,
     STATUS_COMPLETED,
-    STATUS_CANCELLED, 
+    STATUS_CANCELLED,
     LEGACY_COMPLETE,
+    STATUS_IN_PROGRESS,
+    TERMINAL_STATUSES,
 )
+
 
 
 @heat_treat_bp.route("/op/<int:op_id>/start", methods=["POST"])

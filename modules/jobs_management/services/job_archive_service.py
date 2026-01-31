@@ -1,22 +1,11 @@
 from datetime import datetime
 
 from database.models import db, Job, Build, BuildOperation
-
-# Canonical op statuses
-STATUS_QUEUE = "queue"
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_BLOCKED = "blocked"
-STATUS_COMPLETED = "completed"
-STATUS_CANCELLED = "cancelled"
-
-# Legacy
-LEGACY_COMPLETE = "complete"
-
-TERMINAL_STATUSES = (
-    STATUS_COMPLETED,
+from modules.shared.status import (
     STATUS_CANCELLED,
-    LEGACY_COMPLETE,
+    TERMINAL_STATUSES,
 )
+
 
 def archive_job(job_id, force_cancel_in_progress=False):
     job = Job.query.get_or_404(job_id)

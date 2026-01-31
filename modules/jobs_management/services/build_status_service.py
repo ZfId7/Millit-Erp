@@ -3,15 +3,15 @@ from __future__ import annotations
 
 from typing import Dict, Set
 
-from database.models import Build, db
+from database.models import Build
 
-# Canonical status strings (v0 normalization)
-STATUS_QUEUE = "queue"
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_COMPLETED = "completed"   # canonical terminal
-
-# Legacy/compat
-LEGACY_COMPLETE = "complete"
+from modules.shared.status import (
+    STATUS_QUEUE,
+    STATUS_IN_PROGRESS,
+    STATUS_COMPLETED,
+    LEGACY_COMPLETE,
+    TERMINAL_STATUSES,
+)
 
 # Build/job allowed statuses
 ALLOWED_BUILD_STATUSES: Set[str] = {
@@ -19,12 +19,10 @@ ALLOWED_BUILD_STATUSES: Set[str] = {
     STATUS_IN_PROGRESS, 
     STATUS_COMPLETED,
     LEGACY_COMPLETE,
-    }
+}
 
-TERMINAL_STATUSES = (
-    STATUS_COMPLETED,
-    LEGACY_COMPLETE,
-)
+BUILD_TERMINAL_STATUSES = {STATUS_COMPLETED, LEGACY_COMPLETE}
+
 
 def update_build_status(build_id: int, new_status: str) -> Dict[str, object]:
     """
@@ -69,7 +67,7 @@ def update_build_status(build_id: int, new_status: str) -> Dict[str, object]:
     job = build.job
     statuses = {b.status for b in job.builds}
 
-    if statuses.issubset(set(TERMINAL_STATUSES)):
+    if statuses.issubset(set(BUILD_TERMINAL_STATUSES)):
         job.status = STATUS_COMPLETED
     elif STATUS_IN_PROGRESS in statuses:
         job.status = STATUS_IN_PROGRESS

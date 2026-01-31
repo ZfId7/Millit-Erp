@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Optional, Tuple
 
 from database.models import db, BuildOperation, BuildOperationProgress
-
+from modules.shared.status import TERMINAL_STATUSES
 
 class OpProgressError(Exception):
     pass
@@ -29,23 +29,6 @@ def get_op_totals(op_id: int) -> OpProgressTotals:
         .scalar()
     )
     return OpProgressTotals(qty_done=float(done or 0.0), qty_scrap=float(scrap or 0.0))
-
-STATUS_QUEUE = "queue"
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_BLOCKED = "blocked"
-
-STATUS_COMPLETED = "completed"
-STATUS_CANCELLED = "cancelled"
-
-LEGACY_COMPLETE = "complete"
-
-
-TERMINAL_STATUSES = (
-    STATUS_COMPLETED, 
-    STATUS_CANCELLED, 
-    LEGACY_COMPLETE,
-)  
-
 
 def add_op_progress(
     op_id: int,

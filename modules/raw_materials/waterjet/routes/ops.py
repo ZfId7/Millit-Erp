@@ -10,18 +10,15 @@ from modules.raw_materials.waterjet import raw_mats_waterjet_bp
 from modules.jobs_management.services.ops_flow import complete_operation
 from database.models import WaterjetOperationDetail, db, BuildOperation
 
-# Canonical status strings (v0 normalization)
-STATUS_QUEUE = "queue"
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_BLOCKED = "blocked"
-
-STATUS_COMPLETED = "completed"   # canonical terminal
-STATUS_CANCELLED = "cancelled"   # canonical terminal
-
-#Legacy/compat
-LEGACY_COMPLETE = "complete"
-
-TERMINAL_STATUSES = {STATUS_COMPLETED, STATUS_CANCELLED, LEGACY_COMPLETE}
+from modules.shared.status import (
+    STATUS_BLOCKED,
+    STATUS_COMPLETED,
+    STATUS_CANCELLED,
+    LEGACY_COMPLETE,
+    STATUS_IN_PROGRESS,
+    STATUS_QUEUE,
+    TERMINAL_STATUSES,
+)
 
 @raw_mats_waterjet_bp.route("/<int:op_id>/start", methods=["POST"])
 @login_required

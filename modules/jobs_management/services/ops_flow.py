@@ -2,18 +2,15 @@
 # V1 Base Build | Global route for op completion
 
 from database.models import db, BuildOperation
-
-# Canonical status strings (v0 normalization)
-STATUS_QUEUE = "queue"
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_BLOCKED = "blocked"
-STATUS_COMPLETED = "completed"   # canonical terminal
-STATUS_CANCELLED = "cancelled"   # canonical terminal
-
-# Legacy/compat
-LEGACY_COMPLETE = "complete"
-
-TERMINAL_STATUSES = {STATUS_COMPLETED, STATUS_CANCELLED, LEGACY_COMPLETE}
+from modules.shared.status import (
+    STATUS_QUEUE,
+    STATUS_IN_PROGRESS,
+    STATUS_BLOCKED,
+    STATUS_COMPLETED,
+    STATUS_CANCELLED,
+    LEGACY_COMPLETE,
+    TERMINAL_STATUSES,
+)
 
 
 def release_next_for_bom_item(current_op: BuildOperation):

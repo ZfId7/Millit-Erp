@@ -14,20 +14,16 @@ from modules.manufacturing.services.manufacturing_op_service import (
     unblock_operation,
 )
 
-# Terminal guard (canonical + legacy)
-STATUS_QUEUE = "queue"
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_BLOCKED = "blocked"
-
-STATUS_COMPLETED = "completed"   # canonical terminal
-STATUS_CANCELLED = "cancelled"   # canonical terminal
-LEGACY_COMPLETE = "complete"
-
-TERMINAL_STATUSES = (
-    STATUS_COMPLETED, 
-    STATUS_CANCELLED, 
+from modules.shared.status import (
+    STATUS_BLOCKED,
+    STATUS_COMPLETED,
+    STATUS_CANCELLED,
     LEGACY_COMPLETE,
+    STATUS_IN_PROGRESS,
+    STATUS_QUEUE,
+    TERMINAL_STATUSES,
 )
+
 
 @mfg_bp.route("/op/<int:op_id>/start", methods=["POST"])
 @login_required
