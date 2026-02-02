@@ -23,6 +23,7 @@
       <thead>
         <tr>
           <th>WO #</th>
+          <th>Customer</th>
           <th>Title</th>
           
           <th>Status</th>
@@ -35,6 +36,7 @@
         
         <tr>
           <td><strong>{{ wo.wo_number }}</strong></td>
+          <td><strong>{{ wo.customer.name if wo.customer else "" }}</strong></td>
           <td>{{ wo.title or "" }}</td>
           
           <td><span class="badge">{{ wo.status }}</span></td>
@@ -51,7 +53,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="muted">No work orders yet.</td></tr>
+        <tr><td colspan="6" class="muted">No work orders yet.</td></tr>
         {% endfor %}
         
       </tbody>

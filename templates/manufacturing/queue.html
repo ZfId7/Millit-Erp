@@ -80,6 +80,7 @@
           <th style="width: 200px;">Build</th>
           <th style="width: 220px;">Operation</th>
           <th style="width: 160px;">Status</th>
+          <th style="width: 300px;">Assigned Machine</th>
           <th style="width: 120px;">Planned</th>
           <th style="width: 120px;">Done</th>
           <th style="width: 120px;">Scrap</th>
@@ -89,14 +90,9 @@
       <tbody>
         {% for op in ops %}
           <tr>
-            <td class="muted">
-              <a href="{{ url_for(
-                    'jobs_bp.job_daily_update',
-                    job_id=op.build.job.id,
-                    _anchor='op-' ~ op.id
-                  ) }}">
-                {{ op.build.job.job_number }}
-              </a>
+            <td>
+                <div><strong>{{ op.build.job.job_number }}</strong></div>
+                <div class="muted" style="font-size:12px;">{{ op.build.job.title }}</div>
             </td>
 
             <td>
@@ -179,7 +175,7 @@
             </td>
           </tr>
         {% else %}
-          <tr><td colspan="8" class="muted">No manufacturing operations queued yet.</td></tr>
+          <tr><td colspan="9" class="muted">No manufacturing operations queued yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>

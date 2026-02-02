@@ -2,6 +2,10 @@
 # V1 Base Build | Global route for op completion
 
 from database.models import db, BuildOperation
+
+from modules.shared.claims import release_claim
+from modules.shared.services.build_op_progress_service import add_op_event
+
 from modules.shared.status import (
     STATUS_QUEUE,
     STATUS_IN_PROGRESS,
@@ -41,10 +45,23 @@ def release_next_for_bom_item(current_op: BuildOperation):
             next_op.status = STATUS_QUEUE
 
 
-def complete_operation(op: BuildOperation):
+def complete_operation(op: BuildOperation, *, user_id: int = None, is_admin: bool = False, note: str = None):
     # Canonical terminal state
     op.status = STATUS_COMPLETED
     op.is_released = False
+
+    # Release claim on terminal
+    release_claim(op)
+
+    # Audit completion (no commit here)
+    add_op_event(
+        op,
+        user_id=user_id,
+        event_type="complete",
+        actor_role=("admin_override" if is_admin else "editor"),
+        note=(note or None),
+        is_override=bool(is_admin),
+    )
 
     if op.bom_item_id is not None:
         release_next_for_bom_item(op)

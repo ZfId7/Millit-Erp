@@ -1,12 +1,17 @@
 # In app.py (project root: /Millit_ERP/)
 import os
 import click
+import sqlite3
+
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
 from flask import Flask
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
 
+from modules.shared.op_links import op_queue_url
 from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
 from modules import module_blueprints
@@ -14,6 +19,12 @@ from database.models import db, User
 
 load_dotenv()
 
+event.listens_for(Engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON;")
+        cursor.close()
 
 def register_cli(app):
     @app.cli.command("create-admin")
@@ -45,6 +56,8 @@ def create_app():
     app.jinja_env.filters["mt"] = utc_to_mountain
     app.jinja_env.filters["dt"] = fmt_dt
     
+    app.jinja_env.globals["op_queue_url"] = op_queue_url
+
     # ✅ Database path (env override for worktrees)
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -61,6 +74,9 @@ def create_app():
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    # Claim system v0
+    app.config.setdefault("MERP_CLAIM_STALE_SECONDS", 2 * 60 * 60)  # 2 hours
+    
     db.init_app(app)
     register_cli(app)
     Migrate(app, db)

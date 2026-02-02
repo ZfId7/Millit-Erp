@@ -9,4 +9,6 @@ from .queue import * # noqa
 from .ops import * # noqa
 from .details import * # noqa
 from .manager import * # noqa 
+from .progress import * # noqa
+
 

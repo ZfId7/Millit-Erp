@@ -1,10 +1,15 @@
 # File path: modules/manufacturing/routes/ops.py
 # -V1 Base Build
 
-from flask import flash, redirect, request, url_for
-from modules.manufacturing import mfg_bp
-from modules.user.decorators import login_required
+from flask import flash, redirect, request, session, url_for
+from sqlalchemy.exc import SQLAlchemyError
 from database.models import db, BuildOperation, Machine
+
+from modules.user.decorators import login_required
+from modules.manufacturing import mfg_bp
+
+from modules.shared.services.build_op_claim_service import start_build_operation
+from modules.shared.services.build_op_progress_service import OpProgressError
 from modules.jobs_management.services.ops_flow import complete_operation  # adjust if different
 
 from modules.manufacturing.services.manufacturing_op_service import (
@@ -19,26 +24,49 @@ from modules.shared.status import (
     STATUS_COMPLETED,
     STATUS_CANCELLED,
     LEGACY_COMPLETE,
-    STATUS_IN_PROGRESS,
     STATUS_QUEUE,
     TERMINAL_STATUSES,
 )
 
+def _redirect_queue(*args, **kwargs):
+    return redirect(url_for("mfg_bp.mfg_queue"))
+def _ensure_manufacturing(op: BuildOperation) -> bool:
+    if op.module_key != "manufacturing":
+        flash("That operation does not belong to Manufacturing.", "error")
+        return False
+    return True
 
 @mfg_bp.route("/op/<int:op_id>/start", methods=["POST"])
 @login_required
 def mfg_start(op_id):
     op = BuildOperation.query.get_or_404(op_id)
 
+    if not _ensure_manufacturing(op):
+        return _redirect_queue()
+
+    # Keep the quick terminal guard for nicer UX (service also guards)
+    if op.status in TERMINAL_STATUSES:
+        flash(f"Cannot start: operation is {op.status}.", "error")
+        return _redirect_queue()
+    
     try:
-        start_operation(op)
+        start_build_operation(
+            op_id=op.id,
+            user_id=session.get("user_id"),
+            is_admin=bool(session.get("is_admin")),
+            force=False,
+            note=None,
+        )
         db.session.commit()
         flash("Operation started.", "success")
-        return redirect(url_for("mfg_bp.mfg_details", op_id=op.id))
-    except MfgOpError as e:
+    except OpProgressError as e:
         db.session.rollback()
         flash(str(e), "error")
-        return redirect(request.referrer or url_for("mfg_bp.mfg_queue"))
+    except SQLAlchemyError:
+        db.session.rollback()
+        flash("Database error while starting operation.", "error")
+
+    return _redirect_queue()
 
 
 

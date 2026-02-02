@@ -7,6 +7,8 @@ from .index import * #noqa
 from .queue import * # noqa
 from .ops import * # noqa
 from .details import * # noqa
+from .progress import * # noqa
+
 #from .manager import * # noqa 
 
 

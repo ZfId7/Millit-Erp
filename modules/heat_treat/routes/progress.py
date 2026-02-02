@@ -1,9 +1,11 @@
 # File path: modules/heat_treat/routes/progress.py
 
 from flask import request, redirect, url_for, flash, session
-from database.models import BuildOperation, db, User
+from database.models import db
+
 from modules.heat_treat import heat_treat_bp
 from modules.user.decorators import login_required
+
 from modules.manufacturing.services.progress_service import add_op_progress, OpProgressError
 
 @heat_treat_bp.route("/op/<int:op_id>/progress", methods=["POST"])
@@ -13,10 +15,7 @@ def heat_treat_progress_add(op_id):
     qty_scrap_delta = request.form.get("qty_scrap_delta") or 0
     note = request.form.get("note") or None
 
-    # Resolve current user id (based on session username)
-    username = session.get("user")
-    current_user = User.query.filter_by(username=username).first() if username else None
-    current_user_id = current_user.id if current_user else None
+    user_id = session.get("user_id") # ✅ canonical for v0
 
     try:
         add_op_progress(
@@ -24,7 +23,9 @@ def heat_treat_progress_add(op_id):
             qty_done_delta=qty_done_delta,
             qty_scrap_delta=qty_scrap_delta,
             note=note,
-            user_id=current_user_id,
+            user_id=user_id,
+            is_admin=bool(session.get("is_admin")),
+            force=False,
         )
         db.session.commit()
         flash("Progress update added.", "success")

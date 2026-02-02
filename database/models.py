@@ -14,8 +14,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import UniqueConstraint, Index
-
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Boolean, String, UniqueConstraint, Index
+from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
@@ -377,6 +377,7 @@ class BuildOperation(db.Model):
     is_released = db.Column(db.Boolean, nullable=False, default=False, index=True)
     
     qty_planned = db.Column(db.Float, nullable=False, default=0.0)
+    qty_required = db.Column(db.Float, nullable=False, default=0.0)
     qty_done = db.Column(db.Float, nullable=False, default=0.0)
     qty_scrap = db.Column(db.Float, nullable=False, default=0.0)
 
@@ -389,9 +390,22 @@ class BuildOperation(db.Model):
     # archive batch 001 here
     cancelled_at = db.Column(db.DateTime, nullable=True)
     cancelled_reason = db.Column(db.String(255), nullable=True)
+
+    claimed_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    claimed_at = Column(DateTime, nullable=True)
+    claim_touched_at = Column(DateTime, nullable=True)
+    allow_multi_user = Column(Boolean, nullable=False, default=False)
+    claim_note = Column(String(255), nullable=True)
+
+    claimed_by_user = relationship(
+        "User",
+        foreign_keys=[claimed_by_user_id],
+        lazy="joined",
+    )
     
     __table_args__ = (
         UniqueConstraint("build_id", "bom_item_id", "op_key", name="uq_build_bom_op"),
+        {"sqlite_autoincrement": True},
     )
 
 class BuildOperationProgress(db.Model):
@@ -401,6 +415,11 @@ class BuildOperationProgress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
     user = db.relationship("User")
+
+    event_type = db.Column(db.String(50), nullable=False, default="progress")
+    actor_role = db.Column(db.String(32), nullable=True)
+    event_note = db.Column(db.String(255), nullable=True)
+    is_override = db.Column(db.Boolean, nullable=False, default=False)
 
     build_operation_id = db.Column(
         db.Integer,

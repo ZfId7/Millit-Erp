@@ -16,8 +16,10 @@ def login():
         if user: 
             if check_password_hash(user.password_hash, password):
                 print("✅ Login successful. Setting session.")
-                session["user"] = user.username
-                session["is_admin"] = user.role == "admin"
+                session["user"] = user.username          # keep for display/back-compat
+                session["user_id"] = user.id             # NEW: numeric id for claims/progress
+                session["is_admin"] = (user.role == "admin")
+
                 return redirect(url_for("dashboard_bp.dashboard"))
             else:
                 flash("❌ Invalid username or password", "danger")

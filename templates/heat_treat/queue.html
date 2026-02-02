@@ -70,14 +70,9 @@
       <tbody>
         {% for op in ops %}
           <tr>
-            <td class="muted">
-              <a href="{{ url_for(
-                    'jobs_bp.job_daily_update',
-                    job_id=op.build.job.id,
-                    _anchor='op-' ~ op.id
-                  ) }}">
-                {{ op.build.job.job_number }}
-              </a>
+            <td>
+                <div><strong>{{ op.build.job.job_number }}</strong></div>
+                <div class="muted" style="font-size:12px;">{{ op.build.job.title }}</div>
             </td>
 
             <td>

@@ -8,21 +8,15 @@ from modules.jobs_management import jobs_bp
 from modules.jobs_management.services.job_delete_service import delete_job_with_children
 from modules.user.decorators import admin_required, login_required
 
-# Canonical status strings (v0 normalization)
-STATUS_QUEUE = "queue"
-STATUS_IN_PROGRESS = "in_progress"
-STATUS_BLOCKED = "blocked"
-STATUS_COMPLETED = "completed"   # canonical terminal
-STATUS_CANCELLED = "cancelled"   # canonical terminal
-
-#Legacy/compat
-LEGACY_COMPLETE = "complete"
-
-TERMINAL_STATUSES = (
-    STATUS_COMPLETED, 
-    STATUS_CANCELLED, 
-    LEGACY_COMPLETE
+from modules.shared.status import (
+    STATUS_BLOCKED,
+    STATUS_COMPLETED,
+    LEGACY_COMPLETE,
+    STATUS_IN_PROGRESS,
+    STATUS_QUEUE,
+    TERMINAL_STATUSES,
 )
+
 
 @jobs_bp.route("/<int:job_id>/delete", methods=["POST"])
 @login_required

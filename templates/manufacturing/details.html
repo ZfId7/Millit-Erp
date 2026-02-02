@@ -68,9 +68,6 @@
         {% if op.bom_item and op.bom_item.part %}
           <div style="font-weight:900;">{{ op.bom_item.part.part_number }}</div>
           <div class="muted">{{ op.bom_item.part.name }}</div>
-          {% if op.bom_item.qty is not none %}
-            <div class="muted">BOM Qty: {{ op.bom_item.qty }}</div>
-          {% endif %}
         {% elif op.bom_item %}
           <div class="muted">BOM item linked (no part record).</div>
         {% else %}

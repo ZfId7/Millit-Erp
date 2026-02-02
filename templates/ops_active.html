@@ -1,80 +1,199 @@
-<!-- File path: templates/ops_active.html-->
+<!-- File path: templates/ops_active.html -->
 
 {% extends "base.html" %}
+
+{% block title %}My Active Ops{% endblock %}
+{% block topbar %}🛠️ Jobs — My Active Ops{% endblock %}
+
 {% block content %}
-<h1>My Active Ops</h1>
-<p class="muted">Ops you’ve updated recently (last 7 days).</p>
+<div class="page">
 
-{% if ops|length == 0 %}
-  <div class="card">
-    <p class="muted">No active ops yet. Add progress on an op to make it appear here.</p>
+  <div class="page-header" style="margin:0 0 25px 0;">
+    <div>
+      <h1 class="page-title">🛠️ My Active Ops</h1>
+      <p class="page-subtitle">Ops currently claimed by you.</p>
+    </div>
   </div>
-{% else %}
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Module</th>
-        <th>Op</th>
-        <th>Status</th>
-        <th>Planned</th>
-        <th>Done</th>
-        <th>Scrap</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for op in ops %}
-        <tr id="op-{{ op.id }}">
-          <td class="muted">{{ op.id }}</td>
-          <td class="muted">{{ op.module_key }}</td>
-          <td style="font-weight:900;">{{ op.op_name }}</td>
-          <td><span class="badge">{{ op.status }}</span></td>
-          <td class="muted">{{ op.qty_planned }}</td>
-          <td class="muted">{{ op.qty_done }}</td>
-          <td class="muted">{{ op.qty_scrap }}</td>
-        </tr>
 
-        <tr>
-          <td colspan="7">
-            <form method="post"
-                  action="{{ url_for('jobs_bp.op_progress_add', op_id=op.id) }}"
-                  class="row"
-                  style="gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-top: 6px;">
-              <input type="hidden" name="job_id" value="{{ op.build.job_id if op.build else '' }}">
+  {% if ops|length == 0 %}
+    <div class="card" style="padding: 20px; text-align: center;">
+      <p class="muted">No active ops yet. Start an op to claim it.</p>
+    </div>
+  {% else %}
 
-              <div class="field" style="min-width: 140px;">
-                <label>+Done</label>
-                <input type="number" step="1" min="0" name="qty_done_delta" placeholder="0">
-              </div>
+    {% for op in ops %}
+      <div class="card" id="op-{{ op.id }}" style="margin-bottom: 14px;">
 
-              <div class="field" style="min-width: 140px;">
-                <label>+Scrap</label>
-                <input type="number" step="1" min="0" name="qty_scrap_delta" placeholder="0">
-              </div>
+        {# ===== Header row (like manufacturing/details "Operation" card header) ===== #}
+        <div class="row" style="justify-content: space-between; align-items: center;">
+          <div>
+            <div class="muted">Operation</div>
+            <div style="font-weight:900; font-size: 18px;">
+              {{ op.op_name }}
+              <span class="muted" style="font-weight:500;">(#{{ op.id }})</span>
+            </div>
+            <div class="muted">
+              module: {{ op.module_key }}
+              {% if op.sequence is not none %} · sequence: {{ op.sequence }}{% endif %}
+              {% if op.op_key %} · op_key: {{ op.op_key }}{% endif %}
+            </div>
+          </div>
 
-              <div class="field" style="min-width: 320px; flex: 1;">
-                <label>Note</label>
-                <input type="text" name="note" placeholder="optional">
-              </div>
+          <div class="row" style="gap: 8px; align-items: center;">
+            {% set s = (op.status or '') %}
+            {% set s_disp = 'completed' if s == 'complete' else s %}
 
-              <button class="btn btn-primary" type="submit">Add</button>
-            </form>
+            <span class="badge
+              {% if s_disp == 'queue' %}badge-queue
+              {% elif s_disp == 'in_progress' %}badge-in-progress
+              {% elif s_disp == 'blocked' %}badge-blocked
+              {% elif s_disp == 'cancelled' %}badge-cancelled
+              {% elif s_disp == 'completed' %}badge-complete
+              {% endif %}">
+              {{ s_disp.replace('_',' ') }}
+            </span>
 
-            {% set recent = (progress_by_op_id.get(op.id, [])[:3]) %}
-            {% if recent|length > 0 %}
-              <div class="muted" style="margin-top: 6px;">
-                {% for p in recent %}
-                  <div>
-                    {{ p.created_at }} — +{{ p.qty_done_delta }} / +{{ p.qty_scrap_delta }}
-                    {% if p.note %} — {{ p.note }}{% endif %}
-                  </div>
-                {% endfor %}
-              </div>
+            {# quick link to open job (similar to manufacturing/details) #}
+            <a class="btn btn-sm btn-secondary"
+            href="{{ op_queue_url(op) }}">
+            Open in {{ op.module_key.replace('_', ' ').title() }}
+            </a>
+
+          </div>
+        </div>
+
+        {# ===== Context (mini version of manufacturing/details "Context") ===== #}
+        <div class="row" style="gap: 18px; margin-top: 25px; flex-wrap: wrap;">
+          <div class="stack" style="min-width: 240px;">
+            <div class="muted">Job</div>
+            {% if op.build and op.build.job %}
+              <div style="font-weight:900;">{{ op.build.job.job_number }}</div>
+              <div class="muted">{{ op.build.job.title }}</div>
+            {% else %}
+              <div class="muted">No job linked.</div>
             {% endif %}
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% endif %}
+          </div>
+
+          <div class="stack" style="min-width: 240px;">
+            <div class="muted">Build</div>
+            {% if op.build %}
+              <div style="font-weight:900;">
+                {{ op.build.display_name if op.build.display_name else ('Build #' ~ op.build.id) }}
+              </div>
+              <div class="muted">Build ID: {{ op.build.id }}</div>
+            {% else %}
+              <div class="muted">No build linked.</div>
+            {% endif %}
+          </div>
+
+          <div class="stack" style="min-width: 280px; flex: 1;">
+            <div class="muted">Component (BOM Item)</div>
+            {% if op.bom_item and op.bom_item.part %}
+              <div style="font-weight:900;">{{ op.bom_item.part.part_number }}</div>
+              <div class="muted">{{ op.bom_item.part.name }}</div>
+            {% elif op.bom_item %}
+              <div class="muted">BOM item linked (no part record).</div>
+            {% else %}
+              <div class="muted">(No BOM item linked)</div>
+            {% endif %}
+          </div>
+        </div>
+
+        {# ===== Quantities (mini version of manufacturing/details "Quantities") ===== #}
+        <div class="row" style="gap: 18px; margin-top: 25px; flex-wrap: wrap;">
+          <div class="stack" style="min-width: 160px;">
+            <div class="muted">Planned</div>
+            <div style="font-weight:900;">{{ op.qty_planned }}</div>
+          </div>
+
+          <div class="stack" style="min-width: 160px;">
+            <div class="muted">Done</div>
+            <div style="font-weight:900;">{{ op.qty_done }}</div>
+          </div>
+
+          <div class="stack" style="min-width: 160px;">
+            <div class="muted">Scrap</div>
+            <div style="font-weight:900;">{{ op.qty_scrap }}</div>
+          </div>
+
+          <div class="stack" style="min-width: 240px; flex: 1;">
+            <div class="muted">Dispatch (Machine)</div>
+            {% if op.assigned_machine %}
+              <div style="font-weight:900;">{{ op.assigned_machine.name }}</div>
+              <div class="muted">{{ op.assigned_machine.machine_group }}</div>
+            {% else %}
+              <div class="muted">Unassigned</div>
+            {% endif %}
+          </div>
+        </div>
+
+        {# ===== Add Progress (styled like manufacturing/details progress form) ===== #}
+        <div style="margin-top: 14px;">
+          <div class="muted" style="margin-bottom:6px;">Add Progress</div>
+
+          <form method="post"
+                action="{{ url_for('jobs_bp.op_progress_add', op_id=op.id) }}"
+                style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+
+            <input type="hidden" name="job_id" value="{{ op.build.job_id if op.build else '' }}">
+
+            <div style="min-width:160px;">
+              <div class="muted">Qty Done (delta)</div>
+              <input class="input" type="number" step="1" min="0" name="qty_done_delta" value="0">
+            </div>
+
+            <div style="min-width:160px;">
+              <div class="muted">Qty Scrap (delta)</div>
+              <input class="input" type="number" step="1" min="0" name="qty_scrap_delta" value="0">
+            </div>
+
+            <div style="flex:1; min-width:260px;">
+              <div class="muted">Note</div>
+              <input class="input" type="text" name="note" placeholder="Optional note…">
+            </div>
+
+            <button class="btn btn-primary" type="submit">Add Update</button>
+          </form>
+
+          {# ===== Recent Activity (last 3) ===== #}
+          {% set recent = (progress_by_op_id.get(op.id, [])[:3]) %}
+          {% if recent|length > 0 %}
+            <div style="margin-top: 12px;">
+              <div class="muted" style="margin-bottom:6px;">Recent Activity</div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Done Δ</th>
+                    <th>Scrap Δ</th>
+                    <th>Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for p in recent %}
+                    <tr>
+                      <td class="muted">{{ p.created_at }}</td>
+                      <td>{{ p.event_type }}</td>
+                      <td>{% if p.event_type == 'progress' %}{{ p.qty_done_delta }}{% else %}—{% endif %}</td>
+                      <td>{% if p.event_type == 'progress' %}{{ p.qty_scrap_delta }}{% else %}—{% endif %}</td>
+                      <td>
+                        {% if p.event_note %}{{ p.event_note }}
+                        {% elif p.note %}{{ p.note }}
+                        {% else %}{% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    {% endfor %}
+
+  {% endif %}
+
+</div>
 {% endblock %}

@@ -72,7 +72,7 @@ def apply_work_order_to_new_build(wo_id: int) -> Build:
     job = Job(
         customer_id=wo.customer_id,
         job_number=_next_job_number(),
-        title=f"{wo.wo_number} — {line_summary}",
+        title=f"{wo.wo_number} — {wo.title}",
         status="active",
         priority=None,
         due_date=None,
@@ -93,7 +93,7 @@ def apply_work_order_to_new_build(wo_id: int) -> Build:
     # Create Build (required fields per your schema)
     build = Build(
         job_id=job.id,
-        name=f"{wo.wo_number} — {line_summary}",
+        name=f"{wo.wo_number} — {wo.title}",
         status="active",
         qty_ordered=int(total_ordered) if float(total_ordered).is_integer() else int(round(total_ordered)),
         qty_completed=0,
