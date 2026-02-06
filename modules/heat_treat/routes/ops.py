@@ -82,15 +82,21 @@ def heat_treat_complete(op_id):
         flash(f"Cannot complete: operation is {op.status}.", "error")
         return _redirect_queue()
 
-    complete_operation(
-        op,
-        user_id=session.get("user_id"),
-        is_admin=bool(session.get("is_admin")),
-    )    
+    try:
+        complete_operation(
+            op, 
+            user_id=session.get("user_id"), 
+            is_admin=bool(session.get("is_admin"))
+            # note=request.form.get("note"), #later when UI supports override notes
+        )    
+        db.session.commit()
+        flash("Operation completed. Next operation released.", "success")
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), "warning")
+    except Exception:
+        db.session.rollback()
+        raise
 
-    db.session.commit()
-    flash("Operation completed.", "success")
-    return _redirect_queue()
 
-    flash("Operation completed. Next operation released.", "success")
     return _redirect_queue()

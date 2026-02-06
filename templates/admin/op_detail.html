@@ -1,0 +1,164 @@
+<!-- File path: templates/admin/op_detail.html -->
+
+{% extends "base.html" %}
+
+{% block topbar %}
+🔧 Admin Dashboard
+{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+        <h1 class="page-title">Operation #{{ op.id }}</h1>
+        <p class="page-subtitle">Full event timeline + current operation snapshot.</p>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <a href="{{ url_for('admin_bp.ops_audit') }}" class="btn btn-primary">
+			< Back to Audit Feed
+		</a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 14px;">
+    <h2 style="margin-top: 0;">Operation</h2>
+
+    <div style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 10px;">
+      <div>
+        <div style="font-size:12px; opacity:0.7;">Status</div>
+        <div><b>{{ op.status }}</b></div>
+      </div>
+
+      <div>
+        <div style="font-size:12px; opacity:0.7;">Module</div>
+        <div>{{ op.module_key }}</div>
+      </div>
+
+      <div>
+        <div style="font-size:12px; opacity:0.7;">Op Key</div>
+        <div>{{ op.op_key }}</div>
+      </div>
+
+      <div>
+        <div style="font-size:12px; opacity:0.7;">Sequence</div>
+        <div>{{ op.sequence }}</div>
+      </div>
+
+      <div>
+        <div style="font-size:12px; opacity:0.7;">Qty Required</div>
+        <div><b>{{ op.qty_required }}</b></div>
+      </div>
+
+      <div>
+        <div style="font-size:12px; opacity:0.7;">Qty Done</div>
+        <div>{{ op.qty_done }}</div>
+      </div>
+
+      <div>
+        <div style="font-size:12px; opacity:0.7;">Qty Scrap</div>
+        <div>{{ op.qty_scrap }}</div>
+      </div>
+
+      <div>
+        <div style="font-size:12px; opacity:0.7;">Qty Planned</div>
+        <div>{{ op.qty_planned }}</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px;">
+      <div style="opacity:0.8;">
+        <span style="font-size:12px;">Claimed by</span>
+        <b style="margin-left:6px;">
+          {{ op.claimed_by_user.username if op.claimed_by_user else "—" }}
+        </b>
+      </div>
+      <div style="opacity:0.8;">
+        <span style="font-size:12px;">Allow multi-user</span>
+        <b style="margin-left:6px;">
+          {{ "yes" if op.allow_multi_user else "no" }}
+        </b>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <h2 style="margin: 0;">Event timeline</h2>
+      <div style="opacity: 0.7; font-size: 12px;">
+        {{ events|length }} events
+      </div>
+    </div>
+
+    <div style="overflow:auto; margin-top: 10px;">
+        <table class="table">
+            <colgroup>
+            <col style="width: 160px;">  <!-- Time -->
+            <col style="width: 110px;">  <!-- Event -->
+            <col style="width: 110px;">  <!-- User -->
+            <col style="width: 90px;">   <!-- Δ Done -->
+            <col style="width: 90px;">   <!-- Δ Scrap -->
+            <col style="width: 90px;">   <!-- Override -->
+            <col>                        <!-- Note (flex) -->
+            </colgroup>
+
+            <thead>
+            <tr>
+                <th style="text-align:left; white-space:nowrap; padding: 8px 10px;">Time</th>
+                <th style="text-align:center; white-space:nowrap; padding: 8px 10px;">Event</th>
+                <th style="text-align:center; white-space:nowrap; padding: 8px 10px;">User</th>
+                <th style="text-align:right; white-space:nowrap; padding: 8px 10px;">Δ Done</th>
+                <th style="text-align:right; white-space:nowrap; padding: 8px 10px;">Δ Scrap</th>
+                <th style="text-align:center; white-space:nowrap; padding: 8px 10px;">Override</th>
+                <th style="text-align:left; padding: 8px 10px;">Note</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for e in events %}
+                <tr>
+                <td style="text-align:left; white-space:nowrap; padding: 6px 10px;">
+                    {{ e.created_at|dt }}
+                </td>
+
+                <td style="text-align:center; white-space:nowrap; padding: 6px 10px;">
+                    {{ e.event_type }}
+                </td>
+
+                <td style="text-align:center; white-space:nowrap; padding: 6px 10px;">
+                    {{ e.user.username if e.user else "—" }}
+                </td>
+
+                <td style="text-align:right; white-space:nowrap; padding: 6px 10px;">
+                    {{ e.qty_done_delta }}
+                </td>
+
+                <td style="text-align:right; white-space:nowrap; padding: 6px 10px;">
+                    {{ e.qty_scrap_delta }}
+                </td>
+
+                <td style="text-align:center; white-space:nowrap; padding: 6px 10px;">
+                    {{ "yes" if e.is_override else "no" }}
+                </td>
+
+                <td style="text-align:left; padding: 6px 10px; max-width: 700px; overflow-wrap:anywhere;">
+                    {% if e.note %}{{ e.note }}
+                    {% elif e.event_note %}{{ e.event_note }}
+                    {% else %}<span style="opacity:0.6;">—</span>
+                    {% endif %}
+                </td>
+                </tr>
+            {% endfor %}
+
+            {% if events|length == 0 %}
+                <tr>
+                <td colspan="7" style="opacity:0.7; padding: 16px;">
+                    No events recorded for this operation.
+                </td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+  </div>
+
+{% endblock %}

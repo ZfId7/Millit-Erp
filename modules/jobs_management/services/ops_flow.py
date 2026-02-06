@@ -46,6 +46,35 @@ def release_next_for_bom_item(current_op: BuildOperation):
 
 
 def complete_operation(op: BuildOperation, *, user_id: int = None, is_admin: bool = False, note: str = None):
+    # Ready-to-complete gating (required good parts only)
+    required = float(getattr(op, "qty_required", 0) or 0)
+    done = float(getattr(op, "qty_done", 0) or 0)
+
+    if required <= 0:
+        raise ValueError("Cannot complete: qty_required is not set (or is 0).")
+
+    if done < required:
+        remaining = required - done
+        msg = f"Cannot complete: {remaining:g} required good parts remaining (done {done:g} / required {required:g})."
+
+        # Admin override path: allowed, but must be explicit + audited
+        if not is_admin:
+            raise ValueError(msg)
+
+        if not note or not str(note).strip():
+            raise ValueError("Admin override requires a note (reason).")
+
+        # Add an explicit audit event for the blocked attempt (optional but recommended)
+        add_op_event(
+            op,
+            user_id=user_id,
+            event_type="complete_blocked",
+            actor_role="admin_override",
+            note=msg,
+            is_override=True,
+        )
+        # Continue to completion below (forced)
+
     # Canonical terminal state
     op.status = STATUS_COMPLETED
     op.is_released = False
@@ -65,3 +94,4 @@ def complete_operation(op: BuildOperation, *, user_id: int = None, is_admin: boo
 
     if op.bom_item_id is not None:
         release_next_for_bom_item(op)
+

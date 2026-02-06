@@ -65,6 +65,7 @@ def ensure_operations_for_bom_item(bom_item):
         return
 
     planned_qty = float(getattr(bom_item, "qty_planned", None) or bom_item.qty or 0.0)
+    required_qty = planned_qty #v0 required == planned snapshot for this BOM item
 
     for s in steps:
         op = BuildOperation.query.filter_by(
@@ -75,6 +76,11 @@ def ensure_operations_for_bom_item(bom_item):
 
         if op:
             op.qty_planned = planned_qty
+            
+            # Don't overwrite if already set (supports future semantics / manual edits)
+            if getattr(op, "qty_required", None) in (None, 0, 0.0):
+                op.qty_required = required_qty
+
             op.op_name = s.op_name
             op.module_key = s.module_key
             op.sequence = s.sequence
@@ -90,6 +96,7 @@ def ensure_operations_for_bom_item(bom_item):
             sequence=s.sequence,
             is_outsourced=bool(getattr(s, "is_outsourced", False)),
             qty_planned=planned_qty,
+            qty_required=required_qty,
             status="queue",
         ))
 

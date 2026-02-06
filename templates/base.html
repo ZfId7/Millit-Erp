@@ -158,6 +158,11 @@
 			class="{% if request.endpoint.startswith('admin_users_bp') %}active{% endif %}">
 			👤 User Management
 		</a>
+
+        <a href="{{ url_for('admin_bp.admin_index') }}"
+            class="{% if request.endpoint.startswith('admin_bp') %}active{% endif %}">
+			🔧 Admin Dashboard
+		</a>
         {% endif %}
 		
     </div>

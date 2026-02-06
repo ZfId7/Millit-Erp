@@ -110,11 +110,24 @@ def mfg_complete(op_id):
         flash(f"Cannot complete: operation is {op.status}.", "error")
         return redirect(url_for("mfg_bp.mfg_queue"))
 
-    complete_operation(op)  # ✅ bounce-safe completion
-    db.session.commit()
+    try:
+        complete_operation(
+            op, 
+            user_id=session.get("user_id"), 
+            is_admin=bool(session.get("is_admin"))
+            # note=request.form.get("note"), #later when UI supports override notes
+        )    
+        db.session.commit()
+        flash("Operation completed. Next operation released.", "success")
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), "warning")
+    except Exception:
+        db.session.rollback()
+        raise
 
-    flash("Operation completed. Next operation released.", "success")
-    return redirect(url_for("mfg_bp.mfg_queue"))
+
+    return _redirect_queue()
 
 
 @mfg_bp.route("/op/<int:op_id>/assign_machine", methods=["POST"])

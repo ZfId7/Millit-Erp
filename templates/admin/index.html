@@ -1,0 +1,23 @@
+<!-- File path: templates/admin/index.html -->
+
+{% extends "base.html" %}
+
+{% block topbar %}
+🔧 Admin Dashboard
+{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <h1>Admin</h1>
+    <p style="margin: 6px 0 0; opacity: 0.8;">
+      Read-only dashboards for operations history, audit, and troubleshooting.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top: 14px;">
+    <h2 style="margin-top: 0;">Operations</h2>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+      <a class="btn" href="{{ url_for('admin_bp.ops_audit') }}">Operations Audit Feed</a>
+    </div>
+  </div>
+{% endblock %}

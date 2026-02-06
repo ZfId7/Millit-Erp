@@ -27,10 +27,13 @@
         {# ===== Header row (like manufacturing/details "Operation" card header) ===== #}
         <div class="row" style="justify-content: space-between; align-items: center;">
           <div>
-            <div class="muted">Operation</div>
+            <div class="muted"> 
+              <a href="{{ url_for('admin_bp.op_detail', op_id=op.id) }}"> 
+                Operation — (#{{ op.id }})
+              </a>
+            </div>
             <div style="font-weight:900; font-size: 18px;">
               {{ op.op_name }}
-              <span class="muted" style="font-weight:500;">(#{{ op.id }})</span>
             </div>
             <div class="muted">
               module: {{ op.module_key }}
@@ -103,7 +106,7 @@
         <div class="row" style="gap: 18px; margin-top: 25px; flex-wrap: wrap;">
           <div class="stack" style="min-width: 160px;">
             <div class="muted">Planned</div>
-            <div style="font-weight:900;">{{ op.qty_planned }}</div>
+            <div style="font-weight:900;">{{ op.qty_required }}</div>
           </div>
 
           <div class="stack" style="min-width: 160px;">
@@ -159,11 +162,12 @@
           {% set recent = (progress_by_op_id.get(op.id, [])[:3]) %}
           {% if recent|length > 0 %}
             <div style="margin-top: 12px;">
-              <div class="muted" style="margin-bottom:6px;">Recent Activity</div>
+              <div style="margin-bottom:6px; font-weight:750; font-size: 14px;">Recent Activity</div>
               <table class="table">
                 <thead>
                   <tr>
                     <th>Time</th>
+                    <th>Op</th>
                     <th>Type</th>
                     <th>Done Δ</th>
                     <th>Scrap Δ</th>
@@ -173,7 +177,12 @@
                 <tbody>
                   {% for p in recent %}
                     <tr>
-                      <td class="muted">{{ p.created_at }}</td>
+                      <td class="muted">{{ p.created_at|dt }}</td>
+                      <td>
+                        <a href="{{ url_for('admin_bp.op_detail', op_id=op.id) }}">
+                            #{{ op.id }}
+                        </a>
+                      </td>
                       <td>{{ p.event_type }}</td>
                       <td>{% if p.event_type == 'progress' %}{{ p.qty_done_delta }}{% else %}—{% endif %}</td>
                       <td>{% if p.event_type == 'progress' %}{{ p.qty_scrap_delta }}{% else %}—{% endif %}</td>

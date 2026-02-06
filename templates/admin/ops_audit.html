@@ -1,0 +1,133 @@
+<!-- File path: templates/admin/ops_audit.html -->
+
+{% extends "base.html" %}
+
+{% block topbar %}
+🔧 Admin Dashboard
+{% endblock %}
+
+{% block toplinks %}
+  <span class="page-links">
+    <a class="btn btn-secondary" href="{{ url_for('admin_bp.admin_index') }}">← Admin Home</a>
+  </span>
+  {{ super() }}
+{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+        <h1 class="page-title">Operations Audit</h1>
+        <p class="page-subtitle">Latest Progress + audit events across all modules.</p>
+    </div>
+  </div>
+
+  <form method="get" class="card" style="margin-top: 14px;">
+    <h2 style="margin-top: 0;">Filters</h2>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <div>
+        <label style="display:block; font-size: 12px; opacity: 0.8;">module_key</label>
+        <input name="module_key" value="{{ filters.module_key }}" placeholder="surface_grinding" />
+      </div>
+
+      <div>
+        <label style="display:block; font-size: 12px; opacity: 0.8;">op_key</label>
+        <input name="op_key" value="{{ filters.op_key }}" placeholder="surface_grind" />
+      </div>
+
+      <div>
+        <label style="display:block; font-size: 12px; opacity: 0.8;">event_type</label>
+        <input name="event_type" value="{{ filters.event_type }}" placeholder="progress / complete / ..." />
+      </div>
+
+      <div>
+        <label style="display:block; font-size: 12px; opacity: 0.8;">user</label>
+        <select name="user_id">
+          <option value="">Any</option>
+          {% for u in users %}
+            <option value="{{ u.id }}" {% if filters.user_id|int == u.id %}selected{% endif %}>
+              {{ u.username }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display:block; font-size: 12px; opacity: 0.8;">status</label>
+        <input name="status" value="{{ filters.status }}" placeholder="queue / in_progress / completed" />
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <button class="btn" type="submit">Apply</button>
+        <a class="btn" href="{{ url_for('admin_bp.ops_audit') }}">Reset</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="card" style="margin-top: 14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <h2 style="margin: 0;">Recent events</h2>
+      <div style="opacity: 0.7; font-size: 12px;">
+        Showing up to {{ rows|length }} rows (max 500)
+      </div>
+    </div>
+
+    <div style="overflow:auto; margin-top: 10px;">
+      <table class="table" style="min-width: 1100px;">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Op</th>
+            <th>Module</th>
+            <th>Event</th>
+            <th>User</th>
+            <th style="text-align:center;">Δ Done</th>
+            <th style="text-align:center;">Δ Scrap</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in rows %}
+            {% set op = e.build_operation %}
+            <tr>
+              <td>{{ e.created_at|dt }}</td>
+
+              <td>
+                <a href="{{ url_for('admin_bp.op_detail', op_id=op.id) }}">
+                  #{{ op.id }}
+                </a>
+              </td>
+
+              <td>
+                {{ op.module_key }}<br>
+                <span style="opacity:0.7; font-size:12px;">{{ op.op_key }}</span>
+              </td>
+
+              <td>{{ e.event_type }}</td>
+
+              <td>
+                {{ e.user.username if e.user else "—" }}
+              </td>
+
+              <td style="text-align:center;">{{ e.qty_done_delta }}</td>
+              <td style="text-align:center;">{{ e.qty_scrap_delta }}</td>
+
+              <td style="max-width: 520px;">
+                {% if e.note %}{{ e.note }}
+                {% elif e.event_note %}{{ e.event_note }}
+                {% else %}<span style="opacity:0.6;">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          {% if rows|length == 0 %}
+            <tr>
+              <td colspan="8" style="opacity:0.7; padding: 16px;">
+                No events match the current filters.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
