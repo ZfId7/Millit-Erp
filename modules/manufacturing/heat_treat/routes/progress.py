@@ -1,9 +1,9 @@
-# File path: modules/heat_treat/routes/progress.py
+# File path: modules/manufacturing/heat_treat/routes/progress.py
 
 from flask import request, redirect, url_for, flash, session
 from database.models import db
 
-from modules.heat_treat import heat_treat_bp
+from .. import heat_treat_bp
 from modules.user.decorators import login_required
 
 from modules.machining.services.progress_service import add_op_progress, OpProgressError

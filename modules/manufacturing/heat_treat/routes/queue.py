@@ -1,9 +1,9 @@
-# File path: modules/heat_treat/routes/queue.py
+# File path: modules/manufacturing/heat_treat/routes/queue.py
 # -V1 Base Build - Queue
 
 from flask import render_template, request
 from modules.user.decorators import login_required
-from modules.heat_treat import heat_treat_bp
+from .. import heat_treat_bp
 from database.models import BuildOperation, Job, Build
 
 HT_OP_KEYS = ["heat_treat", "in_house_ht"]

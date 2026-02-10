@@ -1,8 +1,7 @@
-import os
-from flask import Blueprint, render_template
+# File path: modules/manufacturing/bevel_grinding/routes/index.py
 
-
-bevel_bp = Blueprint("bevel_bp", __name__)
+from flask import render_template
+from .. import bevel_bp
 
 @bevel_bp.route("/")
 def bevel_index():

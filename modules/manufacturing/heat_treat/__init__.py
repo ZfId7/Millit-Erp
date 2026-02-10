@@ -3,6 +3,10 @@
 
 from flask import Blueprint
 
-heat_treat_bp = Blueprint("heat_treat_bp", __name__)
+heat_treat_bp = Blueprint(
+    "heat_treat_bp",
+    __name__,
+    template_folder="templates"
+    )
 
 from .routes import * #noqa

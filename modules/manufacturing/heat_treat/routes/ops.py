@@ -1,4 +1,4 @@
-# File path: modules/heat_treat/routes/ops.py
+# File path: modules/manufacturing/heat_treat/routes/ops.py
 # -V1 Base Build
 #- V2 Service upgrades TO DO
 
@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.models import db, BuildOperation
 from modules.user.decorators import login_required
 
-from modules.heat_treat import heat_treat_bp
+from .. import heat_treat_bp
 from modules.shared.services.build_op_claim_service import start_build_operation
 from modules.shared.services.build_op_progress_service import OpProgressError
 from modules.jobs_management.services.ops_flow import complete_operation  # adjust if different

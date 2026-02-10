@@ -1,9 +1,9 @@
-# File path: modules/heat_treat/routes/details.py
+# File path: modules/manufacturing/heat_treat/routes/details.py
 # -V1 Base Build
 from flask import render_template, flash, redirect, url_for
 from database.models import BuildOperation
 
-from modules.heat_treat import heat_treat_bp
+from .. import heat_treat_bp
 from modules.user.decorators import login_required
 
 from modules.machining.services.progress_service import get_op_totals
