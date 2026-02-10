@@ -6,15 +6,15 @@ from .inventory import inventory_bp
 from .manufacturing.surface_grinding.routes import surface_bp
 from .manufacturing.bevel_grinding.routes import bevel_bp
 from .jobs_management import jobs_bp
-from .machining.routes import mfg_bp
+from .manufacturing.machining.routes import mfg_bp
 #from .waterjet.routes import waterjet_bp
 # from .assembly.routes import assembly_bp, cad_upload_bp
 #from .assembly.routes.assembly_bom import assembly_bom_bp
 from .analytics.routes import analytics_bp
 from .user.routes import admin_users_bp
 #from .operations.routes import operations_bp
-from .raw_materials.routes import raw_mats_bp
-from .raw_materials.waterjet.routes import raw_mats_waterjet_bp
+from .manufacturing.raw_materials.routes import raw_mats_bp
+from .manufacturing.raw_materials.waterjet.routes import raw_mats_waterjet_bp
 from .manufacturing.heat_treat.routes import heat_treat_bp
 from .work_orders.routes import work_orders_bp
 from .admin.routes import admin_bp
