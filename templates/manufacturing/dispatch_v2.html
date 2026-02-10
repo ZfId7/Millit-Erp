@@ -1,0 +1,170 @@
+<!-- File path: templates/manufacturing/dispatch_v2.html -->
+
+{% extends "base.html" %}
+{% block title %}Manufacturing{% endblock %}
+{% block topbar %}🏭 Manufacturing Hub{% endblock %}
+
+
+
+{% block styles %}
+<style>
+  details.dispatch-build,
+  details.dispatch-bom {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.02);
+  }
+  details.dispatch-build > summary,
+  details.dispatch-bom > summary {
+    cursor: pointer;
+    padding: 10px 12px;
+    list-style: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  details.dispatch-build > summary::-webkit-details-marker,
+  details.dispatch-bom > summary::-webkit-details-marker { display: none; }
+
+  .summary-left { display:flex; flex-direction:column; gap:2px; }
+  .summary-title { font-weight: 650; }
+  .summary-sub { opacity: 0.75; font-size: 12px; }
+
+  .summary-right { opacity: 0.8; font-size: 12px; white-space: nowrap; }
+
+  .dispatch-inner { padding: 10px 12px 12px; }
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Manufacturing Dispatch</h1>
+        <p class="page-subtitle">V2: unified dispatch center for all ops, with improved filtering and deeplinks.</p>
+       
+    </div>
+  </div>  
+  
+  <div class="card">
+    <form method="get" class="row" style="margin: 10px 0; display:flex; gap:10px; flex-wrap:wrap;">
+        <input name="module_key" placeholder="module_key" value="{{ filters.module_key }}">
+        <select name="claimed">
+        <option value="" {% if not filters.claimed %}selected{% endif %}>claimed: any</option>
+        <option value="unclaimed" {% if filters.claimed == "unclaimed" %}selected{% endif %}>unclaimed</option>
+        <option value="claimed" {% if filters.claimed == "claimed" %}selected{% endif %}>claimed</option>
+        </select>
+
+        <label style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" name="released_only" value="1" {% if filters.released_only %}checked{% endif %}>
+        released only
+        </label>
+
+        <label style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" name="show_all" value="1" {% if filters.show_all == "1" %}checked{% endif %}>
+        show all queue ops
+        </label>
+
+        <button class="btn" type="submit">Apply</button>
+        <a class="btn" href="{{ url_for('mfg_bp.mfg_dispatch_v2') }}">Reset</a>
+    </form>
+  </div>
+
+    {% if build_groups|length == 0 %}
+      <div class="card" style="opacity:0.7; padding: 12px;">No operations match your filters.</div>
+    {% else %}
+      {% for bg in build_groups %}
+        <details class="dispatch-build">
+            <summary>
+                <div class="summary-left">
+                <div class="summary-title">
+                    Build #{{ bg.build_id }}
+                    {% if bg.job_title %}
+                      <span style="opacity:0.75; font-weight:400;">— {{ bg.job_title }}</span>
+                    {% endif %}  
+                </div>
+
+                <div class="summary-sub">{{ bg.bom_blocks|length }} line{{ "" if bg.bom_blocks|length == 1 else "s" }}</div>
+                </div>
+                <div class="summary-right">click to expand</div>
+            </summary>
+
+            <div class="dispatch-inner">
+                {% for bb in bg.bom_blocks %}
+                    <details class="dispatch-bom">
+                        <summary>
+                            <div class="summary-left">
+                                {% if bb.bom %}
+                                    <div class="summary-title">
+                                        Line {{ bb.bom.line_no }} · {{ bb.bom.part_number or bb.bom.name or ("BOM Item " ~ bb.bom_item_id) }}
+                                    </div>
+                                    <div class="summary-sub">
+                                        Qty planned: {{ bb.bom.qty_planned }} {{ bb.bom.unit or "ea" }}
+                                    </div>
+                                {% else %}
+                                    <div class="summary-title">Build-level ops</div>
+                                    <div class="summary-sub">No BOM line</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="summary-right">
+                                {{ bb.ops|length }} op{{ "" if bb.ops|length == 1 else "s" }}
+                            </div>
+                        </summary>
+
+                        <div class="dispatch-inner">
+                            <div style="overflow:auto;">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:left;">Op</th>
+                                            <th style="text-align:left;">Module</th>
+                                            <th style="text-align:left;">Operation</th>
+                                            <th style="text-align:center;">Status</th>
+                                            <th style="text-align:center;">Released</th>
+                                            <th style="text-align:center;">Claimed</th>
+                                            <th style="text-align:right;">Req</th>
+                                            <th style="text-align:right;">Done</th>
+                                            <th style="text-align:right;">Scrap</th>
+                                            <th style="text-align:left;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for r in bb.ops %}
+                                            {% set op = r.op %}
+                                            <tr>
+                                                <td>#{{ op.id }}</td>
+                                                <td>{{ op.module_key }}</td>
+                                                <td>{{ op.op_name or op.op_key }}</td>
+                                                <td style="text-align:center;">{{ op.status }}</td>
+                                                <td style="text-align:center;">{{ "yes" if op.is_released else "no" }}</td>
+                                                <td style="text-align:center;">{{ op.claimed_by_user.username if op.claimed_by_user else "—" }}</td>
+                                                <td style="text-align:right;">{{ op.qty_required }}</td>
+                                                <td style="text-align:right;">{{ op.qty_done }}</td>
+                                                <td style="text-align:right;">{{ op.qty_scrap }}</td>
+                                                <td>
+                                                    <a class="btn" href="{{ url_for(r.deeplink_endpoint, **r.deeplink_params) }}">Open in module</a>
+                                                    {% if session.get("is_admin") %}
+                                                        <a class="btn" href="{{ url_for('admin_bp.op_detail', op_id=op.id) }}">History</a>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </details>
+                {% endfor %}
+            </div>
+        </details>
+      {% endfor %}
+    {% endif %}
+  </div>
+</div>  
+{% endblock %}

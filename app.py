@@ -6,7 +6,7 @@ import sqlite3
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from flask import Flask
+from flask import Flask, request
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
@@ -16,6 +16,7 @@ from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
 from modules import module_blueprints
 from database.models import db, User
+from modules.shared.nav_registry import DEPT_NAV, infer_department_from_request
 
 load_dotenv()
 
@@ -48,9 +49,21 @@ def register_cli(app):
         click.echo("Admin user created.")
 
 
+
+
+
 def create_app():
     app = Flask(__name__)
     app.secret_key = os.getenv("SECRET_KEY")
+
+    @app.context_processor
+    def inject_department_nav():
+        dept = infer_department_from_request(request)
+        return {
+            "current_dept": dept,
+            "dept_nav": DEPT_NAV.get(dept, []) if dept else [],
+        }
+
     from routes.time import utc_to_mountain, fmt_dt
 
     app.jinja_env.filters["mt"] = utc_to_mountain

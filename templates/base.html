@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/layout_helpers.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/side_bar.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components/badges.css') }}">
-  
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/nav.css') }}">
   
 <style>
 	:root {
@@ -109,7 +109,7 @@
 			class="{% if request.endpoint.startswith('dashboard_bp.') %}active{% endif %}">
 			🏠 Overview
 		</a>
-		
+		{# Hide
         <a href="{{ url_for('surface_grinding_bp.surface_index') }}"
 			class="{% if request.endpoint.startswith('surface_bp.') %}active{% endif %}">
 			🧱 Surface Grinding
@@ -120,17 +120,7 @@
 			🔪 Bevel Grinding
 		</a>
 		
-        <a href="{{ url_for('inventory_bp.inventory_index') }}"
-			class="{% if request.endpoint.startswith('inventory_bp') %}active{% endif %}">
-			📦 Inventory
-		</a>
-		
-		<a href="{{ url_for('mfg_bp.mfg_index') }}"
-			class="{% if request.endpoint.startswith('mfg_bp') %}active{% endif %}">
-			🏭Manufacturing
-		</a>
-        
-        <a href="{{ url_for('heat_treat_bp.heat_treat_index') }}"
+                <a href="{{ url_for('heat_treat_bp.heat_treat_index') }}"
 			class="{% if request.endpoint.startswith('heat_treat_bp') %}active{% endif %}">
 			🔥 Heat Treat
 		</a>
@@ -139,26 +129,42 @@
             class="{% if request.endpoint.startswith('raw_mats_bp') %}active{% endif %}">
             ✂️ Raw Materials
         </a>
+        #}
         
+        <a href="{{ url_for('mfg_bp.mfg_dispatch_v2') }}"
+			class="{% if request.endpoint.startswith('mfg_bp') %}active{% endif %}">
+			🏭 Manufacturing Dept
+		</a>
+
+        <a href="{{ url_for('inventory_bp.inventory_index') }}"
+			class="{% if request.endpoint.startswith('inventory_bp') %}active{% endif %}">
+			📦 Inventory
+		</a>
+		
+        
+
+        <a href="{{ url_for('work_orders_bp.work_orders_index') }}"
+			class="{% if request.endpoint.startswith('work_orders_bp.') %}active{% endif %}">
+			🧾 Work Orders
+		</a>
+        {# Hide
         <a href="{{ url_for('analytics_bp.analytics_index') }}"
 			class="{% if request.endpoint.startswith('analytics_bp') %}active{% endif %}">
 			📊 Analytics
 		</a>
-		<a href="{{ url_for('work_orders_bp.work_orders_index') }}"
-			class="{% if request.endpoint.startswith('work_orders_bp.') %}active{% endif %}">
-			🧾 Work Orders
-		</a>
+		
 		<a href="{{ url_for('jobs_bp.jobs_index') }}"
 			class="{% if request.endpoint.startswith('jobs_bp.') %}active{% endif %}">
 			📋 Job Management
 		</a>
 		
-		{% if session.get('is_admin') %}
+		
         <a href="{{ url_for('admin_users_bp.user_index') }}"
 			class="{% if request.endpoint.startswith('admin_users_bp') %}active{% endif %}">
 			👤 User Management
 		</a>
-
+        #}
+        {% if session.get('is_admin') %}
         <a href="{{ url_for('admin_bp.admin_index') }}"
             class="{% if request.endpoint.startswith('admin_bp') %}active{% endif %}">
 			🔧 Admin Dashboard
@@ -197,6 +203,7 @@
 					</div>
 				{% endif %}
 			{% endwith %}
+            {% include "components/department_hub_panel.html" %}
             {% block content %}{% endblock %}
         </div>
     </div>

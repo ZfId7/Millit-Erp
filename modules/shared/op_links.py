@@ -17,7 +17,7 @@ def op_queue_url(op):
     if key == "manufacturing":
         return url_for("mfg_bp.mfg_queue")
 
-    if key == "raw_materials_waterjet":
+    if key == "raw_materials":
         return url_for("raw_mats_waterjet_bp.waterjet_queue")
 
     # Fallback (safe)

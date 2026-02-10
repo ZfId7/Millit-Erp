@@ -363,6 +363,8 @@ class BuildOperation(db.Model):
     bom_item_id = db.Column(db.Integer, db.ForeignKey("bom_items.id"), nullable=True)
     bom_item = db.relationship("BOMItem")
 
+    department = db.Column(db.String(32), nullable=False, default="manufacturing")
+
     op_key = db.Column(db.String(50), nullable=False)
     op_name = db.Column(db.String(120), nullable=False)
     module_key = db.Column(db.String(50), nullable=False)

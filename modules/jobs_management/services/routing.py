@@ -64,6 +64,7 @@ def ensure_operations_for_bom_item(bom_item):
     if not steps:
         return
 
+    
     planned_qty = float(getattr(bom_item, "qty_planned", None) or bom_item.qty or 0.0)
     required_qty = planned_qty #v0 required == planned snapshot for this BOM item
 
@@ -76,7 +77,8 @@ def ensure_operations_for_bom_item(bom_item):
 
         if op:
             op.qty_planned = planned_qty
-            
+            op.department = "manufacturing"
+
             # Don't overwrite if already set (supports future semantics / manual edits)
             if getattr(op, "qty_required", None) in (None, 0, 0.0):
                 op.qty_required = required_qty
@@ -90,6 +92,7 @@ def ensure_operations_for_bom_item(bom_item):
         db.session.add(BuildOperation(
             build_id=bom_item.build_id,
             bom_item_id=bom_item.id,
+            department="manufacturing",
             op_key=s.op_key,
             op_name=s.op_name,
             module_key=s.module_key,
