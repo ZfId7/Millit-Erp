@@ -3,7 +3,11 @@
 
 from flask import Blueprint
 
-surface_bp = Blueprint("surface_grinding_bp", __name__)
+surface_bp = Blueprint(
+    "surface_grinding_bp", 
+    __name__,
+    template_folder="templates",
+    )
 
 #Import routes AFTER blueprint exists
 from .routes import * #noqa
