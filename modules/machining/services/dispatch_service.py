@@ -1,4 +1,4 @@
-# File path: modules/manufacturing/services/dispatch_service.py
+# File path: modules/machining/services/dispatch_service.py
 
 from dataclasses import dataclass
 from typing import List, Optional
@@ -16,7 +16,7 @@ class DispatchFilters:
 
 def get_dispatchable_ops(filters: Optional[DispatchFilters] = None) -> List[BuildOperation]:
     """
-    V0-B: Dispatchable = manufacturing ops that are released + queued, and currently unassigned.
+    V0-B: Dispatchable = machining ops that are released + queued, and currently unassigned.
     """
     if filters is None:
         filters = DispatchFilters()

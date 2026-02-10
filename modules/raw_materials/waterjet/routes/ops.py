@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from database.models import WaterjetOperationDetail, db, BuildOperation
 
-from modules.surface_grinding.routes.ops import _redirect_queue
+
 from modules.user.decorators import login_required
 from modules.raw_materials.waterjet import raw_mats_waterjet_bp
 from modules.jobs_management.services.ops_flow import complete_operation

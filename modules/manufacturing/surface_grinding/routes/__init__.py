@@ -1,4 +1,4 @@
-# File path: modules/surface_grinding/routes/__init__.py
+# File path: modules/manufacturing/surface_grinding/routes/__init__.py
 # V1 OG Build | Index-Queue-Ops
 # V2 Refactor
 

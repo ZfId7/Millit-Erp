@@ -1,11 +1,11 @@
-# File path: modules/surface_grinding/routes/details.py
+# File path: modules/manufacturing/surface_grinding/routes/details.py
 # V1 Refactor | Base Build for surface/details
 
 from flask import render_template, redirect, url_for, flash, request
 
 from database.models import db, BuildOperation
 from modules.user.decorators import login_required
-from modules.surface_grinding import surface_bp
+from .. import surface_bp
 
 
 @surface_bp.route("/details/<int:op_id>", methods=["GET"])

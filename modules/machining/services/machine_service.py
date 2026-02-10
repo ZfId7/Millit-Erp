@@ -1,10 +1,10 @@
-# File path: modules/manufacturing/services/machine_service.py
+# File path: modules/machining/services/machine_service.py
 
 from dataclasses import dataclass
 from typing import List, Optional
 
 from database.models import BuildOperation, Machine
-from modules.manufacturing.services.dispatch_service import MFG_OP_KEYS
+from modules.machining.services.dispatch_service import MFG_OP_KEYS
 
 
 @dataclass(frozen=True)

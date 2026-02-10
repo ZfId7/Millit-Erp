@@ -1,4 +1,4 @@
-# File path: modules/manufacturing/services/progress_service.py
+# File path: modules/machining/services/progress_service.py
 # Compatibility shim: manufacturing remains the hub, but canonical logic is global/shared.
 
 from modules.shared.services.build_op_progress_service import (

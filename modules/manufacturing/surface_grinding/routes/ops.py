@@ -1,13 +1,14 @@
-# File path: modules/surface_grinding/routes/ops.py
+# File path: modules/manufacturing/surface_grinding/routes/ops.py
 # V1 Refactor Ops
 # V2 Change complete route to run through ops_flow
+
 from flask import request, redirect, session, url_for, flash
 from sqlalchemy.exc import SQLAlchemyError
 
 from database.models import db, BuildOperation
 
 from modules.user.decorators import login_required
-from modules.surface_grinding import surface_bp
+from .. import surface_bp
 from modules.jobs_management.services.ops_flow import complete_operation
 
 from modules.shared.services.build_op_claim_service import start_build_operation

@@ -1,10 +1,10 @@
-# File path: modules/manufacturing/routes/details.py
+# File path: modules/machining/routes/details.py
 
 from flask import render_template, flash, redirect, url_for
-from modules.manufacturing import mfg_bp
+from modules.machining import mfg_bp
 from modules.user.decorators import login_required
 from database.models import BuildOperation, BuildOperationProgress
-from modules.manufacturing.services.progress_service import get_op_totals
+from modules.machining.services.progress_service import get_op_totals
 
 @mfg_bp.route("/op/<int:op_id>", methods=["GET"])
 @login_required

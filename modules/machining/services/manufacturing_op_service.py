@@ -1,4 +1,4 @@
-# File path: modules/manufacturing/services/manufacturing_op_service.py
+# File path: modules/machining/services/manufacturing_op_service.py
 
 from database.models import BuildOperation
 

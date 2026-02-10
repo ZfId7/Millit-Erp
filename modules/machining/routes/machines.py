@@ -1,18 +1,18 @@
-# File path: modules/manufacturing/routes/machines.py
+# File path: modules/machining/routes/machines.py
 
 from flask import render_template, request, redirect, url_for, flash
-from modules.manufacturing import mfg_bp
+from modules.machining import mfg_bp
 from modules.user.decorators import login_required
 from database.models import db, BuildOperation, Machine
 
-from modules.manufacturing.services.dispatch_service import (
+from modules.machining.services.dispatch_service import (
     get_active_machines,
     assign_op_to_machine,
     unassign_op,
     DispatchError,
 )
 
-from modules.manufacturing.services.machine_service import (
+from modules.machining.services.machine_service import (
     get_machine_by_id,
     get_machine_queue,
     get_machine_by_key,

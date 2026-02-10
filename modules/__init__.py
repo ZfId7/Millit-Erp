@@ -3,10 +3,10 @@
 
 # Import each module's blueprint
 from .inventory import inventory_bp
-from .surface_grinding.routes import surface_bp
+from .manufacturing.surface_grinding.routes import surface_bp
 from .bevel_grinding.routes import bevel_bp
 from .jobs_management import jobs_bp
-from .manufacturing.routes import mfg_bp
+from .machining.routes import mfg_bp
 #from .waterjet.routes import waterjet_bp
 # from .assembly.routes import assembly_bp, cad_upload_bp
 #from .assembly.routes.assembly_bom import assembly_bom_bp

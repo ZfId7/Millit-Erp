@@ -1,11 +1,11 @@
-# File path: modules/manufacturing/routes/dispatch_v2.py
+# File path: modules/machining/routes/dispatch_v2.py
 
 from flask import render_template, request, session
 from sqlalchemy import func, and_
 from collections import OrderedDict
 
 from database.models import db, BuildOperation, BOMItem, Build, Job, WorkOrder
-from modules.manufacturing import mfg_bp
+from modules.machining import mfg_bp
 
 from modules.user.decorators import admin_required, login_required
 from modules.shared.status import TERMINAL_STATUSES  # wherever your canonical statuses live

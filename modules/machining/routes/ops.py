@@ -1,4 +1,4 @@
-# File path: modules/manufacturing/routes/ops.py
+# File path: modules/machining/routes/ops.py
 # -V1 Base Build
 
 from flask import flash, redirect, request, session, url_for
@@ -6,13 +6,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.models import db, BuildOperation, Machine
 
 from modules.user.decorators import login_required
-from modules.manufacturing import mfg_bp
+from modules.machining import mfg_bp
 
 from modules.shared.services.build_op_claim_service import start_build_operation
 from modules.shared.services.build_op_progress_service import OpProgressError
 from modules.jobs_management.services.ops_flow import complete_operation  # adjust if different
 
-from modules.manufacturing.services.manufacturing_op_service import (
+from modules.machining.services.manufacturing_op_service import (
     start_operation,
     block_operation,
     MfgOpError,

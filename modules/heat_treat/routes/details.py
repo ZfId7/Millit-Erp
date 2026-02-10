@@ -6,7 +6,7 @@ from database.models import BuildOperation
 from modules.heat_treat import heat_treat_bp
 from modules.user.decorators import login_required
 
-from modules.manufacturing.services.progress_service import get_op_totals
+from modules.machining.services.progress_service import get_op_totals
 
 @heat_treat_bp.route("/op/<int:op_id>", methods=["GET"])
 @login_required

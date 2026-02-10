@@ -1,11 +1,11 @@
-# File path: modules/surface_grinding/routes/queue.py
+# File path: modules/manufacturing/surface_grinding/routes/queue.py
 # V1 Refactor Queue
 
 from flask import render_template, request
 from sqlalchemy import case
 
 from modules.user.decorators import login_required
-from modules.surface_grinding import surface_bp
+from .. import surface_bp
 from database.models import BuildOperation, Build, Job
 
 # Terminal guard (canonical + legacy)

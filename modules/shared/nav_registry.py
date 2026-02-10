@@ -14,7 +14,7 @@ MFG_BLUEPRINTS = {
 ADMIN_BLUEPRINTS = {
     "admin_bp",
     "analytics_bp",
-    "job_management_bp",
+    "jobs_bp",
     "admin_users_bp",
     # add more admin blueprints here
 }
@@ -23,21 +23,23 @@ DEPT_NAV = {
     "manufacturing": [
         # label, endpoint
         ("Dispatch", "mfg_bp.mfg_dispatch_v2"), # or whatever your hub route is
-        ("Machining", "mfg_bp.mfg_index"),
-
-        ("Surface Grinding", "surface_grinding_bp.surface_index"),
-        ("Bevel Grinding", "bevel_bp.bevel_index"),
-        ("Heat Treat", "heat_treat_bp.heat_treat_index"),
-
         ("Raw Materials", "raw_materials_bp.raw_mats_index"),
+        ("Surface Grinding", "surface_grinding_bp.surface_index"),
+        ("Machining", "mfg_bp.mfg_index"),
+        ("Heat Treat", "heat_treat_bp.heat_treat_index"),
+        ("Bevel Grinding", "bevel_bp.bevel_index"),
+        
+
+        
         
     ],
 
     "admin": [
         ("Admin Dashboard", "admin_bp.admin_index"),
-        ("Analytics", "analytics_bp.analytics_index"),
+        ("Jobs Management", "jobs_bp.jobs_index"),
         ("User Management", "admin_users_bp.user_index"),
-        ("Job Management", "jobs_bp.jobs_index"),
+        ("Analytics", "analytics_bp.analytics_index"),
+        
         # add more admin links here
     ],
 }

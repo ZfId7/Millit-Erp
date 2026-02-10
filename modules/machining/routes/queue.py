@@ -1,7 +1,7 @@
-# File path: modules/manufacturing/routes/queue.py
+# File path: modules/machining/routes/queue.py
 # -V1 Base Build
 from flask import render_template, request
-from modules.manufacturing import mfg_bp
+from modules.machining import mfg_bp
 from modules.user.decorators import login_required
 from database.models import BuildOperation, Job, Build, Machine
 

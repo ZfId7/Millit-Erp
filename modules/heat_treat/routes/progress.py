@@ -6,7 +6,7 @@ from database.models import db
 from modules.heat_treat import heat_treat_bp
 from modules.user.decorators import login_required
 
-from modules.manufacturing.services.progress_service import add_op_progress, OpProgressError
+from modules.machining.services.progress_service import add_op_progress, OpProgressError
 
 @heat_treat_bp.route("/op/<int:op_id>/progress", methods=["POST"])
 @login_required
