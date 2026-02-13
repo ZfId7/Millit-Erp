@@ -1,0 +1,13 @@
+<!-- File path: templates/components/secondary_nav.html -->
+  {% if secondary_tabs and secondary_tabs|length > 0 %}
+    <div class="dept-hub-panel secondary-nav">
+        <div class="dept-mode">
+            {% for t in secondary_tabs %}
+                <a class="dept-mode-item {{ 'on' if request.endpoint == t.endpoint else '' }}"
+                  href="{{ url_for(t.endpoint) }}">
+                    {{ t.label }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+  {% endif %}  

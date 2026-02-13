@@ -19,6 +19,10 @@ ADMIN_BLUEPRINTS = {
     # add more admin blueprints here
 }
 
+INV_BLUEPRINTS = {
+    "inventory_bp",
+    # add more inventory blueprints here
+}
 DEPT_NAV = {
     "manufacturing": [
         # label, endpoint
@@ -42,6 +46,12 @@ DEPT_NAV = {
         
         # add more admin links here
     ],
+
+        "inventory": [
+            ("Catalog", "inventory_bp.inventory_catalog"),
+            ("Master BOM", "inventory_bp.bom_index"),
+            # add more inventory links here
+        ],
 }
 
 def infer_department_from_request(request) -> Optional[str]:
@@ -52,4 +62,6 @@ def infer_department_from_request(request) -> Optional[str]:
         return "manufacturing"
     if bp in ADMIN_BLUEPRINTS:
         return "admin"
+    if bp in INV_BLUEPRINTS:
+        return "inventory"
     return None

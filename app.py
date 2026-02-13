@@ -17,6 +17,7 @@ from routes.dashboard import dashboard_bp
 from modules import module_blueprints
 from database.models import db, User
 from modules.shared.nav_registry import DEPT_NAV, infer_department_from_request
+from modules.shared.secondary_nav import resolve_secondary_tabs
 
 load_dotenv()
 
@@ -64,6 +65,12 @@ def create_app():
             "dept_nav": DEPT_NAV.get(dept, []) if dept else [],
         }
 
+    @app.context_processor
+    def inject_secondary_nav():
+        bp = request.blueprint
+        return {
+            "secondary_tabs": resolve_secondary_tabs(request.blueprint, request.endpoint),
+    }
     from routes.time import utc_to_mountain, fmt_dt
 
     app.jinja_env.filters["mt"] = utc_to_mountain

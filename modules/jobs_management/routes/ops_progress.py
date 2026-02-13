@@ -9,7 +9,7 @@ from modules.jobs_management import jobs_bp
 
 from modules.inventory.services.parts_inventory import apply_part_inventory_delta
 from modules.jobs_management.services.ops_flow import complete_operation
-from modules.machining.services.progress_service import add_op_progress, OpProgressError
+from modules.manufacturing.machining.services.progress_service import add_op_progress, OpProgressError
 
 
 

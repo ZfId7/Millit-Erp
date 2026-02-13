@@ -1,19 +1,23 @@
 {# Under-title department hub panel (mode switch) #}
 {% if current_dept and dept_nav %}
-  <div class="dept-hub-panel">
-    <div class="dept-mode">
-      {% for label, endpoint in dept_nav %}
-        <a class="dept-mode-item {{ 'on' if request.endpoint == endpoint else '' }}"
-           href="{{ url_for(endpoint) }}">
-          {{ label }}
-        </a>
-      {% endfor %}
+  <div class="dept-hub-wrap">
+    <div class="dept-hub-panel primary-nav">
+        <div class="dept-mode">
+        {% for label, endpoint in dept_nav %}
+            <a class="dept-mode-item {{ 'on' if request.endpoint == endpoint else '' }}"
+            href="{{ url_for(endpoint) }}">
+            {{ label }}
+            </a>
+        {% endfor %}
+        </div>
+        
+        {# Jump input placeholder (enable later) #}
+        {# <div class="dept-jump">
+        <input class="dept-jump-input" placeholder="Jump: WO-0005 / Build # / Part" />
+        <button class="btn">Go</button>
+        </div> #}
     </div>
-
-    {# Jump input placeholder (enable later) #}
-    {# <div class="dept-jump">
-      <input class="dept-jump-input" placeholder="Jump: WO-0005 / Build # / Part" />
-      <button class="btn">Go</button>
-    </div> #}
-  </div>
+  </div>      
 {% endif %}
+
+  

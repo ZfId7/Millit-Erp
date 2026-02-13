@@ -17,7 +17,7 @@
 	.btn:hover { background: #2a2a2a; border-color: #4a4a4a; }
 	.btn:active { transform: translateY(1px); }
 
-    .btn-sm{ padding: 6px 10px; border-radius: 10px; font-size; 13px; }
+    .btn-sm{ padding: 6px 10px; border-radius: 10px; font-size: 13px; }
     
 	.btn-primary {
 		background: rgba(0,191,255,.14);

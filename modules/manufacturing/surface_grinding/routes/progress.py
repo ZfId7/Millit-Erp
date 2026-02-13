@@ -6,7 +6,7 @@ from database.models import db
 from .. import surface_bp
 from modules.user.decorators import login_required
 
-from modules.machining.services.progress_service import add_op_progress, OpProgressError
+from modules.manufacturing.machining.services.progress_service import add_op_progress, OpProgressError
 
 @surface_bp.route("/op/<int:op_id>/progress", methods=["POST"])
 @login_required

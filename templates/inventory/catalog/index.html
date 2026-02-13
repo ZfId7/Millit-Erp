@@ -9,12 +9,6 @@
 {% endblock %}
 
 {% block toplinks %}
-  <span class="page-links">
-    <a class="btn btn-secondary" href="{{ url_for('inventory_bp.inventory_index') }}">← Inventory</a>
-    <a class="btn btn-primary" href="{{ url_for('inventory_bp.raw_stock_index') }}">Raw Stock</a>
-    <a class="btn btn-primary" href="{{ url_for('inventory_bp.bulk_index') }}">Bulk Hardware</a>
-    <a class="btn btn-primary" href="{{ url_for('inventory_bp.parts_inventory_index') }}">Parts Inventory</a>
-  </span>
   {{ super() }}
 {% endblock %}
 

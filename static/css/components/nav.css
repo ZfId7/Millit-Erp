@@ -11,12 +11,20 @@
 .hub-spacer { flex: 1; }
 
 /* Dept hub panel under title */
+.dept-hub-wrap{
+  display: flex;
+  flex-direction: column;   /* stack children vertically */
+  align-items: center;      /* center each row */
+  gap: 10px;                /* space between rows */
+}
+
 .dept-hub-panel{
   display:flex;
+  width:fit-content;
   align-items:center;
   justify-content:center;
   gap:16px;
-  margin: 2px 0 18px;
+  margin: 2px auto 10px;
   padding: 10px 12px;
   border-radius: 14px;
   background: rgba(255,255,255,.03);
@@ -37,22 +45,47 @@
   text-decoration:none;
   color: inherit;
   padding: 10px 14px;
+  margin: 4px 6px;
   border-radius: 10px;
   opacity: .92;
   background: rgba(255,255,255,.02);
-  border: 1px solid rgba(255,255,255,.04);
+  border: 1px solid rgba(0,191,255,.35);
 }
 
 .dept-mode-item:hover{
   background: rgba(255,255,255,.05);
   border-color: rgba(255,255,255,.08);
+  color: var(--accent);
   opacity: 1;
 }
 
 .dept-mode-item.on{
   background: rgba(255,255,255,.08);
   border-color: rgba(120,180,255,.35);
+  color: var(--accent);
+  font-weight:600;
   outline: 1px solid rgba(120,180,255,.18);
+  opacity: 1;
+}
+
+.secondary-nav{
+  padding: 6px 10px;                 /* smaller than primary */
+  border-radius: 12px;               /* slightly tighter */
+  background: rgba(255,255,255,.02); /* lighter fill */
+  border-color: rgba(255,255,255,.05);
+  box-shadow: none;                  /* if you’re using shadows */
+}
+
+.secondary-nav .dept-mode-item{
+  padding: 8px 10px;                 /* smaller buttons */
+  border-radius: 9px;
+  background: rgba(255,255,255,.015);
+  border-color: rgba(0,191,255,.35);
+  opacity: .90;
+}
+
+.secondary-nav .dept-mode-item:hover{
+  background: rgba(255,255,255,.04);
   opacity: 1;
 }
 
@@ -65,4 +98,27 @@
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.08);
   color: inherit;
+}
+
+.subtabs{
+  display:flex; gap:8px; align-items:center;
+  margin: 10px 0 14px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06);
+}
+.subtab{
+  text-decoration:none;
+  color:inherit;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.05);
+}
+.subtab:hover{ background: rgba(255,255,255,.05); }
+.subtab.on{
+  background: rgba(255,255,255,.08);
+  border-color: rgba(120,180,255,.35);
+  outline: 1px solid rgba(120,180,255,.18);
 }
